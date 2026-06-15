@@ -28,11 +28,11 @@ export function AboutPage() {
 
         <section className="overflow-hidden rounded-[1.25rem] border border-moove-border shadow-moove-soft">
           <img
-            src="/image2.jpeg"
-            alt="Ο χώρος Moove"
-            className="aspect-[4/3] w-full object-cover"
-            width={800}
-            height={600}
+            src="/image1.jpeg"
+            alt={`${site.ownerName} — ${site.name}`}
+            className="w-full h-auto"
+            width={1349}
+            height={1500}
           />
           <div className="bg-moove-surface/95 px-6 py-5">
             <h2 className="font-display text-lg font-semibold text-moove-silver">

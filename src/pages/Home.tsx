@@ -75,11 +75,11 @@ export function HomePage() {
           <div className="animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none [animation-delay:120ms]">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-moove-soft ring-1 ring-moove-border/40">
               <img
-                src="/image1.jpeg"
-                alt="Χώρος προπόνησης Moove"
+                src="/image03.jpeg"
+                alt="Μάθημα Pilates στο Moove"
                 className="h-full w-full object-cover"
-                width={640}
-                height={800}
+                width={1440}
+                height={1800}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-moove-espresso/55 via-moove-espresso/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
@@ -140,11 +140,11 @@ export function HomePage() {
                 height={533}
               />
               <img
-                src="/image4.jpeg"
-                alt="Reformer στο Moove"
+                src="/image5.jpeg"
+                alt="Pilates στο Moove"
                 className="mt-8 aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
-                width={400}
-                height={533}
+                width={1440}
+                height={1792}
               />
             </div>
           </div>
