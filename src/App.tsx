@@ -4,6 +4,7 @@ import { HomePage } from './pages/Home'
 import { ClassesPage } from './pages/Classes'
 import { AboutPage } from './pages/About'
 import { ContactPage } from './pages/Contact'
+import { PosingPage } from './pages/Posing'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/mathimata" element={<ClassesPage />} />
           <Route path="/sxetika" element={<AboutPage />} />
           <Route path="/epikoinonia" element={<ContactPage />} />
+          <Route path="/posing" element={<PosingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

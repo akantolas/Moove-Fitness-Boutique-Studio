@@ -1,78 +1,128 @@
 import { Link } from 'react-router-dom'
 import { site } from '../site'
+import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
 
 export function Footer() {
+  const posing = useIsPosingRoute()
+  const { posing: posingBrand } = site
+
+  const linkClass = posing
+    ? 'text-white/55 transition hover:text-cyan-300'
+    : 'text-moove-muted transition hover:text-moove-lime'
+
+  const headingClass = posing
+    ? 'font-display text-sm font-semibold uppercase tracking-widest text-white'
+    : 'font-display text-sm font-semibold uppercase tracking-widest text-moove-silver'
+
   return (
-    <footer className="border-t border-moove-border/80 bg-moove-espresso/[0.04] pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+    <footer
+      className={
+        posing
+          ? 'border-t border-white/10 bg-[#06060a] pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0'
+          : 'border-t border-moove-border/80 bg-moove-espresso/[0.04] pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0'
+      }
+    >
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-display text-lg font-semibold tracking-wide text-moove-silver">
-            {site.name}
-          </p>
-          <p className="mt-1 text-xs uppercase tracking-[0.22em] text-moove-muted">
-            {site.tagline}
-          </p>
-          <p className="mt-4 text-sm leading-relaxed text-moove-muted">
-            Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {site.ownerName}.
-          </p>
+          {posing ? (
+            <>
+              <Link to="/posing">
+                <img
+                  src={posingBrand.logo}
+                  alt={posingBrand.brandName}
+                  className="h-16 w-auto"
+                  width={160}
+                  height={80}
+                />
+              </Link>
+              <p className="mt-3 text-xs uppercase tracking-[0.22em] text-cyan-300/80">
+                {posingBrand.brandSubtitle}
+              </p>
+              <p className="mt-4 text-sm leading-relaxed text-white/55">
+                Online posing coaching για bodybuilding shows — by {posingBrand.coachName}.
+              </p>
+              <Link to="/" className={`mt-4 inline-block text-xs ${linkClass}`}>
+                ← Επιστροφή στο {site.name} studio
+              </Link>
+            </>
+          ) : (
+            <>
+              <p className="font-display text-lg font-semibold tracking-wide text-moove-silver">
+                {site.name}
+              </p>
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-moove-muted">
+                {site.tagline}
+              </p>
+              <p className="mt-4 text-sm leading-relaxed text-moove-muted">
+                Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {site.ownerName}.
+              </p>
+            </>
+          )}
         </div>
         <div>
-          <h2 className="font-display text-sm font-semibold uppercase tracking-widest text-moove-silver">
-            Πλοήγηση
-          </h2>
+          <h2 className={headingClass}>Πλοήγηση</h2>
           <ul className="mt-4 space-y-2 text-sm">
+            {!posing ? (
+              <li>
+                <Link to="/mathimata" className={linkClass}>
+                  Μαθήματα
+                </Link>
+              </li>
+            ) : null}
             <li>
-              <Link
-                to="/mathimata"
-                className="text-moove-muted transition hover:text-moove-lime"
-              >
-                Μαθήματα
+              <Link to="/posing" className={linkClass}>
+                Move & Pose
               </Link>
             </li>
+            {posing ? (
+              <li>
+                <a href="#booking" className={linkClass}>
+                  Κράτηση συνεδρίας
+                </a>
+              </li>
+            ) : null}
             <li>
-              <Link
-                to="/epikoinonia"
-                className="text-moove-muted transition hover:text-moove-lime"
-              >
+              <Link to="/epikoinonia" className={linkClass}>
                 Επικοινωνία
               </Link>
             </li>
+            {posing ? (
+              <li>
+                <Link to="/mathimata" className={linkClass}>
+                  Μαθήματα studio
+                </Link>
+              </li>
+            ) : null}
           </ul>
         </div>
         <div>
-          <h2 className="font-display text-sm font-semibold uppercase tracking-widest text-moove-silver">
-            Στοιχεία
-          </h2>
-          <ul className="mt-4 space-y-3 text-sm text-moove-muted">
+          <h2 className={headingClass}>Στοιχεία</h2>
+          <ul className={`mt-4 space-y-3 text-sm ${posing ? 'text-white/55' : 'text-moove-muted'}`}>
             <li>
-              <a
-                className="transition hover:text-moove-lime"
-                href={`tel:${site.phone.replace(/\s/g, '')}`}
-              >
+              <a className={linkClass} href={`tel:${site.phone.replace(/\s/g, '')}`}>
                 {site.phone}
               </a>
             </li>
             <li>
-              <a
-                className="transition hover:text-moove-lime"
-                href={`mailto:${site.email}`}
-              >
+              <a className={linkClass} href={`mailto:${site.email}`}>
                 {site.email}
               </a>
             </li>
-            <li>{site.addressLine}</li>
-            <li>{site.hours}</li>
+            {!posing ? (
+              <>
+                <li>{site.addressLine}</li>
+                <li>{site.hours}</li>
+              </>
+            ) : null}
           </ul>
         </div>
         <div>
-          <h2 className="font-display text-sm font-semibold uppercase tracking-widest text-moove-silver">
-            Social
-          </h2>
+          <h2 className={headingClass}>Social</h2>
           <ul className="mt-4 space-y-2 text-sm">
             <li>
               <a
                 href={site.social.instagram}
-                className="text-moove-muted transition hover:text-moove-lime"
+                className={linkClass}
                 target="_blank"
                 rel="noreferrer noopener"
               >
@@ -82,37 +132,46 @@ export function Footer() {
             <li>
               <a
                 href={site.social.facebook}
-                className="text-moove-muted transition hover:text-moove-lime"
+                className={linkClass}
                 target="_blank"
                 rel="noreferrer noopener"
               >
                 Facebook
               </a>
             </li>
-            <li>
-              <a
-                href={site.mapsUrl}
-                className="text-moove-muted transition hover:text-moove-lime"
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Google Maps
-              </a>
-            </li>
+            {!posing ? (
+              <li>
+                <a
+                  href={site.mapsUrl}
+                  className={linkClass}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  Google Maps
+                </a>
+              </li>
+            ) : null}
           </ul>
         </div>
       </div>
-      <div className="border-t border-moove-border py-6">
-        <p className="text-center text-xs text-moove-muted">
-          © {new Date().getFullYear()} {site.name}. Με επιφύλαξη παντός δικαιώματος.
+      <div className={`border-t py-6 ${posing ? 'border-white/10' : 'border-moove-border'}`}>
+        <p className={`text-center text-xs ${posing ? 'text-white/45' : 'text-moove-muted'}`}>
+          © {new Date().getFullYear()}{' '}
+          {posing ? posingBrand.brandName : site.name}. Με επιφύλαξη παντός δικαιώματος.
         </p>
-        <p className="mt-4 flex flex-col items-center justify-center gap-2 text-center text-xs uppercase tracking-[0.18em] text-moove-muted sm:flex-row sm:gap-3">
+        <p
+          className={`mt-4 flex flex-col items-center justify-center gap-2 text-center text-xs uppercase tracking-[0.18em] sm:flex-row sm:gap-3 ${
+            posing ? 'text-white/35' : 'text-moove-muted'
+          }`}
+        >
           <span className="font-medium">Powered by</span>
           <a
             href="https://akantronics.gr/"
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center opacity-90 transition hover:opacity-100 focus-visible:opacity-100"
+            className={`inline-flex items-center transition hover:opacity-100 focus-visible:opacity-100 ${
+              posing ? 'opacity-70 invert' : 'opacity-90'
+            }`}
             aria-label="Akantronics — Electronics Engineer & Developer"
           >
             <img

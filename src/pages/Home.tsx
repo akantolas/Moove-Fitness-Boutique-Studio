@@ -1,5 +1,6 @@
 import { GhostLink, ButtonLink } from '../components/Links'
 import { GoogleReviews } from '../components/GoogleReviews'
+import { PosePromoBubble } from '../components/PosePromoBubble'
 import { site } from '../site'
 
 const usp = [
@@ -125,6 +126,12 @@ export function HomePage() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="border-b border-moove-border/80 py-12 sm:py-14">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <PosePromoBubble variant="home" />
         </div>
       </section>
 

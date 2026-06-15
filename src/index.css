@@ -63,6 +63,32 @@
     outline: 2px solid var(--color-moove-lime);
     outline-offset: 2px;
   }
+
+  body.pose-shell {
+    background-color: #08080c;
+    background-image:
+      radial-gradient(
+        ellipse 90% 50% at 15% -10%,
+        rgba(192, 38, 211, 0.12) 0%,
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 90% 30%,
+        rgba(34, 211, 238, 0.08) 0%,
+        transparent 40%
+      );
+    color: #fafafa;
+    color-scheme: dark;
+  }
+
+  body.pose-shell :focus-visible {
+    outline-color: #e879f9;
+  }
+
+  body.pose-shell ::selection {
+    background-color: rgba(192, 38, 211, 0.35);
+    color: #fafafa;
+  }
 }
 
 @layer components {
