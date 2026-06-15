@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji';
+  --font-display: 'Lora', Georgia, 'Times New Roman', serif;
+
+  --color-moove-bg: #faf6ef;
+  --color-moove-surface: #fffdf9;
+  --color-moove-elevated: #f3ece2;
+  --color-moove-border: rgba(105, 72, 48, 0.11);
+  --color-moove-lime: #c4f031;
+  --color-moove-lime-hover: #d4f040;
+  --color-moove-silver: #292524;
+  --color-moove-muted: #78716c;
+  --color-moove-ink: #1c1917;
+  --color-moove-accent: #b46548;
+  --color-moove-glow: #e8d5c4;
+
+  --shadow-moove-soft: 0 22px 48px -16px rgba(80, 52, 36, 0.14);
+  --shadow-moove-lift: 0 14px 32px -12px rgba(80, 52, 36, 0.12);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+    background-color: var(--color-moove-bg);
+    background-image: radial-gradient(
+      ellipse 120% 80% at 50% -20%,
+      rgba(232, 213, 196, 0.45) 0%,
+      transparent 55%
+    );
+    color: var(--color-moove-silver);
+    color-scheme: light;
+    font-family: var(--font-sans);
+    line-height: 1.58;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-moove-lime) 32%, transparent);
+    color: var(--color-moove-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-moove-lime);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  @keyframes schedule-slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(1.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes schedule-slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-1.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-schedule-right {
+    animation: schedule-slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-schedule-left {
+    animation: schedule-slide-in-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
