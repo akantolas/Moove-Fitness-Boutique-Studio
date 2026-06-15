@@ -1,21 +1,19 @@
 import { NavLink } from 'react-router-dom'
 import { useState } from 'react'
 import { site } from '../site'
-import { ButtonLink, PrimaryLink } from './Links'
+import { ButtonLink } from './Links'
 
 const nav = [
   { to: '/', label: 'Αρχική' },
   { to: '/mathimata', label: 'Μαθήματα' },
-  { to: '/programma', label: 'Πρόγραμμα' },
-  { to: '/times', label: 'Τιμές' },
   { to: '/sxetika', label: 'Σχετικά' },
   { to: '/epikoinonia', label: 'Επικοινωνία' },
 ] as const
 
 function navClass(isActive: boolean) {
-  return `rounded-md px-3 py-2 text-sm font-medium transition ${
+  return `relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-3.5 sm:text-sm ${
     isActive
-      ? 'text-moove-lime'
+      ? 'text-moove-ink'
       : 'text-moove-muted hover:text-moove-silver'
   }`
 }
@@ -24,57 +22,90 @@ export function Header() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 border-b border-moove-border/90 bg-moove-surface/88 backdrop-blur-md backdrop-saturate-150">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
+    <header className="sticky top-0 z-50 border-b border-moove-border/70 bg-moove-surface/75 backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-14 max-w-6xl items-center px-4 sm:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-6">
+        {/* Mobile: centered logo between spacer + menu */}
+        <div className="flex min-w-0 flex-1 items-center lg:hidden">
+          <div className="w-10 shrink-0" aria-hidden />
+          <div className="flex flex-1 justify-center">
+            <NavLink to="/" onClick={() => setOpen(false)}>
+              <img
+                src="/logo-header.png"
+                alt={`${site.name} ${site.tagline}`}
+                className="h-10 w-auto shrink-0"
+                width={180}
+                height={48}
+              />
+            </NavLink>
+          </div>
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-moove-border/80 bg-moove-surface/80 text-moove-silver"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? '✕' : '☰'}
+          </button>
+        </div>
+
+        {/* Desktop logo — contained inside header */}
         <NavLink
           to="/"
-          className="flex shrink-0 items-center gap-3"
+          className="hidden shrink-0 items-center lg:flex"
           onClick={() => setOpen(false)}
         >
           <img
-            src="/logo.png"
+            src="/logo-header.png"
             alt={`${site.name} ${site.tagline}`}
-            className="h-14 w-auto sm:h-16 lg:h-[4.25rem]"
+            className="h-12 w-auto shrink-0"
             width={240}
-            height={64}
+            height={48}
           />
         </NavLink>
 
         <nav
-          className="hidden items-center gap-1 lg:flex"
+          className="hidden items-center justify-center gap-0.5 self-center rounded-full border border-moove-border/80 bg-moove-elevated/50 p-0.5 lg:flex"
           aria-label="Κύρια πλοήγηση"
         >
           {nav.map(({ to, label }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => navClass(isActive)} end={to === '/'}>
-              {label}
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) => navClass(isActive)}
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive ? (
+                    <span
+                      className="absolute inset-0 rounded-full bg-moove-lime/90 shadow-sm"
+                      aria-hidden
+                    />
+                  ) : null}
+                  <span className="relative z-10">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
-          <ButtonLink href={site.bookingUrl} variant="ghost" external={site.bookingUrl.startsWith('http')}>
-            Ο λογαριασμός μου
+        <div className="hidden items-center justify-end lg:flex">
+          <ButtonLink
+            href={site.bookingUrl}
+            external={site.bookingUrl.startsWith('http')}
+            className="!px-4 !py-2 text-xs sm:text-sm"
+          >
+            Κράτηση
           </ButtonLink>
-          <PrimaryLink to="/programma">Κράτηση</PrimaryLink>
         </div>
-
-        <button
-          type="button"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-moove-border text-moove-silver lg:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <span className="sr-only">Μενού</span>
-          {open ? '✕' : '☰'}
-        </button>
       </div>
 
       {open ? (
         <div
           id="mobile-nav"
-          className="border-t border-moove-border bg-moove-surface px-4 py-4 lg:hidden"
+          className="border-t border-moove-border/80 bg-moove-surface/95 px-4 py-4 backdrop-blur-xl lg:hidden"
         >
           <nav className="flex flex-col gap-1" aria-label="Κινητή πλοήγηση">
             {nav.map(({ to, label }) => (
@@ -83,30 +114,25 @@ export function Header() {
                 to={to}
                 end={to === '/'}
                 className={({ isActive }) =>
-                  `rounded-lg px-3 py-3 text-base ${navClass(isActive)}`
+                  `rounded-xl px-4 py-2.5 text-sm font-medium ${
+                    isActive
+                      ? 'bg-moove-lime/20 text-moove-ink'
+                      : 'text-moove-muted'
+                  }`
                 }
                 onClick={() => setOpen(false)}
               >
                 {label}
               </NavLink>
             ))}
-            <div className="mt-3 flex flex-col gap-2 border-t border-moove-border pt-4">
-              <a
+            <div className="mt-3 border-t border-moove-border pt-4">
+              <ButtonLink
                 href={site.bookingUrl}
-                className="rounded-lg border border-moove-silver/40 px-4 py-3 text-center text-sm text-moove-silver"
-                {...(site.bookingUrl.startsWith('http')
-                  ? { target: '_blank', rel: 'noreferrer noopener' }
-                  : undefined)}
-              >
-                Ο λογαριασμός μου
-              </a>
-              <NavLink
-                to="/programma"
-                className="rounded-full bg-moove-lime py-3 text-center text-sm font-semibold text-moove-ink"
-                onClick={() => setOpen(false)}
+                external={site.bookingUrl.startsWith('http')}
+                className="w-full"
               >
                 Κράτηση
-              </NavLink>
+              </ButtonLink>
             </div>
           </nav>
         </div>

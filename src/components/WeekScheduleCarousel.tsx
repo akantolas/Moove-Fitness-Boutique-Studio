@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { weekSchedule } from '../data/weekSchedule'
 
 function getInitialDayIndex() {
@@ -74,11 +74,20 @@ export function WeekScheduleCarousel() {
   const [activeIndex, setActiveIndex] = useState(getInitialDayIndex)
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right')
   const touchStartX = useRef<number | null>(null)
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   const goTo = useCallback((index: number) => {
     if (index < 0 || index >= weekSchedule.length || index === activeIndex) return
     setSlideDir(index > activeIndex ? 'right' : 'left')
     setActiveIndex(index)
+  }, [activeIndex])
+
+  useEffect(() => {
+    tabRefs.current[activeIndex]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    })
   }, [activeIndex])
 
   const day = weekSchedule[activeIndex]
@@ -121,7 +130,7 @@ export function WeekScheduleCarousel() {
           </NavButton>
 
           <div
-            className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto [scrollbar-width:none] sm:justify-center sm:gap-2 [&::-webkit-scrollbar]:hidden"
+            className="grid min-w-0 flex-1 grid-cols-6 gap-1 sm:gap-2"
             role="tablist"
             aria-label="Ημέρες εβδομάδας"
           >
@@ -130,17 +139,20 @@ export function WeekScheduleCarousel() {
               return (
                 <button
                   key={d.key}
+                  ref={(el) => {
+                    tabRefs.current[index] = el
+                  }}
                   type="button"
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => goTo(index)}
-                  className={`shrink-0 rounded-xl px-3 py-2.5 text-center transition-all duration-200 sm:min-w-[4.5rem] sm:px-4 ${
+                  className={`min-w-0 rounded-xl px-1 py-2 text-center transition-all duration-200 sm:px-4 sm:py-2.5 ${
                     isActive
                       ? 'bg-moove-lime text-moove-ink shadow-[0_6px_20px_-6px_rgba(120,100,40,0.45)]'
                       : 'bg-moove-elevated/50 text-moove-muted hover:bg-moove-elevated hover:text-moove-silver'
                   }`}
                 >
-                  <span className="block text-[10px] font-bold tracking-[0.22em]">
+                  <span className="block text-[9px] font-bold tracking-[0.12em] sm:text-[10px] sm:tracking-[0.22em]">
                     {d.short}
                   </span>
                   <span
@@ -228,7 +240,7 @@ export function WeekScheduleCarousel() {
         </div>
 
         <p className="mt-4 text-center text-xs text-moove-muted">
-          <span className="sm:hidden">Σύρετε την κάρτα για άλλη ημέρα · </span>
+          <span className="sm:hidden">Σύρε για άλλη μέρα · </span>
           {activeIndex + 1} από {weekSchedule.length}
         </p>
       </div>

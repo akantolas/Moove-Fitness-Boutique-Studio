@@ -2,12 +2,13 @@
 export const site = {
   name: 'Moove',
   tagline: 'Fitness Boutique Studio',
+  /** Ιδιοκτήτρια & μοναδική γυμνάστρια */
+  ownerName: 'Μαγδα Σαμαρά',
+  ownerFirstName: 'Μαγδα',
   /**
    * Gym Booking — https://members.moovefitness.gr/
    */
   bookingUrl: 'https://members.moovefitness.gr/',
-  /** null = χρησιμοποιεί το bookingUrl ως iframe στο /programma */
-  bookingEmbedUrl: null as string | null,
   phone: '+30 2421 070 751',
   email: 'hello@moovestudio.gr',
   addressLine: 'Δημάρχου Γεωργιάδου, Κοραή 106Γ, Βόλος 383 33',

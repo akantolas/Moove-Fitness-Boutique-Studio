@@ -1,150 +1,178 @@
-import { GhostLink, PrimaryLink, ButtonLink } from '../components/Links'
+import { GhostLink, ButtonLink } from '../components/Links'
 import { GoogleReviews } from '../components/GoogleReviews'
 import { site } from '../site'
 
 const usp = [
   {
+    num: '01',
     title: 'Μικρά γκρουπ',
-    body: 'Περισσότερη προσοχή από τον instructor και ασφαλέστερη εκτέλεση ασκήσεων.',
+    body: 'Λίγοι ασκούμενοι ανά μάθημα, ώστε η καθοδήγηση να είναι πραγματικά προσωπική — με διόρθωση και σαφείς οδηγίες.',
   },
   {
-    title: 'Boutique εμπειρία',
-    body: 'Καθαρός χώρος, premium εξοπλισμός και ατμόσφαιρα που σέβεται την ενέργειά σας.',
+    num: '02',
+    title: 'Ήρεμος χώρος',
+    body: 'Καθαρό studio, σύγχρονος εξοπλισμός και ήσυχη ατμόσφαιρα — μακριά από τον θόρυβο των μεγάλων χώρων.',
   },
   {
-    title: 'Σαφής πρόοδος',
-    body: 'Προγράμματα που χτίζουν δύναμη, ευελιξία και σταθερότητα με μέτρο.',
+    num: '03',
+    title: 'Σταδιακή πρόοδος',
+    body: 'Δύναμη, ευελιξία και σταθερότητα χτίζονται με μέθοδο και συνέπεια, όχι με βιασύνη.',
   },
+] as const
+
+const stats = [
+  { value: 'Reformer', label: 'Σύγχρονος εξοπλισμός' },
+  { value: 'Μικρά γκρουπ', label: 'Προσωπική καθοδήγηση' },
+  { value: 'Βόλος', label: 'Κοραή 106Γ' },
 ] as const
 
 export function HomePage() {
   return (
     <>
-      <section className="relative overflow-hidden border-b border-moove-border">
+      <section className="relative overflow-hidden border-b border-moove-border/80">
         <div
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 opacity-90"
           style={{
             backgroundImage:
-              'radial-gradient(ellipse 85% 70% at 12% 15%, rgba(196, 240, 49, 0.2) 0%, transparent 52%), radial-gradient(circle at 92% 8%, rgba(232, 213, 196, 0.55) 0%, transparent 38%), radial-gradient(circle at 70% 85%, rgba(180, 101, 72, 0.06) 0%, transparent 45%)',
+              'radial-gradient(ellipse 70% 55% at 8% 20%, rgba(196, 240, 49, 0.18) 0%, transparent 50%), radial-gradient(circle at 95% 10%, rgba(232, 213, 196, 0.55) 0%, transparent 35%)',
           }}
+          aria-hidden
         />
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 sm:py-24 lg:flex-row lg:items-center lg:gap-16">
-          <div className="flex flex-1 flex-col items-center lg:items-start">
-            <p className="text-center text-xs font-medium uppercase tracking-[0.28em] text-moove-accent/90 lg:text-left">
-              {site.tagline}
-            </p>
-            <h1 className="font-display mt-4 text-center text-4xl font-semibold leading-[1.12] tracking-tight text-moove-silver sm:text-5xl lg:text-left lg:text-6xl">
-              Κίνηση με ροή.
-              <span className="mt-2 block text-moove-lime">Αποτέλεσμα με μέτρο.</span>
+
+        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
+          <div className="animate-fade-up flex flex-col items-center text-center lg:items-start lg:text-left">
+            <p className="moove-eyebrow">{site.tagline}</p>
+            <h1 className="font-display mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.35rem]">
+              Pilates & Reformer στον Βόλο.
+              <span className="mt-2 block text-gradient-lime">Μικρά γκρουπ, προσωπική καθοδήγηση.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-center text-base leading-relaxed text-moove-muted lg:text-left">
-              Στο {site.name} συνδυάζουμε κλασική προσέγγιση Pilates με σύγχρονο boutique
-              χώρο — για σώμα που νιώθει δυνατό, σταθερό και ελεύθερο στην καθημερινότητα.
+            <p className="mt-6 max-w-lg text-base leading-relaxed text-moove-muted sm:text-lg">
+              Το {site.name} είναι studio της {site.ownerName} στην Κοραή. Όλα τα μαθήματα
+              διδάσκονται από αυτή, σε μικρά γκρουπ, με έμφαση στην ασφάλεια και τη σωστή
+              τεχνική.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <PrimaryLink to="/programma">Κλείσε θέση</PrimaryLink>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+              <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
+                Κλείσε θέση
+              </ButtonLink>
               <GhostLink to="/mathimata">Δες μαθήματα</GhostLink>
             </div>
+
+            <dl className="mt-12 grid w-full max-w-md grid-cols-3 gap-4 border-t border-moove-border/70 pt-8 lg:max-w-none">
+              {stats.map((s) => (
+                <div key={s.label}>
+                  <dt className="font-display text-sm font-semibold text-moove-silver sm:text-base">
+                    {s.value}
+                  </dt>
+                  <dd className="mt-1 text-[11px] leading-snug text-moove-muted sm:text-xs">
+                    {s.label}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <div className="flex flex-1 justify-center">
-            <div className="relative w-full max-w-md rounded-3xl border border-moove-border/80 bg-moove-surface/95 p-8 shadow-moove-soft ring-1 ring-moove-glow/40 backdrop-blur-[2px]">
-              <div className="flex justify-center">
-                <img
-                  src="/logo.png"
-                  alt=""
-                  className="h-auto w-full max-w-[280px]"
-                  width={320}
-                  height={120}
-                />
-              </div>
-              <ul className="mt-8 space-y-3 text-sm text-moove-muted">
-                <li className="flex gap-2">
-                  <span className="text-moove-lime" aria-hidden>
-                    ✓
-                  </span>
-                  Reformer & εξατομικευμένα προγράμματα
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-moove-lime" aria-hidden>
-                    ✓
-                  </span>
-                  Κατάλληλο για αρχάριους και προχωρημένους
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-moove-lime" aria-hidden>
-                    ✓
-                  </span>
-                  Ρυθμός που σέβεται το σώμα σας
-                </li>
-              </ul>
-              <div className="mt-8 flex flex-col gap-2">
-                <ButtonLink
-                  href={site.bookingUrl}
-                  external={site.bookingUrl.startsWith('http')}
-                >
-                  Άνοιγμα συστήματος κρατήσεων
-                </ButtonLink>
+
+          <div className="animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none [animation-delay:120ms]">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-moove-soft ring-1 ring-moove-border/40">
+              <img
+                src="/image1.jpeg"
+                alt="Χώρος προπόνησης Moove"
+                className="h-full w-full object-cover"
+                width={640}
+                height={800}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-moove-espresso/55 via-moove-espresso/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-moove-lime">
+                  {site.name}
+                </p>
+                <p className="font-display mt-2 text-xl font-semibold text-white sm:text-2xl">
+                  Κοραή 106Γ · Βόλος
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-moove-border bg-gradient-to-b from-moove-glow/35 via-moove-surface/50 to-moove-bg/80">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <h2 className="font-display text-center text-2xl font-semibold text-moove-silver sm:text-3xl">
-            Γιατί boutique;
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-moove-muted">
-            Λιγότερος θόρυβος, πιο ουσιαστική καθοδήγηση.
-          </p>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+      <section className="border-b border-moove-border/80 bg-moove-espresso/[0.03] moove-section-pad">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="moove-eyebrow">Η προσέγγιση</p>
+            <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
+              Προσωπική καθοδήγηση
+            </h2>
+            <p className="mt-4 text-moove-muted">
+              Σε μικρό studio δεν χάνεσαι στο πλήθος. Κάθε μάθημα σχεδιάζεται με προσοχή στη
+              τεχνική, στη διόρθωση και στις ανάγκες του κάθε ασκούμενου.
+            </p>
+            <div className="moove-rule mx-auto mt-6" aria-hidden />
+          </div>
+
+          <div className="mt-14 grid gap-5 md:grid-cols-3">
             {usp.map((item) => (
               <article
                 key={item.title}
-                className="rounded-3xl border border-moove-border/90 bg-moove-surface/90 p-6 shadow-moove-lift transition duration-300 ease-out hover:-translate-y-1 hover:border-moove-lime/35 hover:shadow-moove-soft"
+                className="group moove-card p-8 transition duration-300 hover:-translate-y-1 hover:shadow-moove-soft"
               >
-                <h3 className="font-display text-lg font-semibold text-moove-silver">
+                <span className="font-display text-3xl font-semibold text-moove-lime/50 transition group-hover:text-moove-lime/80">
+                  {item.num}
+                </span>
+                <h3 className="font-display mt-4 text-xl font-semibold text-moove-silver">
                   {item.title}
                 </h3>
-                <p className="mt-3 text-sm leading-relaxed text-moove-muted">
-                  {item.body}
-                </p>
+                <p className="mt-3 text-sm leading-relaxed text-moove-muted">{item.body}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-b border-moove-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:flex-row lg:items-center">
-          <div className="flex-1">
-            <h2 className="font-display text-2xl font-semibold text-moove-silver sm:text-3xl">
-              Μαθήματα για κάθε στάδιο
-            </h2>
-            <p className="mt-4 text-moove-muted leading-relaxed">
-              Από εισαγωγή στο Reformer μέχρι δυναμικές συνεδρίες που ενδυναμώνουν τον
-              κορμό. Διαλέξτε το είδος που σας ταιριάζει — εμείς σας καθοδηγούμε με ασφάλεια.
-            </p>
-            <div className="mt-8">
-              <GhostLink to="/mathimata">Όλα τα μαθήματα</GhostLink>
+      <section className="border-b border-moove-border/80 moove-section-pad">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center">
+          <div className="relative order-2 lg:order-1">
+            <div className="grid grid-cols-2 gap-3">
+              <img
+                src="/image3.jpeg"
+                alt="Pilates στο Moove"
+                className="aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
+                width={400}
+                height={533}
+              />
+              <img
+                src="/image4.jpeg"
+                alt="Reformer στο Moove"
+                className="mt-8 aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
+                width={400}
+                height={533}
+              />
             </div>
           </div>
-          <div className="flex-1">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                'Reformer Group',
-                'Mat Pilates',
-                'Private / Duet',
-                'Intro πρώτο μάθημα',
-              ].map((title) => (
-                <div
-                  key={title}
-                  className="rounded-2xl border border-moove-border/60 bg-moove-surface/90 px-4 py-5 text-center text-sm font-medium text-moove-silver shadow-moove-lift transition duration-300 hover:border-moove-accent/25"
-                >
-                  {title}
-                </div>
-              ))}
+
+          <div className="order-1 lg:order-2">
+            <p className="moove-eyebrow">Μαθήματα</p>
+            <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
+              Τα μαθήματα
+            </h2>
+            <p className="mt-4 leading-relaxed text-moove-muted">
+              Από εισαγωγή στο Reformer μέχρι πιο απαιτητικές συνεδρίες. Επιλέξτε το πρόγραμμα που
+              σας ταιριάζει — η καθοδήγηση προσαρμόζεται στο επίπεδό σας.
+            </p>
+            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+              {['Reformer', 'Pilates Mat', 'TRX & Functional', "Magda's Bootycamp"].map(
+                (title) => (
+                  <li
+                    key={title}
+                    className="flex items-center gap-3 rounded-xl border border-moove-border/70 bg-moove-surface/80 px-4 py-3.5 text-sm font-medium text-moove-silver shadow-sm"
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-moove-lime" />
+                    {title}
+                  </li>
+                ),
+              )}
+            </ul>
+            <div className="mt-8">
+              <GhostLink to="/mathimata">Δες το πρόγραμμα</GhostLink>
             </div>
           </div>
         </div>
@@ -152,18 +180,34 @@ export function HomePage() {
 
       <GoogleReviews />
 
-      <section>
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <div className="flex flex-col items-center rounded-3xl border border-moove-lime/20 bg-gradient-to-br from-moove-glow/50 via-moove-surface to-[#eef5e0] px-6 py-12 text-center shadow-moove-soft sm:px-12">
-            <h2 className="font-display text-2xl font-semibold text-moove-silver sm:text-3xl">
-              Έτοιμοι να κινηθείτε;
-            </h2>
-            <p className="mt-3 max-w-xl text-moove-muted">
-              Κλείστε θέση στο πρόγραμμα ή επικοινωνήστε για ερωτήσεις πριν την πρώτη σας επίσκεψη.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <PrimaryLink to="/programma">Κράτηση</PrimaryLink>
-              <GhostLink to="/epikoinonia">Επικοινωνία</GhostLink>
+      <section className="moove-section-pad">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-[2rem] border border-moove-lime/25 bg-gradient-to-br from-moove-espresso via-[#3a322c] to-moove-espresso px-6 py-14 text-center shadow-moove-soft sm:px-12 sm:py-16">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 20% 0%, rgba(196, 240, 49, 0.25) 0%, transparent 45%)',
+              }}
+              aria-hidden
+            />
+            <div className="relative">
+              <p className="moove-eyebrow !text-moove-lime/90">Έλα να δοκιμάσεις</p>
+              <h2 className="font-display mt-4 text-3xl font-semibold text-white sm:text-4xl">
+                Θέλεις να κλείσεις θέση;
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-moove-glow/90">
+                Κλείστε θέση online ή επικοινωνήστε μαζί μας για οποιαδήποτε απορία πριν την
+                πρώτη σας επίσκεψη.
+              </p>
+              <div className="mt-9 flex flex-wrap justify-center gap-3">
+                <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
+                  Κράτηση
+                </ButtonLink>
+                <GhostLink to="/epikoinonia" className="!border-white/20 !bg-white/10 !text-white hover:!border-white/40 hover:!text-white">
+                  Επικοινωνία
+                </GhostLink>
+              </div>
             </div>
           </div>
         </div>

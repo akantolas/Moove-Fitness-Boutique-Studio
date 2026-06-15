@@ -3,7 +3,7 @@ import { site } from '../site'
 
 export function Footer() {
   return (
-    <footer className="border-t border-moove-border/80 bg-gradient-to-b from-moove-elevated/60 to-moove-glow/25 pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
+    <footer className="border-t border-moove-border/80 bg-moove-espresso/[0.04] pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <p className="font-display text-lg font-semibold tracking-wide text-moove-silver">
@@ -13,8 +13,7 @@ export function Footer() {
             {site.tagline}
           </p>
           <p className="mt-4 text-sm leading-relaxed text-moove-muted">
-            Boutique Pilates με έμφαση στην ακρίβεια, την ασφάλεια και την
-            προσωπική καθοδήγηση σε μικρά γκρουπ.
+            Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {site.ownerName}.
           </p>
         </div>
         <div>
@@ -28,22 +27,6 @@ export function Footer() {
                 className="text-moove-muted transition hover:text-moove-lime"
               >
                 Μαθήματα
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/programma"
-                className="text-moove-muted transition hover:text-moove-lime"
-              >
-                Πρόγραμμα
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/times"
-                className="text-moove-muted transition hover:text-moove-lime"
-              >
-                Τιμές
               </Link>
             </li>
             <li>

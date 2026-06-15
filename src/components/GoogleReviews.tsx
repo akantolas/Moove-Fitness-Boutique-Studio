@@ -23,12 +23,12 @@ type ReviewsPayload = {
 const fallbackTestimonials = [
   {
     quote:
-      'Ήρεμο περιβάλλον, ξεκάθαρες οδηγίες. Ένιωσα διαφορά στο σώμα μου μέσα σε λίγες εβδομάδες.',
+      'Ήσυχο studio, καταλαβαίνουν τι κάνεις. Σε λίγες εβδομάδες ένιωσα διαφορά στη στάση μου.',
     name: 'Μαρία Κ.',
   },
   {
     quote:
-      'Το καλύτερο Pilates experience που έχω δοκιμάσει. Προσοχή στη λεπτομέρεια και στην ασφάλεια.',
+      'Έρχομαι εδώ και καιρό. Μικρά γκρουπ, προσοχή στη λεπτομέρεια, δεν αφήνουν κανέναν να κάνει λάθος χωρίς να το διορθώσουν.',
     name: 'Νίκος Π.',
   },
 ] as const
@@ -75,14 +75,16 @@ export function GoogleReviews() {
   const apiPending = !loading && !showGoogle
 
   return (
-    <section className="border-b border-moove-border bg-moove-elevated/40">
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-        <h2 className="font-display text-center text-2xl font-semibold text-moove-silver sm:text-3xl">
-          Τι λένε οι ασκούμενοι
-        </h2>
+    <section className="border-b border-moove-border/80 bg-gradient-to-b from-moove-elevated/40 to-moove-bg moove-section-pad">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="moove-eyebrow">Κριτικές</p>
+          <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
+            Τι λένε οι ασκούμενοι
+          </h2>
         {apiPending ? (
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-moove-muted">
-            Ζωντανές κριτικές από το Google Maps —{' '}
+            Δες τι γράφουν στο Google Maps —{' '}
             <a
               href={mapsHref}
               className="text-moove-accent underline-offset-2 hover:underline"
@@ -109,9 +111,11 @@ export function GoogleReviews() {
               </>
             ) : null}
           </p>
-        ) : null}
+          ) : null}
+          <div className="moove-rule mx-auto mt-6" aria-hidden />
+        </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <div className="mt-14 grid gap-6 md:grid-cols-2">
           {loading ? (
             <>
               <div className="h-40 animate-pulse rounded-3xl bg-moove-border/40" />
@@ -121,7 +125,7 @@ export function GoogleReviews() {
             data.reviews.map((rev, i) => (
               <figure
                 key={`${rev.author}-${i}`}
-                className="rounded-3xl border border-moove-border/80 bg-moove-surface/95 p-8 shadow-moove-lift"
+                className="moove-card p-8 transition hover:shadow-moove-soft"
               >
                 {rev.rating != null ? (
                   <div className="mb-3 text-sm">
@@ -156,7 +160,7 @@ export function GoogleReviews() {
             fallbackTestimonials.map((t) => (
               <figure
                 key={t.name}
-                className="rounded-3xl border border-moove-border/80 bg-moove-surface/95 p-8 shadow-moove-lift"
+                className="moove-card p-8 transition hover:shadow-moove-soft"
               >
                 <blockquote className="text-moove-muted leading-relaxed">
                   «{t.quote}»
@@ -166,9 +170,9 @@ export function GoogleReviews() {
                 </figcaption>
                 <p className="mt-2 text-xs text-moove-muted">
                   {data?.error === 'missing_api_key'
-                    ? 'Για αυτόματη εμφάνιση κριτικών: deploy στο Vercel + GOOGLE_PLACES_API_KEY (βλ. .env.example).'
+                    ? 'Για να φορτώνουν αυτόματα οι κριτικές: Vercel + GOOGLE_PLACES_API_KEY (βλ. .env.example).'
                     : data?.error
-                      ? 'Προσωρινά εμφανίζονται ενδεικτικά σχόλια — δείτε όλες τις κριτικές στο Google.'
+                      ? 'Προσωρινά δείχνουμε ενδεικτικά σχόλια — όλες οι κριτικές είναι στο Google.'
                       : null}
                 </p>
               </figure>
@@ -178,9 +182,8 @@ export function GoogleReviews() {
 
         <div className="mx-auto mt-10 max-w-2xl text-center">
           <p className="text-xs leading-relaxed text-moove-muted">
-            Οι κριτικές από το Google εμφανίζονται σύμφωνα με τις πολιτικές της
-            Google και ενδέχεται να μην είναι πάντα διαθέσιμες μέσω API. Όλα τα
-            σχόλια και η βαθμολογία παραμένουν και στο{' '}
+            Οι κριτικές από το Google εμφανίζονται σύμφωνα με τους όρους της Google και
+            μερικές φορές δεν είναι διαθέσιμες μέσω API. Όλα τα σχόλια μένουν πάντα στο{' '}
             <a
               href={mapsHref}
               className="text-moove-accent underline-offset-2 hover:underline"
@@ -193,7 +196,7 @@ export function GoogleReviews() {
           </p>
           <div className="mt-4 flex justify-center">
             <ButtonLink href={mapsHref} external variant="ghost">
-              Όλες οι κριτικές στο Google
+              Όλες οι κριτικές στο Google Maps
             </ButtonLink>
           </div>
         </div>

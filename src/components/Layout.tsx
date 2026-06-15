@@ -1,6 +1,7 @@
-import { Link, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { Header } from './Header'
 import { Footer } from './Footer'
+import { site } from '../site'
 
 function CalendarGlyph({ className }: { className?: string }) {
   return (
@@ -53,9 +54,12 @@ export function Layout() {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden">
         <div className="pointer-events-auto px-4 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] pt-3">
           <div className="mx-auto max-w-lg rounded-2xl border border-moove-border/40 bg-moove-surface/80 p-1.5 shadow-moove-soft backdrop-blur-xl backdrop-saturate-150 ring-1 ring-white/60">
-            <Link
-              to="/programma"
+            <a
+              href={site.bookingUrl}
               className="flex min-h-[3.35rem] items-center gap-2 rounded-[0.85rem] bg-gradient-to-b from-moove-lime via-moove-lime to-[#b8cf2e] px-2 py-2 text-moove-ink no-underline shadow-[0_8px_28px_-6px_rgba(120,100,40,0.35),inset_0_1px_0_0_rgba(255,255,255,0.35)] transition active:scale-[0.98] active:brightness-[0.97] sm:px-3"
+              {...(site.bookingUrl.startsWith('http')
+                ? { target: '_blank', rel: 'noreferrer noopener' }
+                : undefined)}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-moove-ink/[0.12] text-moove-ink">
                 <CalendarGlyph className="h-[1.15rem] w-[1.15rem]" />
@@ -66,7 +70,7 @@ export function Layout() {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-moove-ink/[0.12] text-moove-ink/85">
                 <ChevronGlyph className="h-4 w-4" />
               </span>
-            </Link>
+            </a>
           </div>
         </div>
       </div>
