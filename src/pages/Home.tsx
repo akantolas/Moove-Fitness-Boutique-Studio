@@ -2,32 +2,20 @@ import { GhostLink, ButtonLink } from '../components/Links'
 import { GoogleReviews } from '../components/GoogleReviews'
 import { PosePromoBubble } from '../components/PosePromoBubble'
 import { site } from '../site'
+import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
-const usp = [
-  {
-    num: '01',
-    title: 'Μικρά γκρουπ',
-    body: 'Λίγοι ασκούμενοι ανά μάθημα, ώστε η καθοδήγηση να είναι πραγματικά προσωπική — με διόρθωση και σαφείς οδηγίες.',
-  },
-  {
-    num: '02',
-    title: 'Ήρεμος χώρος',
-    body: 'Καθαρό studio, σύγχρονος εξοπλισμός και ήσυχη ατμόσφαιρα — μακριά από τον θόρυβο των μεγάλων χώρων.',
-  },
-  {
-    num: '03',
-    title: 'Σταδιακή πρόοδος',
-    body: 'Δύναμη, ευελιξία και σταθερότητα χτίζονται με μέθοδο και συνέπεια, όχι με βιασύνη.',
-  },
-] as const
-
-const stats = [
-  { value: 'Reformer', label: 'Σύγχρονος εξοπλισμός' },
-  { value: 'Μικρά γκρουπ', label: 'Προσωπική καθοδήγηση' },
-  { value: 'Βόλος', label: 'Κοραή 106Γ' },
-] as const
+const classTitles = ['Reformer', 'Pilates Mat', 'TRX & Functional', "Magda's Bootycamp"] as const
 
 export function HomePage() {
+  const { t, dictionary } = useTranslation()
+  const vars = useSiteVars()
+
+  const stats = [
+    { value: t('home.stats.reformer'), label: t('home.stats.reformerLabel') },
+    { value: t('home.stats.groups'), label: t('home.stats.groupsLabel') },
+    { value: t('home.stats.volos'), label: t('home.stats.volosLabel') },
+  ]
+
   return (
     <>
       <section className="relative overflow-hidden border-b border-moove-border/80">
@@ -44,19 +32,17 @@ export function HomePage() {
           <div className="animate-fade-up flex flex-col items-center text-center lg:items-start lg:text-left">
             <p className="moove-eyebrow">{site.tagline}</p>
             <h1 className="font-display mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.35rem]">
-              Pilates & Reformer στον Βόλο.
-              <span className="mt-2 block text-gradient-lime">Μικρά γκρουπ, προσωπική καθοδήγηση.</span>
+              {t('home.hero.title')}
+              <span className="mt-2 block text-gradient-lime">{t('home.hero.titleAccent')}</span>
             </h1>
             <p className="mt-6 max-w-lg text-base leading-relaxed text-moove-muted sm:text-lg">
-              Το {site.name} είναι studio της {site.ownerName} στην Κοραή. Όλα τα μαθήματα
-              διδάσκονται από αυτή, σε μικρά γκρουπ, με έμφαση στην ασφάλεια και τη σωστή
-              τεχνική.
+              {t('home.hero.body', vars)}
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
-                Κλείσε θέση
+                {t('common.bookSpot')}
               </ButtonLink>
-              <GhostLink to="/mathimata">Δες μαθήματα</GhostLink>
+              <GhostLink to="/mathimata">{t('home.hero.viewClasses')}</GhostLink>
             </div>
 
             <dl className="mt-12 grid w-full max-w-md grid-cols-3 gap-4 border-t border-moove-border/70 pt-8 lg:max-w-none">
@@ -77,7 +63,7 @@ export function HomePage() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-moove-soft ring-1 ring-moove-border/40">
               <img
                 src="/image03.jpeg"
-                alt="Μάθημα Pilates στο Moove"
+                alt={t('home.hero.heroImageAlt')}
                 className="h-full w-full object-cover"
                 width={1440}
                 height={1800}
@@ -88,7 +74,7 @@ export function HomePage() {
                   {site.name}
                 </p>
                 <p className="font-display mt-2 text-xl font-semibold text-white sm:text-2xl">
-                  Κοραή 106Γ · Βόλος
+                  {t('home.hero.location')}
                 </p>
               </div>
             </div>
@@ -99,25 +85,22 @@ export function HomePage() {
       <section className="border-b border-moove-border/80 bg-moove-espresso/[0.03] moove-section-pad">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="moove-eyebrow">Η προσέγγιση</p>
+            <p className="moove-eyebrow">{t('home.approach.eyebrow')}</p>
             <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
-              Προσωπική καθοδήγηση
+              {t('home.approach.title')}
             </h2>
-            <p className="mt-4 text-moove-muted">
-              Σε μικρό studio δεν χάνεσαι στο πλήθος. Κάθε μάθημα σχεδιάζεται με προσοχή στη
-              τεχνική, στη διόρθωση και στις ανάγκες του κάθε ασκούμενου.
-            </p>
+            <p className="mt-4 text-moove-muted">{t('home.approach.body')}</p>
             <div className="moove-rule mx-auto mt-6" aria-hidden />
           </div>
 
           <div className="mt-14 grid gap-5 md:grid-cols-3">
-            {usp.map((item) => (
+            {dictionary.home.approach.items.map((item, i) => (
               <article
                 key={item.title}
                 className="group moove-card p-8 transition duration-300 hover:-translate-y-1 hover:shadow-moove-soft"
               >
                 <span className="font-display text-3xl font-semibold text-moove-lime/50 transition group-hover:text-moove-lime/80">
-                  {item.num}
+                  {String(i + 1).padStart(2, '0')}
                 </span>
                 <h3 className="font-display mt-4 text-xl font-semibold text-moove-silver">
                   {item.title}
@@ -141,14 +124,14 @@ export function HomePage() {
             <div className="grid grid-cols-2 gap-3">
               <img
                 src="/image3.jpeg"
-                alt="Pilates στο Moove"
+                alt={t('home.classes.imageAlt')}
                 className="aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
                 width={400}
                 height={533}
               />
               <img
                 src="/image5.jpeg"
-                alt="Pilates στο Moove"
+                alt={t('home.classes.imageAlt')}
                 className="mt-8 aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
                 width={1440}
                 height={1792}
@@ -157,29 +140,24 @@ export function HomePage() {
           </div>
 
           <div className="order-1 lg:order-2">
-            <p className="moove-eyebrow">Μαθήματα</p>
+            <p className="moove-eyebrow">{t('home.classes.eyebrow')}</p>
             <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
-              Τα μαθήματα
+              {t('home.classes.title')}
             </h2>
-            <p className="mt-4 leading-relaxed text-moove-muted">
-              Από εισαγωγή στο Reformer μέχρι πιο απαιτητικές συνεδρίες. Επιλέξτε το πρόγραμμα που
-              σας ταιριάζει — η καθοδήγηση προσαρμόζεται στο επίπεδό σας.
-            </p>
+            <p className="mt-4 leading-relaxed text-moove-muted">{t('home.classes.body')}</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {['Reformer', 'Pilates Mat', 'TRX & Functional', "Magda's Bootycamp"].map(
-                (title) => (
-                  <li
-                    key={title}
-                    className="flex items-center gap-3 rounded-xl border border-moove-border/70 bg-moove-surface/80 px-4 py-3.5 text-sm font-medium text-moove-silver shadow-sm"
-                  >
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-moove-lime" />
-                    {title}
-                  </li>
-                ),
-              )}
+              {classTitles.map((title) => (
+                <li
+                  key={title}
+                  className="flex items-center gap-3 rounded-xl border border-moove-border/70 bg-moove-surface/80 px-4 py-3.5 text-sm font-medium text-moove-silver shadow-sm"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-moove-lime" />
+                  {title}
+                </li>
+              ))}
             </ul>
             <div className="mt-8">
-              <GhostLink to="/mathimata">Δες το πρόγραμμα</GhostLink>
+              <GhostLink to="/mathimata">{t('home.classes.viewProgram')}</GhostLink>
             </div>
           </div>
         </div>
@@ -199,20 +177,20 @@ export function HomePage() {
               aria-hidden
             />
             <div className="relative">
-              <p className="moove-eyebrow !text-moove-lime/90">Έλα να δοκιμάσεις</p>
+              <p className="moove-eyebrow !text-moove-lime/90">{t('home.cta.eyebrow')}</p>
               <h2 className="font-display mt-4 text-3xl font-semibold text-white sm:text-4xl">
-                Θέλεις να κλείσεις θέση;
+                {t('home.cta.title')}
               </h2>
-              <p className="mx-auto mt-4 max-w-lg text-moove-glow/90">
-                Κλείστε θέση online ή επικοινωνήστε μαζί μας για οποιαδήποτε απορία πριν την
-                πρώτη σας επίσκεψη.
-              </p>
+              <p className="mx-auto mt-4 max-w-lg text-moove-glow/90">{t('home.cta.body')}</p>
               <div className="mt-9 flex flex-wrap justify-center gap-3">
                 <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
-                  Κράτηση
+                  {t('common.book')}
                 </ButtonLink>
-                <GhostLink to="/epikoinonia" className="!border-white/20 !bg-white/10 !text-white hover:!border-white/40 hover:!text-white">
-                  Επικοινωνία
+                <GhostLink
+                  to="/epikoinonia"
+                  className="!border-white/20 !bg-white/10 !text-white hover:!border-white/40 hover:!text-white"
+                >
+                  {t('nav.contact')}
                 </GhostLink>
               </div>
             </div>

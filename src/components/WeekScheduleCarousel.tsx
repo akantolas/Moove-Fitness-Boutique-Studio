@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { weekSchedule } from '../data/weekSchedule'
+import { useTranslation } from '../i18n/useTranslation'
 
 function getInitialDayIndex() {
   const dow = new Date().getDay()
@@ -71,16 +72,20 @@ function NavButton({
 }
 
 export function WeekScheduleCarousel() {
+  const { t, dictionary } = useTranslation()
   const [activeIndex, setActiveIndex] = useState(getInitialDayIndex)
   const [slideDir, setSlideDir] = useState<'left' | 'right'>('right')
   const touchStartX = useRef<number | null>(null)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
-  const goTo = useCallback((index: number) => {
-    if (index < 0 || index >= weekSchedule.length || index === activeIndex) return
-    setSlideDir(index > activeIndex ? 'right' : 'left')
-    setActiveIndex(index)
-  }, [activeIndex])
+  const goTo = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= weekSchedule.length || index === activeIndex) return
+      setSlideDir(index > activeIndex ? 'right' : 'left')
+      setActiveIndex(index)
+    },
+    [activeIndex],
+  )
 
   useEffect(() => {
     tabRefs.current[activeIndex]?.scrollIntoView({
@@ -90,7 +95,8 @@ export function WeekScheduleCarousel() {
     })
   }, [activeIndex])
 
-  const day = weekSchedule[activeIndex]
+  const dayData = weekSchedule[activeIndex]
+  const dayLabels = dictionary.schedule.days[dayData.key]
   const canGoPrev = activeIndex > 0
   const canGoNext = activeIndex < weekSchedule.length - 1
 
@@ -122,7 +128,7 @@ export function WeekScheduleCarousel() {
       <div className="relative rounded-[1.75rem] border border-moove-border/80 bg-moove-surface/75 p-4 shadow-moove-soft ring-1 ring-white/50 backdrop-blur-sm sm:p-6">
         <div className="flex items-center gap-2 sm:gap-3">
           <NavButton
-            label="Προηγούμενη ημέρα"
+            label={t('schedule.prevDay')}
             onClick={() => goTo(activeIndex - 1)}
             disabled={!canGoPrev}
           >
@@ -132,9 +138,10 @@ export function WeekScheduleCarousel() {
           <div
             className="grid min-w-0 flex-1 grid-cols-6 gap-1 sm:gap-2"
             role="tablist"
-            aria-label="Ημέρες εβδομάδας"
+            aria-label={t('schedule.daysAria')}
           >
             {weekSchedule.map((d, index) => {
+              const labels = dictionary.schedule.days[d.key]
               const isActive = index === activeIndex
               return (
                 <button
@@ -153,14 +160,14 @@ export function WeekScheduleCarousel() {
                   }`}
                 >
                   <span className="block text-[9px] font-bold tracking-[0.12em] sm:text-[10px] sm:tracking-[0.22em]">
-                    {d.short}
+                    {labels.short}
                   </span>
                   <span
                     className={`mt-0.5 hidden text-[11px] font-medium sm:block ${
                       isActive ? 'text-moove-ink/75' : 'text-moove-muted'
                     }`}
                   >
-                    {d.label}
+                    {labels.label}
                   </span>
                 </button>
               )
@@ -168,7 +175,7 @@ export function WeekScheduleCarousel() {
           </div>
 
           <NavButton
-            label="Επόμενη ημέρα"
+            label={t('schedule.nextDay')}
             onClick={() => goTo(activeIndex + 1)}
             disabled={!canGoNext}
           >
@@ -182,23 +189,23 @@ export function WeekScheduleCarousel() {
           onTouchEnd={(e) => onTouchEnd(e.changedTouches[0].clientX)}
         >
           <article
-            key={day.key}
+            key={dayData.key}
             className={`flex min-h-[18rem] ${
               slideDir === 'right' ? 'animate-schedule-right' : 'animate-schedule-left'
             }`}
           >
             <aside className="flex w-[4.5rem] shrink-0 flex-col items-center justify-between border-r border-moove-lime/25 bg-gradient-to-b from-moove-lime/30 via-moove-lime/18 to-moove-lime/8 py-6 sm:w-20">
               <span className="text-[10px] font-bold tracking-[0.28em] text-moove-ink/55 sm:text-xs">
-                {day.short}
+                {dayLabels.short}
               </span>
               <span
                 className="font-display text-[2.5rem] font-semibold leading-none text-moove-ink/20 sm:text-5xl"
                 aria-hidden
               >
-                {day.label.charAt(0)}
+                {dayLabels.label.charAt(0)}
               </span>
               <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-semibold tracking-[0.18em] text-moove-ink/50 sm:text-xs">
-                {day.label}
+                {dayLabels.label}
               </span>
             </aside>
 
@@ -206,21 +213,22 @@ export function WeekScheduleCarousel() {
               <header className="flex items-center justify-between gap-3 border-b border-moove-border/60 px-4 py-3.5 sm:px-6">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.2em] text-moove-muted">
-                    Πρόγραμμα
+                    {t('schedule.program')}
                   </p>
                   <h3 className="font-display mt-0.5 text-lg font-semibold text-moove-silver sm:text-xl">
-                    {day.label}
+                    {dayLabels.label}
                   </h3>
                 </div>
                 <span className="rounded-full bg-moove-elevated px-3 py-1 text-xs font-medium text-moove-muted">
-                  {day.slots.length} {day.slots.length === 1 ? 'μάθημα' : 'μαθήματα'}
+                  {dayData.slots.length}{' '}
+                  {dayData.slots.length === 1 ? t('schedule.lesson') : t('schedule.lessons')}
                 </span>
               </header>
 
               <ul className="divide-y divide-moove-border/50">
-                {day.slots.map((slot, slotIndex) => (
+                {dayData.slots.map((slot, slotIndex) => (
                   <li
-                    key={`${day.key}-${slot.time}-${slot.name}`}
+                    key={`${dayData.key}-${slot.time}-${slot.name}`}
                     className={`flex items-center gap-4 px-4 py-3.5 sm:px-6 sm:py-4 ${
                       slotIndex % 2 === 0 ? 'bg-transparent' : 'bg-moove-surface/35'
                     }`}
@@ -240,8 +248,11 @@ export function WeekScheduleCarousel() {
         </div>
 
         <p className="mt-4 text-center text-xs text-moove-muted">
-          <span className="sm:hidden">Σύρε για άλλη μέρα · </span>
-          {activeIndex + 1} από {weekSchedule.length}
+          <span className="sm:hidden">{t('schedule.swipeHint')}</span>
+          {t('schedule.counter', {
+            current: activeIndex + 1,
+            total: weekSchedule.length,
+          })}
         </p>
       </div>
     </div>

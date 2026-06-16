@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { site } from '../site'
 import { ButtonLink } from './Links'
+import { useTranslation } from '../i18n/useTranslation'
 
 type ReviewItem = {
   author: string
@@ -20,23 +21,10 @@ type ReviewsPayload = {
   reviews: ReviewItem[]
 }
 
-const fallbackTestimonials = [
-  {
-    quote:
-      'Ήσυχο studio, καταλαβαίνουν τι κάνεις. Σε λίγες εβδομάδες ένιωσα διαφορά στη στάση μου.',
-    name: 'Μαρία Κ.',
-  },
-  {
-    quote:
-      'Έρχομαι εδώ και καιρό. Μικρά γκρουπ, προσοχή στη λεπτομέρεια, δεν αφήνουν κανέναν να κάνει λάθος χωρίς να το διορθώσουν.',
-    name: 'Νίκος Π.',
-  },
-] as const
-
-function Stars({ rating }: { rating: number }) {
+function Stars({ rating, label }: { rating: number; label: string }) {
   const full = Math.round(rating)
   return (
-    <span className="text-moove-lime" aria-label={`${rating} στα 5 αστέρια`}>
+    <span className="text-moove-lime" aria-label={label}>
       {'★'.repeat(full)}
       <span className="text-moove-border">{'★'.repeat(Math.max(0, 5 - full))}</span>
     </span>
@@ -44,6 +32,7 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export function GoogleReviews() {
+  const { t, dictionary } = useTranslation()
   const [data, setData] = useState<ReviewsPayload | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -78,39 +67,41 @@ export function GoogleReviews() {
     <section className="border-b border-moove-border/80 bg-gradient-to-b from-moove-elevated/40 to-moove-bg moove-section-pad">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="moove-eyebrow">Κριτικές</p>
+          <p className="moove-eyebrow">{t('reviews.eyebrow')}</p>
           <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
-            Τι λένε οι ασκούμενοι
+            {t('reviews.title')}
           </h2>
-        {apiPending ? (
-          <p className="mx-auto mt-3 max-w-lg text-center text-sm text-moove-muted">
-            Δες τι γράφουν στο Google Maps —{' '}
-            <a
-              href={mapsHref}
-              className="text-moove-accent underline-offset-2 hover:underline"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              δείτε το προφίλ μας
-            </a>
-            .
-          </p>
-        ) : null}
-        {(data?.aggregateRating != null || data?.reviewCount != null) &&
-        showGoogle ? (
-          <p className="mx-auto mt-3 text-center text-sm text-moove-muted">
-            {data.aggregateRating != null ? (
-              <>
-                <span className="font-semibold text-moove-silver">
-                  {data.aggregateRating.toFixed(1)}
-                </span>{' '}
-                / 5 στο Google
-                {data.reviewCount != null ? (
-                  <> · {data.reviewCount} κριτικές</>
-                ) : null}
-              </>
-            ) : null}
-          </p>
+          {apiPending ? (
+            <p className="mx-auto mt-3 max-w-lg text-center text-sm text-moove-muted">
+              {t('reviews.mapsHint')}{' '}
+              <a
+                href={mapsHref}
+                className="text-moove-accent underline-offset-2 hover:underline"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {t('reviews.viewProfile')}
+              </a>
+              .
+            </p>
+          ) : null}
+          {(data?.aggregateRating != null || data?.reviewCount != null) && showGoogle ? (
+            <p className="mx-auto mt-3 text-center text-sm text-moove-muted">
+              {data.aggregateRating != null ? (
+                <>
+                  <span className="font-semibold text-moove-silver">
+                    {data.aggregateRating.toFixed(1)}
+                  </span>{' '}
+                  {t('reviews.onGoogle')}
+                  {data.reviewCount != null ? (
+                    <>
+                      {' '}
+                      · {data.reviewCount} {t('reviews.reviewCount')}
+                    </>
+                  ) : null}
+                </>
+              ) : null}
+            </p>
           ) : null}
           <div className="moove-rule mx-auto mt-6" aria-hidden />
         </div>
@@ -129,7 +120,10 @@ export function GoogleReviews() {
               >
                 {rev.rating != null ? (
                   <div className="mb-3 text-sm">
-                    <Stars rating={rev.rating} />
+                    <Stars
+                      rating={rev.rating}
+                      label={t('reviews.starsAria', { rating: rev.rating })}
+                    />
                   </div>
                 ) : null}
                 <blockquote className="text-moove-muted leading-relaxed">
@@ -150,29 +144,27 @@ export function GoogleReviews() {
                       rev.author
                     )}
                   </span>
-                  {rev.time ? (
-                    <span className="text-moove-muted/80">· {rev.time}</span>
-                  ) : null}
+                  {rev.time ? <span className="text-moove-muted/80">· {rev.time}</span> : null}
                 </figcaption>
               </figure>
             ))
           ) : (
-            fallbackTestimonials.map((t) => (
+            dictionary.reviewsFallback.items.map((item) => (
               <figure
-                key={t.name}
+                key={item.name}
                 className="moove-card p-8 transition hover:shadow-moove-soft"
               >
                 <blockquote className="text-moove-muted leading-relaxed">
-                  «{t.quote}»
+                  «{item.quote}»
                 </blockquote>
                 <figcaption className="mt-6 text-sm font-semibold text-moove-accent">
-                  {t.name}
+                  {item.name}
                 </figcaption>
                 <p className="mt-2 text-xs text-moove-muted">
                   {data?.error === 'missing_api_key'
-                    ? 'Για να φορτώνουν αυτόματα οι κριτικές: Vercel + GOOGLE_PLACES_API_KEY (βλ. .env.example).'
+                    ? t('reviewsFallback.apiKeyHint')
                     : data?.error
-                      ? 'Προσωρινά δείχνουμε ενδεικτικά σχόλια — όλες οι κριτικές είναι στο Google.'
+                      ? t('reviewsFallback.tempHint')
                       : null}
                 </p>
               </figure>
@@ -182,21 +174,20 @@ export function GoogleReviews() {
 
         <div className="mx-auto mt-10 max-w-2xl text-center">
           <p className="text-xs leading-relaxed text-moove-muted">
-            Οι κριτικές από το Google εμφανίζονται σύμφωνα με τους όρους της Google και
-            μερικές φορές δεν είναι διαθέσιμες μέσω API. Όλα τα σχόλια μένουν πάντα στο{' '}
+            {t('reviewsFallback.legal')}{' '}
             <a
               href={mapsHref}
               className="text-moove-accent underline-offset-2 hover:underline"
               target="_blank"
               rel="noreferrer noopener"
             >
-              προφίλ στο Google Maps
+              {t('reviewsFallback.mapsProfile')}
             </a>
             .
           </p>
           <div className="mt-4 flex justify-center">
             <ButtonLink href={mapsHref} external variant="ghost">
-              Όλες οι κριτικές στο Google Maps
+              {t('reviews.allOnMaps')}
             </ButtonLink>
           </div>
         </div>

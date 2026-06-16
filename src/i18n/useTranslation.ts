@@ -1,0 +1,20 @@
+import { useContext } from 'react'
+import { site } from '../site'
+import { I18nContext } from './context'
+import type { TranslationVars } from './types'
+
+export function useTranslation() {
+  const ctx = useContext(I18nContext)
+  if (!ctx) throw new Error('useTranslation must be used within I18nProvider')
+  return ctx
+}
+
+export function useSiteVars(): TranslationVars {
+  return {
+    name: site.name,
+    tagline: site.tagline,
+    owner: site.ownerName,
+    coach: site.posing.coachName,
+    brand: site.posing.brandName,
+  }
+}

@@ -4,6 +4,7 @@ import { Header } from './Header'
 import { Footer } from './Footer'
 import { site } from '../site'
 import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
+import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 function CalendarGlyph({ className }: { className?: string }) {
   return (
@@ -46,7 +47,8 @@ function ChevronGlyph({ className }: { className?: string }) {
 
 export function Layout() {
   const isPosing = useIsPosingRoute()
-  const { posing: posingBrand } = site
+  const { t, locale } = useTranslation()
+  const vars = useSiteVars()
 
   useEffect(() => {
     document.body.classList.toggle('pose-shell', isPosing)
@@ -58,8 +60,8 @@ export function Layout() {
   useEffect(() => {
     const prevTitle = document.title
     document.title = isPosing
-      ? `${posingBrand.brandName} — Online posing coaching`
-      : `${site.name} — ${site.ownerName} · ${site.tagline} Βόλος`
+      ? t('meta.posingTitle', vars)
+      : t('meta.studioTitle', vars)
 
     let themeMeta = document.querySelector('meta[name="theme-color"]')
     const created = !themeMeta
@@ -79,7 +81,7 @@ export function Layout() {
         themeMeta?.setAttribute('content', prevTheme)
       }
     }
-  }, [isPosing, posingBrand.brandName])
+  }, [isPosing, t, locale, vars])
 
   return (
     <div
@@ -118,7 +120,7 @@ export function Layout() {
                 <CalendarGlyph className="h-[1.15rem] w-[1.15rem]" />
               </span>
               <span className="min-w-0 flex-1 text-center text-sm font-semibold leading-tight tracking-wide">
-                {isPosing ? 'Κράτηση posing session' : 'Κράτηση μαθήματος'}
+                {isPosing ? t('common.bookPosing') : t('common.bookClass')}
               </span>
               <span
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${

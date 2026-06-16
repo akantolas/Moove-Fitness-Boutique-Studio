@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { site } from '../site'
+import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 type PosePromoBubbleProps = {
   variant: 'header' | 'menu' | 'home' | 'studio-back'
@@ -8,6 +9,8 @@ type PosePromoBubbleProps = {
 
 export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
   const { posing } = site
+  const { t } = useTranslation()
+  const vars = useSiteVars()
 
   if (variant === 'studio-back') {
     const isMenu = Boolean(onNavigate)
@@ -40,14 +43,14 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
               isMenu ? 'text-sm' : 'text-[11px] sm:text-xs'
             }`}
           >
-            {site.name} Studio
+            {t('poseBubble.studioTitle', vars)}
           </span>
           <span
             className={`mt-0.5 block leading-snug text-moove-lime/75 ${
-              isMenu ? 'text-xs' : 'hidden sm:block text-[10px]'
+              isMenu ? 'text-xs' : 'hidden text-[10px] sm:block'
             }`}
           >
-            Pilates & Reformer · Βόλος
+            {t('poseBubble.studioSubtitle')}
           </span>
         </span>
       </Link>
@@ -87,7 +90,7 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
               variant === 'home' ? 'text-sm' : 'text-xs'
             }`}
           >
-            Online posing coaching
+            {t('poseBubble.tagline')}
           </span>
         )}
       </span>
@@ -111,11 +114,10 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
         <div className="relative flex flex-1 flex-col gap-5 sm:flex-row sm:items-center">
           {sharedInner}
           <p className="relative flex-1 text-sm leading-relaxed text-white/60 sm:text-base">
-            Ξεχωριστή υπηρεσία για bodybuilding shows — live coaching, στάσεις και stage presence.
-            Δεν σχετίζεται με τα μαθήματα του studio.
+            {t('poseBubble.homeBody')}
           </p>
           <span className="relative inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-black transition group-hover:brightness-110">
-            Δες περισσότερα
+            {t('common.learnMore')}
           </span>
         </div>
       </Link>

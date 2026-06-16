@@ -31,6 +31,7 @@ export const site = {
     brandName: 'Move & Pose',
     brandSubtitle: 'The Posing Academy',
     logo: '/pose1.png',
+    instagram: 'https://www.instagram.com/theposingacademygr/',
     /** Cal.com inline embed path — username ή username/event-slug */
     calLink: '',
     coachName: 'Μαγδα Σαμαρά',

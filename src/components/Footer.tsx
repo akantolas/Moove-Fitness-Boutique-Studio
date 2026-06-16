@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom'
 import { site } from '../site'
 import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
+import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 export function Footer() {
   const posing = useIsPosingRoute()
   const { posing: posingBrand } = site
+  const { t } = useTranslation()
+  const vars = useSiteVars()
 
   const linkClass = posing
     ? 'text-white/55 transition hover:text-cyan-300'
@@ -39,10 +42,10 @@ export function Footer() {
                 {posingBrand.brandSubtitle}
               </p>
               <p className="mt-4 text-sm leading-relaxed text-white/55">
-                Online posing coaching για bodybuilding shows — by {posingBrand.coachName}.
+                {t('footer.posingBlurb', vars)}
               </p>
               <Link to="/" className={`mt-4 inline-block text-xs ${linkClass}`}>
-                ← Επιστροφή στο {site.name} studio
+                {t('footer.backToStudio', vars)}
               </Link>
             </>
           ) : (
@@ -54,49 +57,49 @@ export function Footer() {
                 {site.tagline}
               </p>
               <p className="mt-4 text-sm leading-relaxed text-moove-muted">
-                Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {site.ownerName}.
+                {t('footer.studioBlurb', vars)}
               </p>
             </>
           )}
         </div>
         <div>
-          <h2 className={headingClass}>Πλοήγηση</h2>
+          <h2 className={headingClass}>{t('footer.nav')}</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {!posing ? (
               <li>
                 <Link to="/mathimata" className={linkClass}>
-                  Μαθήματα
+                  {t('nav.classes')}
                 </Link>
               </li>
             ) : null}
             <li>
               <Link to="/posing" className={linkClass}>
-                Move & Pose
+                {t('footer.moveAndPose')}
               </Link>
             </li>
             {posing ? (
               <li>
                 <a href="#booking" className={linkClass}>
-                  Κράτηση συνεδρίας
+                  {t('common.bookPosingSession')}
                 </a>
               </li>
             ) : null}
             <li>
               <Link to="/epikoinonia" className={linkClass}>
-                Επικοινωνία
+                {t('nav.contact')}
               </Link>
             </li>
             {posing ? (
               <li>
                 <Link to="/mathimata" className={linkClass}>
-                  Μαθήματα studio
+                  {t('footer.studioClasses')}
                 </Link>
               </li>
             ) : null}
           </ul>
         </div>
         <div>
-          <h2 className={headingClass}>Στοιχεία</h2>
+          <h2 className={headingClass}>{t('footer.details')}</h2>
           <ul className={`mt-4 space-y-3 text-sm ${posing ? 'text-white/55' : 'text-moove-muted'}`}>
             <li>
               <a className={linkClass} href={`tel:${site.phone.replace(/\s/g, '')}`}>
@@ -111,34 +114,36 @@ export function Footer() {
             {!posing ? (
               <>
                 <li>{site.addressLine}</li>
-                <li>{site.hours}</li>
+                <li>{t('contact.hoursValue')}</li>
               </>
             ) : null}
           </ul>
         </div>
         <div>
-          <h2 className={headingClass}>Social</h2>
+          <h2 className={headingClass}>{t('footer.social')}</h2>
           <ul className="mt-4 space-y-2 text-sm">
             <li>
               <a
-                href={site.social.instagram}
+                href={posing ? posingBrand.instagram : site.social.instagram}
                 className={linkClass}
                 target="_blank"
                 rel="noreferrer noopener"
               >
-                Instagram
+                {t('common.instagram')}
               </a>
             </li>
-            <li>
-              <a
-                href={site.social.facebook}
-                className={linkClass}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Facebook
-              </a>
-            </li>
+            {!posing ? (
+              <li>
+                <a
+                  href={site.social.facebook}
+                  className={linkClass}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {t('common.facebook')}
+                </a>
+              </li>
+            ) : null}
             {!posing ? (
               <li>
                 <a
@@ -147,7 +152,7 @@ export function Footer() {
                   target="_blank"
                   rel="noreferrer noopener"
                 >
-                  Google Maps
+                  {t('common.googleMaps')}
                 </a>
               </li>
             ) : null}
@@ -157,14 +162,14 @@ export function Footer() {
       <div className={`border-t py-6 ${posing ? 'border-white/10' : 'border-moove-border'}`}>
         <p className={`text-center text-xs ${posing ? 'text-white/45' : 'text-moove-muted'}`}>
           © {new Date().getFullYear()}{' '}
-          {posing ? posingBrand.brandName : site.name}. Με επιφύλαξη παντός δικαιώματος.
+          {posing ? posingBrand.brandName : site.name}. {t('common.copyright')}
         </p>
         <p
           className={`mt-4 flex flex-col items-center justify-center gap-2 text-center text-xs uppercase tracking-[0.18em] sm:flex-row sm:gap-3 ${
             posing ? 'text-white/35' : 'text-moove-muted'
           }`}
         >
-          <span className="font-medium">Powered by</span>
+          <span className="font-medium">{t('common.poweredBy')}</span>
           <a
             href="https://akantronics.gr/"
             target="_blank"

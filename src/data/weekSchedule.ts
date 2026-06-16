@@ -4,9 +4,7 @@ export type ScheduleSlot = {
 }
 
 export type ScheduleDay = {
-  key: string
-  label: string
-  short: string
+  key: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'
   slots: ScheduleSlot[]
 }
 
@@ -14,8 +12,6 @@ export type ScheduleDay = {
 export const weekSchedule: ScheduleDay[] = [
   {
     key: 'mon',
-    label: 'Δευτέρα',
-    short: 'ΔΕΥ',
     slots: [
       { time: '8:00–9:00', name: 'Reformer' },
       { time: '10:00', name: 'Functional / Cross Training' },
@@ -28,8 +24,6 @@ export const weekSchedule: ScheduleDay[] = [
   },
   {
     key: 'tue',
-    label: 'Τρίτη',
-    short: 'ΤΡΙ',
     slots: [
       { time: '8:30', name: 'Pilates Mat' },
       { time: '9:30', name: 'TRX' },
@@ -43,8 +37,6 @@ export const weekSchedule: ScheduleDay[] = [
   },
   {
     key: 'wed',
-    label: 'Τετάρτη',
-    short: 'ΤΕΤ',
     slots: [
       { time: '8:00–9:00', name: 'Reformer' },
       { time: '10:00', name: "40' Magda's Bootycamp" },
@@ -59,8 +51,6 @@ export const weekSchedule: ScheduleDay[] = [
   },
   {
     key: 'thu',
-    label: 'Πέμπτη',
-    short: 'ΠΕΜ',
     slots: [
       { time: '8:30', name: 'Pilates Mat' },
       { time: '9:30', name: 'Functional / Cross Training' },
@@ -76,8 +66,6 @@ export const weekSchedule: ScheduleDay[] = [
   },
   {
     key: 'fri',
-    label: 'Παρασκευή',
-    short: 'ΠΑΡ',
     slots: [
       { time: '8:00–9:00', name: 'Reformer' },
       { time: '10:00', name: "40' Magda's Bootycamp" },
@@ -90,8 +78,6 @@ export const weekSchedule: ScheduleDay[] = [
   },
   {
     key: 'sat',
-    label: 'Σάββατο',
-    short: 'ΣΑΒ',
     slots: [
       { time: '9:30', name: 'Pilates Mat' },
       { time: '10:30', name: 'Reformer' },

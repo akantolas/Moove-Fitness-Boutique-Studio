@@ -4,12 +4,14 @@ import { site } from '../site'
 import { ButtonLink } from './Links'
 import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
 import { PosePromoBubble } from './PosePromoBubble'
+import { LanguageSwitcher } from './LanguageSwitcher'
+import { useTranslation } from '../i18n/useTranslation'
 
 const nav = [
-  { to: '/', label: 'Αρχική' },
-  { to: '/mathimata', label: 'Μαθήματα' },
-  { to: '/sxetika', label: 'Σχετικά' },
-  { to: '/epikoinonia', label: 'Επικοινωνία' },
+  { to: '/', labelKey: 'nav.home' },
+  { to: '/mathimata', labelKey: 'nav.classes' },
+  { to: '/sxetika', labelKey: 'nav.about' },
+  { to: '/epikoinonia', labelKey: 'nav.contact' },
 ] as const
 
 const posingCtaClass =
@@ -19,6 +21,7 @@ export function Header() {
   const [open, setOpen] = useState(false)
   const posing = useIsPosingRoute()
   const { posing: posingBrand } = site
+  const { t } = useTranslation()
 
   function navClass(isActive: boolean) {
     if (posing) {
@@ -68,7 +71,7 @@ export function Header() {
             }
             aria-expanded={open}
             aria-controls="mobile-nav"
-            aria-label={open ? 'Κλείσιμο μενού' : 'Άνοιγμα μενού'}
+            aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')}
             onClick={() => setOpen((v) => !v)}
           >
             {open ? '✕' : '☰'}
@@ -83,7 +86,7 @@ export function Header() {
           <img
             src={logoSrc}
             alt={logoAlt}
-            className={`w-auto shrink-0 ${posing ? 'h-12' : 'h-12'}`}
+            className="h-12 w-auto shrink-0"
             width={posing ? 140 : 240}
             height={48}
           />
@@ -95,9 +98,9 @@ export function Header() {
               ? 'hidden items-center justify-center gap-0.5 self-center rounded-full border border-white/10 bg-white/[0.04] p-0.5 lg:flex'
               : 'hidden items-center justify-center gap-0.5 self-center rounded-full border border-moove-border/80 bg-moove-elevated/50 p-0.5 lg:flex'
           }
-          aria-label="Κύρια πλοήγηση"
+          aria-label={t('nav.main')}
         >
-          {nav.map(({ to, label }) => (
+          {nav.map(({ to, labelKey }) => (
             <NavLink
               key={to}
               to={to}
@@ -116,7 +119,7 @@ export function Header() {
                       aria-hidden
                     />
                   ) : null}
-                  <span className="relative z-10">{label}</span>
+                  <span className="relative z-10">{t(labelKey)}</span>
                 </>
               )}
             </NavLink>
@@ -124,6 +127,7 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center justify-end gap-2 lg:flex">
+          <LanguageSwitcher compact />
           {posing ? (
             <PosePromoBubble variant="studio-back" />
           ) : (
@@ -131,7 +135,7 @@ export function Header() {
           )}
           {posing ? (
             <a href="#booking" className={posingCtaClass}>
-              Κράτηση
+              {t('header.bookPosingShort')}
             </a>
           ) : (
             <ButtonLink
@@ -139,7 +143,7 @@ export function Header() {
               external={site.bookingUrl.startsWith('http')}
               className="!px-4 !py-2 text-xs sm:text-sm"
             >
-              Κράτηση
+              {t('common.book')}
             </ButtonLink>
           )}
         </div>
@@ -154,8 +158,11 @@ export function Header() {
               : 'border-t border-moove-border/80 bg-moove-surface/95 px-4 py-4 backdrop-blur-xl lg:hidden'
           }
         >
-          <nav className="flex flex-col gap-1" aria-label="Κινητή πλοήγηση">
-            {nav.map(({ to, label }) => (
+          <div className="mb-3 flex justify-center">
+            <LanguageSwitcher />
+          </div>
+          <nav className="flex flex-col gap-1" aria-label={t('nav.mobile')}>
+            {nav.map(({ to, labelKey }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -175,7 +182,7 @@ export function Header() {
                 }
                 onClick={() => setOpen(false)}
               >
-                {label}
+                {t(labelKey)}
               </NavLink>
             ))}
             {!posing ? (
@@ -192,7 +199,7 @@ export function Header() {
             >
               {posing ? (
                 <a href="#booking" className={`w-full ${posingCtaClass} !py-3`}>
-                  Κράτηση συνεδρίας
+                  {t('common.bookPosingSession')}
                 </a>
               ) : (
                 <ButtonLink
@@ -200,7 +207,7 @@ export function Header() {
                   external={site.bookingUrl.startsWith('http')}
                   className="w-full"
                 >
-                  Κράτηση
+                  {t('common.book')}
                 </ButtonLink>
               )}
             </div>
