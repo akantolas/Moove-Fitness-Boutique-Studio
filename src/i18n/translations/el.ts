@@ -35,6 +35,8 @@ export const el = {
     level: 'Επίπεδο',
     duration: 'Διάρκεια',
     volos: 'Βόλος',
+    close: 'Κλείσιμο',
+    viewLarger: 'Μεγέθυνση: {{alt}}',
   },
   header: {
     bookPosingShort: 'Κράτηση',
@@ -229,8 +231,8 @@ export const el = {
       title: 'Τι καλύπτει',
       items: [
         {
-          title: 'Online 1-on-1',
-          body: 'Ζωντανή συνεδρία μέσω video — όπου κι αν βρίσκεστε, πριν από τον διαγωνισμό σας.',
+          title: 'Live & Online Posing',
+          body: 'Coaching live στην πλάτφορμα ή online μέσω video — όπου κι αν είστε, πριν και κατά τη διάρκεια της προετοιμασίας σας.',
         },
         {
           title: 'Posing & presentation',
@@ -239,6 +241,18 @@ export const el = {
         {
           title: 'Προσωπικό πλάνο',
           body: 'Προσαρμογή στο division, το music και το level σας — από πρώτη φορά μέχρι πλάτφορμα.',
+        },
+        {
+          title: 'Custom Bikinis',
+          body: 'Σχεδιασμός και κατασκευή competition bikini προσαρμοσμένο στο σώμα και το division σας.',
+        },
+        {
+          title: 'Makeup service',
+          body: 'Stage makeup για διαγωνισμό — look που αναδεικνύει τη φυσική σας κάτω από τα φώτα της πλάτφορμας.',
+        },
+        {
+          title: 'Custom Made Heels',
+          body: 'Custom heels για Wellness, Bikini και σχετικές κατηγορίες — άνεση, σταθερότητα και σωστό ύψος για το stage.',
         },
       ],
     },
@@ -284,8 +298,6 @@ export const el = {
     },
     cal: {
       pending: 'Το ημερολόγιο κρατήσεων ρυθμίζεται. Μέχρι τότε, επικοινωνήστε για ραντεβού:',
-      setup: 'Ρύθμιση:',
-      setupPath: 'στο src/site.ts',
       emailSubject: 'Posing coaching — κράτηση',
     },
   },

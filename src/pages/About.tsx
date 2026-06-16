@@ -1,4 +1,5 @@
 import { PageHeader } from '../components/PageHeader'
+import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
@@ -34,9 +35,10 @@ export function AboutPage() {
         </section>
 
         <section className="overflow-hidden rounded-[1.25rem] border border-moove-border shadow-moove-soft">
-          <img
+          <ZoomableImage
             src="/image1.jpeg"
             alt={`${site.ownerName} — ${site.name}`}
+            wrapperClassName="block w-full cursor-zoom-in"
             className="h-auto w-full"
             width={1349}
             height={1500}
@@ -56,9 +58,10 @@ export function AboutPage() {
             key={img.src}
             className="overflow-hidden rounded-2xl border border-moove-border/80 shadow-moove-lift"
           >
-            <img
+            <ZoomableImage
               src={img.src}
               alt={img.alt}
+              wrapperClassName="block w-full cursor-zoom-in overflow-hidden"
               className="aspect-[4/3] w-full object-cover transition duration-500 hover:scale-105"
               width={400}
               height={300}

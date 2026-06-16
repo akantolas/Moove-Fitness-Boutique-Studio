@@ -1,6 +1,7 @@
 import { GhostLink, ButtonLink } from '../components/Links'
 import { GoogleReviews } from '../components/GoogleReviews'
 import { PosePromoBubble } from '../components/PosePromoBubble'
+import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
@@ -61,15 +62,16 @@ export function HomePage() {
 
           <div className="animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none [animation-delay:120ms]">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-moove-soft ring-1 ring-moove-border/40">
-              <img
+              <ZoomableImage
                 src="/image03.jpeg"
                 alt={t('home.hero.heroImageAlt')}
+                wrapperClassName="block h-full w-full cursor-zoom-in"
                 className="h-full w-full object-cover"
                 width={1440}
                 height={1800}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-moove-espresso/55 via-moove-espresso/10 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-moove-espresso/55 via-moove-espresso/10 to-transparent" />
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-6 sm:p-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-moove-lime">
                   {site.name}
                 </p>
@@ -122,17 +124,19 @@ export function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center">
           <div className="relative order-2 lg:order-1">
             <div className="grid grid-cols-2 gap-3">
-              <img
+              <ZoomableImage
                 src="/image3.jpeg"
                 alt={t('home.classes.imageAlt')}
-                className="aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
+                wrapperClassName="block w-full cursor-zoom-in overflow-hidden rounded-2xl shadow-moove-lift"
+                className="aspect-[3/4] w-full object-cover"
                 width={400}
                 height={533}
               />
-              <img
+              <ZoomableImage
                 src="/image5.jpeg"
                 alt={t('home.classes.imageAlt')}
-                className="mt-8 aspect-[3/4] rounded-2xl object-cover shadow-moove-lift"
+                wrapperClassName="mt-8 block w-full cursor-zoom-in overflow-hidden rounded-2xl shadow-moove-lift"
+                className="aspect-[3/4] w-full object-cover"
                 width={1440}
                 height={1792}
               />

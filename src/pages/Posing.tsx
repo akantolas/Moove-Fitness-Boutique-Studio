@@ -1,4 +1,5 @@
 import { CalPosingEmbed } from '../components/CalPosingEmbed'
+import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
@@ -21,10 +22,11 @@ export function PosingPage() {
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            <img
+            <ZoomableImage
               src={posing.logo}
               alt={`${posing.brandName} — ${posing.brandSubtitle}`}
-              className="h-auto w-full max-w-[17rem] sm:max-w-xs"
+              wrapperClassName="block w-full max-w-[17rem] cursor-zoom-in sm:max-w-xs"
+              className="h-auto w-full"
               width={400}
               height={520}
             />
@@ -67,9 +69,10 @@ export function PosingPage() {
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
             <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 p-2 shadow-[0_24px_64px_-24px_rgba(192,38,211,0.35)]">
-              <img
+              <ZoomableImage
                 src={posing.logo}
                 alt=""
+                wrapperClassName="block w-full cursor-zoom-in"
                 className="w-full rounded-[1.35rem] object-cover"
                 width={600}
                 height={780}
@@ -89,7 +92,7 @@ export function PosingPage() {
               {t('posing.service.title')}
             </h2>
           </div>
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {dictionary.posing.service.items.map((item) => (
               <article
                 key={item.title}

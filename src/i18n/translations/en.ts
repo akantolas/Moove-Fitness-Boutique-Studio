@@ -35,6 +35,8 @@ export const en = {
     level: 'Level',
     duration: 'Duration',
     volos: 'Volos',
+    close: 'Close',
+    viewLarger: 'View larger: {{alt}}',
   },
   header: {
     bookPosingShort: 'Book',
@@ -229,8 +231,8 @@ export const en = {
       title: 'What it covers',
       items: [
         {
-          title: 'Online 1-on-1',
-          body: 'Live video sessions — wherever you are, before your show.',
+          title: 'Live & Online Posing',
+          body: 'Live on-stage or online video coaching — wherever you are, before and throughout your prep.',
         },
         {
           title: 'Posing & presentation',
@@ -239,6 +241,18 @@ export const en = {
         {
           title: 'Personal plan',
           body: 'Tailored to your division, music, and level — from first-time competitors to the stage.',
+        },
+        {
+          title: 'Custom Bikinis',
+          body: 'Competition bikini design and tailoring built around your physique and division.',
+        },
+        {
+          title: 'Makeup service',
+          body: 'Stage makeup for show day — a look that holds up under bright stage lighting.',
+        },
+        {
+          title: 'Custom Made Heels',
+          body: 'Custom heels for Wellness, Bikini, and related divisions — comfort, stability, and the right height on stage.',
         },
       ],
     },
@@ -284,8 +298,6 @@ export const en = {
     },
     cal: {
       pending: 'The booking calendar is being set up. Until then, contact us to schedule:',
-      setup: 'Setup:',
-      setupPath: 'in src/site.ts',
       emailSubject: 'Posing coaching — booking',
     },
   },
