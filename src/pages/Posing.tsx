@@ -22,14 +22,16 @@ export function PosingPage() {
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            <ZoomableImage
-              src={posing.heroImage}
-              alt={`${posing.brandName} — ${posing.brandSubtitle}`}
-              wrapperClassName="block w-full max-w-[17rem] cursor-zoom-in sm:max-w-xs"
-              className="h-auto w-full"
-              width={400}
-              height={520}
-            />
+            <div className="w-full max-w-[17rem] overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 p-2 shadow-[0_24px_64px_-24px_rgba(192,38,211,0.35)] sm:max-w-xs">
+              <ZoomableImage
+                src={posing.heroImage}
+                alt={`${posing.brandName} — ${posing.brandSubtitle}`}
+                wrapperClassName="block w-full cursor-zoom-in"
+                className="h-auto w-full rounded-[1.35rem] object-cover"
+                width={400}
+                height={520}
+              />
+            </div>
             <p className="mt-8 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300/90">
               {t('posing.hero.byCoach', vars)}
             </p>
