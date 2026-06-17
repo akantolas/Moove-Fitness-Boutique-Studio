@@ -37,7 +37,7 @@ export function ContactPage() {
             <li>
               <span className="moove-eyebrow !text-[0.6rem]">{t('contact.phone')}</span>
               <a
-                className="mt-2 inline-block font-medium text-moove-accent hover:underline"
+                className="mt-2 block text-base font-medium text-moove-ink transition hover:text-moove-accent hover:underline"
                 href={`tel:${site.phone.replace(/\s/g, '')}`}
               >
                 {site.phone}
@@ -46,7 +46,7 @@ export function ContactPage() {
             <li>
               <span className="moove-eyebrow !text-[0.6rem]">{t('common.email')}</span>
               <a
-                className="mt-2 inline-block font-medium text-moove-accent hover:underline"
+                className="mt-2 block text-base font-medium text-moove-ink transition hover:text-moove-accent hover:underline"
                 href={`mailto:${site.email}`}
               >
                 {site.email}
