@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useCookieConsent } from '../cookies/CookieConsentProvider'
 import { site } from '../site'
 import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -8,6 +9,7 @@ export function Footer() {
   const { posing: posingBrand } = site
   const { t } = useTranslation()
   const vars = useSiteVars()
+  const { openPreferences } = useCookieConsent()
 
   const linkClass = posing
     ? 'text-white/55 transition hover:text-cyan-300'
@@ -163,6 +165,27 @@ export function Footer() {
         <p className={`text-center text-xs ${posing ? 'text-white/45' : 'text-moove-muted'}`}>
           © {new Date().getFullYear()}{' '}
           {posing ? posingBrand.brandName : site.name}. {t('common.copyright')}
+        </p>
+        <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-center text-xs">
+          <Link to="/privacy" className={linkClass}>
+            {t('privacy.footer.privacyPolicy')}
+          </Link>
+          <Link to="/cookies" className={linkClass}>
+            {t('cookies.footer.cookiePolicy')}
+          </Link>
+          <Link to="/terms" className={linkClass}>
+            {t('termsOfUse.footer.termsOfUse')}
+          </Link>
+          <Link to="/service-terms" className={linkClass}>
+            {t('serviceTerms.footer.serviceTerms')}
+          </Link>
+          <button
+            type="button"
+            onClick={openPreferences}
+            className={`${linkClass} cursor-pointer border-0 bg-transparent p-0 font-inherit`}
+          >
+            {t('cookies.footer.manageCookies')}
+          </button>
         </p>
         <p
           className={`mt-4 flex flex-col items-center justify-center gap-2 text-center text-xs uppercase tracking-[0.18em] sm:flex-row sm:gap-3 ${

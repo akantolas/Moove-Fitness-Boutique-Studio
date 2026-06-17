@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
 
 export function ContactPage() {
   const [sent, setSent] = useState(false)
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const { t } = useTranslation()
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (!privacyAccepted) return
     setSent(true)
   }
 
@@ -116,9 +119,30 @@ export function ContactPage() {
                   placeholder={t('contact.messagePlaceholder')}
                 />
               </div>
+              <label className="flex items-start gap-3 rounded-xl border border-moove-border/80 bg-moove-bg/30 px-4 py-4 text-sm leading-relaxed text-moove-muted">
+                <input
+                  type="checkbox"
+                  name="privacyConsent"
+                  required
+                  checked={privacyAccepted}
+                  onChange={(event) => setPrivacyAccepted(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-moove-border accent-moove-lime-deep"
+                />
+                <span>
+                  {t('contact.consentBefore')}{' '}
+                  <Link
+                    to="/privacy"
+                    className="font-medium text-moove-accent underline-offset-2 hover:underline"
+                  >
+                    {t('privacy.footer.privacyPolicy')}
+                  </Link>
+                  {t('contact.consentAfter')}
+                </span>
+              </label>
               <button
                 type="submit"
-                className="w-full rounded-full bg-gradient-to-b from-moove-lime to-moove-lime-deep py-3.5 text-sm font-semibold text-moove-ink shadow-moove-glow transition hover:brightness-105 sm:w-auto sm:px-10"
+                disabled={!privacyAccepted}
+                className="w-full rounded-full bg-gradient-to-b from-moove-lime to-moove-lime-deep py-3.5 text-sm font-semibold text-moove-ink shadow-moove-glow transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-10"
               >
                 {t('common.send')}
               </button>

@@ -16,5 +16,8 @@ export function useSiteVars(): TranslationVars {
     owner: site.ownerName,
     coach: site.posing.coachName,
     brand: site.posing.brandName,
+    email: site.email,
+    address: site.addressLine,
+    bookingUrl: site.bookingUrl,
   }
 }

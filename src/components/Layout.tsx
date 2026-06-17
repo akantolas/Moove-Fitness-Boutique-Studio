@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { useEffect } from 'react'
+import { CookieBanner } from './CookieBanner'
+import { CookiePreferencesPanel } from './CookiePreferencesPanel'
 import { Header } from './Header'
 import { Footer } from './Footer'
 import { site } from '../site'
@@ -92,6 +94,8 @@ export function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <CookieBanner />
+      <CookiePreferencesPanel />
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden">
         <div className="pointer-events-auto px-4 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] pt-3">
           <div
