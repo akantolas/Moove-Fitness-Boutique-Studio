@@ -23,7 +23,7 @@ export function PosingPage() {
         <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <ZoomableImage
-              src={posing.logo}
+              src={posing.heroImage}
               alt={`${posing.brandName} — ${posing.brandSubtitle}`}
               wrapperClassName="block w-full max-w-[17rem] cursor-zoom-in sm:max-w-xs"
               className="h-auto w-full"

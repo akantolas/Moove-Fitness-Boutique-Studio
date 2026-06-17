@@ -31,6 +31,8 @@ export const site = {
     brandName: 'Move & Pose',
     brandSubtitle: 'The Posing Academy',
     logo: '/pose1.png',
+    /** Hero image (αριστερά) στη σελίδα posing — ξεχωριστό από το logo mark. */
+    heroImage: '/pose2.png',
     instagram: 'https://www.instagram.com/theposingacademygr/',
     /** Cal.com inline embed path — username ή username/event-slug */
     calLink: '',
