@@ -15,38 +15,38 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
   if (variant === 'studio-back') {
     const isMenu = Boolean(onNavigate)
     const shellClass = isMenu
-      ? 'flex w-full items-center gap-3 rounded-2xl border border-moove-lime/35 bg-gradient-to-r from-[#121410] to-[#0e100c] px-4 py-3.5 shadow-[0_8px_32px_-12px_rgba(196,240,49,0.22)] transition hover:border-moove-lime/55'
-      : 'inline-flex items-center gap-2.5 rounded-full border border-moove-lime/35 bg-[#10100c]/95 py-1.5 pl-2 pr-3 shadow-[0_4px_20px_-8px_rgba(196,240,49,0.28)] transition hover:border-moove-lime/55 hover:bg-[#141410] xl:inline-flex'
+      ? 'flex w-full items-center gap-3 rounded-2xl border border-fuchsia-100/20 bg-gradient-to-r from-white/[0.055] to-fuchsia-300/[0.055] px-4 py-3.5 shadow-[0_10px_36px_-22px_rgba(244,114,182,0.75)] transition hover:border-fuchsia-100/35 hover:bg-white/[0.075]'
+      : 'inline-flex items-center gap-2 rounded-full border border-fuchsia-100/20 bg-gradient-to-r from-white/[0.05] to-fuchsia-300/[0.06] py-1.5 pl-2 pr-3 shadow-[0_12px_32px_-22px_rgba(244,114,182,0.9)] backdrop-blur-md transition hover:border-fuchsia-100/35 hover:bg-white/[0.07] xl:inline-flex'
 
     return (
       <Link to="/" onClick={onNavigate} className={shellClass}>
         <span
-          className={`flex shrink-0 items-center justify-center rounded-full bg-black/35 ring-1 ring-moove-lime/25 ${
-            isMenu ? 'h-11 w-11' : 'h-8 w-8'
+          className={`flex shrink-0 items-center justify-center rounded-full bg-fuchsia-200/12 ring-1 ring-fuchsia-100/20 ${
+            isMenu ? 'h-10 w-10' : 'h-7 w-7'
           }`}
           aria-hidden
         >
-          <span className={`font-medium text-moove-lime ${isMenu ? 'text-base' : 'text-sm'}`}>
+          <span className={`font-medium text-fuchsia-100 ${isMenu ? 'text-base' : 'text-sm'}`}>
             ←
           </span>
         </span>
         <img
           src={site.logoMark}
           alt={site.name}
-          className={`w-auto shrink-0 ${isMenu ? 'h-9' : 'h-7'}`}
+          className={`w-auto shrink-0 opacity-85 grayscale ${isMenu ? 'h-8' : 'h-6'}`}
           width={isMenu ? 120 : 96}
           height={isMenu ? 36 : 28}
         />
         <span className="min-w-0 text-left">
           <span
             className={`block font-semibold leading-tight text-white ${
-              isMenu ? 'text-sm' : 'text-[11px] sm:text-xs'
+              isMenu ? 'text-sm' : 'text-[11px]'
             }`}
           >
             {t('poseBubble.studioTitle', vars)}
           </span>
           <span
-            className={`mt-0.5 block leading-snug text-moove-lime/75 ${
+            className={`mt-0.5 block leading-snug text-fuchsia-100/45 ${
               isMenu ? 'text-xs' : 'hidden text-[10px] sm:block'
             }`}
           >

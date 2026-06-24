@@ -226,8 +226,10 @@ export const en = {
       title: 'Online posing coaching for bodybuilding shows',
       body: 'One-on-one coaching sessions for poses, stage presence, and platform confidence — completely separate from the Pilates studio.',
       book: 'Book a session',
+      viewPackages: 'View packages',
       openCal: 'Open Cal.com',
       byCoach: 'by {{coach}}',
+      chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Stripe payments'],
     },
     service: {
       eyebrow: 'The service',
@@ -262,7 +264,7 @@ export const en = {
     how: {
       title: 'How it works',
       steps: [
-        { title: 'Booking', body: 'Pick a time and pay online through Cal.com.' },
+        { title: 'Booking', body: 'Pick a time and pay online through Cal.com and Stripe.' },
         {
           title: 'Preparation',
           body: 'You receive guidance on camera setup, lighting, and what to have ready.',
@@ -273,10 +275,64 @@ export const en = {
         },
       ],
     },
+    pricing: {
+      eyebrow: 'Packages & pricing',
+      title: 'Choose the package that fits your prep',
+      body: 'All packages are for online posing coaching and are prepaid during booking.',
+      choose: 'Choose {{package}}',
+      includedTitle: 'Every session includes',
+      included: ['Personalised walks', 'T-walks by federation', 'Comparison rounds'],
+      packages: [
+        {
+          label: 'Single session',
+          name: '1 Posing Session',
+          cta: 'Choose session',
+          backgroundImage: '/posing-bg-single.webp',
+          features: ['One online posing session.'],
+        },
+        {
+          label: 'Monthly package',
+          name: 'Sapphire',
+          cta: 'Choose Sapphire',
+          backgroundImage: '/posing-bg-sapphire.webp',
+          features: [
+            '15 min launch call',
+            "Fortnightly 1:1 posing sessions 30'",
+            'Fortnightly check-ins & feedback',
+          ],
+        },
+        {
+          label: 'Prepayment',
+          name: 'Ruby',
+          cta: 'Choose Ruby',
+          backgroundImage: '/posing-bg-ruby.webp',
+          features: [
+            '15 min launch call',
+            "Weekly 1:1 posing sessions 30'",
+            'Weekly check-ins & feedback',
+          ],
+        },
+        {
+          label: 'Prepayment',
+          name: 'Diamond',
+          cta: 'Choose Diamond',
+          backgroundImage: '/posing-bg-diamond.webp',
+          features: [
+            '15 min launch call',
+            "Weekly 1:1 posing sessions 40'",
+            'Weekly check-ins & feedback',
+            'Stage presence & heels technique',
+          ],
+        },
+      ],
+    },
     booking: {
       eyebrow: 'Booking & payment',
       title: 'Book your session',
-      body: 'Choose an available slot and complete payment online. This calendar is separate from studio class bookings.',
+      body: 'Choose an available slot and complete payment online through Stripe. This calendar is separate from studio class bookings.',
+      selectedLabel: 'Selected package',
+      paymentNote:
+        'Bookings are handled through Cal.com and online payments are securely processed by Stripe. Card details are not stored on our website.',
     },
     faq: {
       title: 'FAQ',
@@ -297,11 +353,35 @@ export const en = {
           q: 'Language?',
           a: 'Greek and English.',
         },
+        {
+          q: 'How is payment handled?',
+          a: 'Payment is completed online during booking through Stripe. This website does not store card details.',
+        },
       ],
     },
     cal: {
-      pending: 'The booking calendar is being set up. Until then, contact us to schedule:',
+      pending:
+        'The online booking calendar is being set up. Until then, send an appointment request and we will confirm availability:',
+      sent: 'The appointment request email opened on your device. Send it to complete the request.',
       emailSubject: 'Posing coaching — booking',
+      emailIntro: 'I would like to book an appointment for Move & Pose.',
+      name: 'Full name',
+      namePlaceholder: 'e.g. Maria Papadopoulou',
+      phone: 'Phone',
+      phonePlaceholder: 'e.g. +30 69...',
+      emailPlaceholder: 'your email',
+      preferredDate: 'Preferred date / time',
+      sessionType: 'Session type',
+      message: 'Notes',
+      messagePlaceholder: 'Division, level, show date, or anything we should know.',
+      submit: 'Request appointment',
+      options: {
+        online: 'Online posing session',
+        live: 'Live posing session',
+        bikini: 'Custom bikini',
+        makeup: 'Makeup service',
+        other: 'Other service',
+      },
     },
   },
   poseBubble: {
@@ -394,7 +474,7 @@ export const en = {
         },
         {
           title: 'Data we collect',
-          body: 'We may process: contact details (name, email, message) from the contact form; technical visit data (IP, browser, device) via hosting/analytics; site preferences (language, cookies). Class bookings are handled on an external platform (members.moovefitness.gr) with its own privacy policy.',
+          body: 'We may process: contact details (name, email, message) from the contact form; technical visit data (IP, browser, device) via hosting/analytics; site preferences (language, cookies). Class bookings are handled on an external platform (members.moovefitness.gr). Move & Pose bookings are handled through Cal.com and online payments through Stripe, each with their own privacy policies.',
         },
         {
           title: 'Purpose of processing',
@@ -406,7 +486,7 @@ export const en = {
         },
         {
           title: 'Recipients and third parties',
-          body: 'We use Vercel (hosting, optional analytics), Google Places API (public reviews), and external booking/scheduling platforms. Providers process data as processors or independent controllers under their own policies.',
+          body: 'We use Vercel (hosting, optional analytics), Google Places API (public reviews), Cal.com (appointment bookings), Stripe (online payments), and external booking platforms. Providers process data as processors or independent controllers under their own policies.',
         },
         {
           title: 'Retention',
@@ -448,7 +528,7 @@ export const en = {
         },
         {
           title: 'External links',
-          body: 'Links to third parties (e.g. booking, social media, Google Maps) lead to external sites with their own policies. We are not responsible for their content.',
+          body: 'Links to third parties (e.g. booking, Stripe payments, social media, Google Maps) lead to external sites with their own policies. We are not responsible for their content.',
         },
         {
           title: 'Limitation of liability',

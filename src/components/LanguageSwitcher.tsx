@@ -10,7 +10,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
     if (posing) {
       return `rounded-full px-2.5 py-1 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
         active
-          ? 'bg-gradient-to-r from-fuchsia-400 to-cyan-300 text-black'
+          ? 'bg-gradient-to-r from-fuchsia-100 to-rose-200 text-[#180913] shadow-[0_8px_24px_-12px_rgba(244,114,182,0.9)]'
           : 'text-white/60 hover:text-white'
       }`
     }
@@ -20,7 +20,7 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   }
 
   const shellClass = posing
-    ? 'inline-flex items-center gap-0.5 rounded-full border border-white/15 bg-white/[0.04] p-0.5'
+    ? 'inline-flex items-center gap-0.5 rounded-full border border-fuchsia-100/18 bg-white/[0.045] p-0.5 shadow-[0_10px_30px_-24px_rgba(244,114,182,0.85)] backdrop-blur-md'
     : 'inline-flex items-center gap-0.5 rounded-full border border-moove-border/80 bg-moove-elevated/50 p-0.5'
 
   return (

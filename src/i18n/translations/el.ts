@@ -225,8 +225,10 @@ export const el = {
       title: 'Online posing coaching για bodybuilding shows',
       body: 'Διδακτικές συνεδρίες one-on-one για στάσεις, stage presence και confidence στην πλάτφορμα — εντελώς ξεχωριστά από το Pilates studio.',
       book: 'Κλείσε συνεδρία',
+      viewPackages: 'Δες τα πακέτα',
       openCal: 'Άνοιγμα Cal.com',
       byCoach: 'by {{coach}}',
+      chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Stripe payments'],
     },
     service: {
       eyebrow: 'Η υπηρεσία',
@@ -261,7 +263,7 @@ export const el = {
     how: {
       title: 'Πώς λειτουργεί',
       steps: [
-        { title: 'Κράτηση', body: 'Επιλέγετε ώρα και πληρώνετε online μέσω Cal.com.' },
+        { title: 'Κράτηση', body: 'Επιλέγετε ώρα και πληρώνετε online μέσω Cal.com και Stripe.' },
         {
           title: 'Προετοιμασία',
           body: 'Λαμβάνετε οδηγίες για camera, φωτισμό και τι να έχετε έτοιμο.',
@@ -272,10 +274,64 @@ export const el = {
         },
       ],
     },
+    pricing: {
+      eyebrow: 'Πακέτα & τιμές',
+      title: 'Διάλεξε το πρόγραμμα που σου ταιριάζει',
+      body: 'Όλα τα πακέτα είναι για online posing coaching και πληρώνονται προκαταβολικά κατά την κράτηση.',
+      choose: 'Επιλογή {{package}}',
+      includedTitle: 'Όλα τα sessions περιλαμβάνουν',
+      included: ['Personalised walks', 'T-walks ανά federation', 'Comparison rounds'],
+      packages: [
+        {
+          label: 'Μία συνεδρία',
+          name: '1 Posing Session',
+          cta: 'Επιλογή συνεδρίας',
+          backgroundImage: '/posing-bg-single.webp',
+          features: ['Μία online posing συνεδρία.'],
+        },
+        {
+          label: 'Μηνιαίο πακέτο',
+          name: 'Sapphire',
+          cta: 'Επιλογή Sapphire',
+          backgroundImage: '/posing-bg-sapphire.webp',
+          features: [
+            '15 min launch call',
+            "1:1 posing session 30' ανά δύο εβδομάδες",
+            'Check-ins & feedback ανά δύο εβδομάδες',
+          ],
+        },
+        {
+          label: 'Προπληρωμή',
+          name: 'Ruby',
+          cta: 'Επιλογή Ruby',
+          backgroundImage: '/posing-bg-ruby.webp',
+          features: [
+            '15 min launch call',
+            "Εβδομαδιαία 1:1 posing sessions 30'",
+            'Εβδομαδιαία check-ins & feedback',
+          ],
+        },
+        {
+          label: 'Προπληρωμή',
+          name: 'Diamond',
+          cta: 'Επιλογή Diamond',
+          backgroundImage: '/posing-bg-diamond.webp',
+          features: [
+            '15 min launch call',
+            "Εβδομαδιαία 1:1 posing sessions 40'",
+            'Εβδομαδιαία check-ins & feedback',
+            'Stage presence & heels technique',
+          ],
+        },
+      ],
+    },
     booking: {
       eyebrow: 'Κράτηση & πληρωμή',
       title: 'Κλείσε τη συνεδρία σου',
-      body: 'Επιλέξτε διαθέσιμη ώρα και ολοκληρώστε την πληρωμή online. Το ημερολόγιο είναι ξεχωριστό από τις κρατήσεις του γυμναστηρίου.',
+      body: 'Επιλέξτε διαθέσιμη ώρα και ολοκληρώστε την πληρωμή online μέσω Stripe. Το ημερολόγιο είναι ξεχωριστό από τις κρατήσεις του γυμναστηρίου.',
+      selectedLabel: 'Επιλεγμένο πακέτο',
+      paymentNote:
+        'Οι κρατήσεις γίνονται μέσω Cal.com και οι online πληρωμές επεξεργάζονται με ασφάλεια από τη Stripe. Τα στοιχεία κάρτας δεν αποθηκεύονται στο site μας.',
     },
     faq: {
       title: 'Συχνές ερωτήσεις',
@@ -296,11 +352,35 @@ export const el = {
           q: 'Γλώσσα;',
           a: 'Ελληνικά και αγγλικά.',
         },
+        {
+          q: 'Πώς γίνεται η πληρωμή;',
+          a: 'Η πληρωμή ολοκληρώνεται online κατά την κράτηση μέσω Stripe. Το site δεν αποθηκεύει στοιχεία κάρτας.',
+        },
       ],
     },
     cal: {
-      pending: 'Το ημερολόγιο κρατήσεων ρυθμίζεται. Μέχρι τότε, επικοινωνήστε για ραντεβού:',
+      pending:
+        'Το online ημερολόγιο κρατήσεων ρυθμίζεται. Μέχρι τότε, στείλτε αίτημα ραντεβού και θα επικοινωνήσουμε για επιβεβαίωση:',
+      sent: 'Το email αιτήματος άνοιξε στη συσκευή σας. Στείλτε το για να ολοκληρωθεί το αίτημα.',
       emailSubject: 'Posing coaching — κράτηση',
+      emailIntro: 'Θα ήθελα να κλείσω ραντεβού για Move & Pose.',
+      name: 'Ονοματεπώνυμο',
+      namePlaceholder: 'π.χ. Μαρία Παπαδοπούλου',
+      phone: 'Τηλέφωνο',
+      phonePlaceholder: 'π.χ. +30 69...',
+      emailPlaceholder: 'το email σου',
+      preferredDate: 'Προτιμώμενη ημέρα / ώρα',
+      sessionType: 'Τύπος συνεδρίας',
+      message: 'Σημειώσεις',
+      messagePlaceholder: 'Division, επίπεδο, ημερομηνία αγώνα ή ό,τι χρειάζεται να ξέρουμε.',
+      submit: 'Αίτημα ραντεβού',
+      options: {
+        online: 'Online posing session',
+        live: 'Live posing session',
+        bikini: 'Custom bikini',
+        makeup: 'Makeup service',
+        other: 'Άλλη υπηρεσία',
+      },
     },
   },
   poseBubble: {
@@ -395,7 +475,7 @@ export const el = {
         },
         {
           title: 'Ποια δεδομένα συλλέγουμε',
-          body: 'Μπορεί να επεξεργαζόμαστε: στοιχεία επικοινωνίας (όνομα, email, μήνυμα) από τη φόρμα επικοινωνίας· τεχνικά δεδομένα επίσκεψης (IP, browser, συσκευή) μέσω hosting/analytics· προτιμήσεις site (γλώσσα, cookies). Κρατήσεις μαθημάτων γίνονται σε εξωτερική πλατφόρμα (members.moovefitness.gr) με δική της πολιτική απορρήτου.',
+          body: 'Μπορεί να επεξεργαζόμαστε: στοιχεία επικοινωνίας (όνομα, email, μήνυμα) από τη φόρμα επικοινωνίας· τεχνικά δεδομένα επίσκεψης (IP, browser, συσκευή) μέσω hosting/analytics· προτιμήσεις site (γλώσσα, cookies). Κρατήσεις μαθημάτων γίνονται σε εξωτερική πλατφόρμα (members.moovefitness.gr). Κρατήσεις Move & Pose γίνονται μέσω Cal.com και οι online πληρωμές μέσω Stripe, με δικές τους πολιτικές απορρήτου.',
         },
         {
           title: 'Σκοπός επεξεργασίας',
@@ -407,7 +487,7 @@ export const el = {
         },
         {
           title: 'Αποδέκτες και τρίτα μέρη',
-          body: 'Χρησιμοποιούμε Vercel (hosting, προαιρετικά analytics), Google Places API (δημόσιες κριτικές) και εξωτερικές πλατφόρμες κρατήσεων/ραντεβού. Οι πάροχοι επεξεργάζονται δεδομένα ως εκτελούντες την επεξεργασία ή ανεξάρτητοι υπεύθυνοι, σύμφωνα με τις δικές τους πολιτικές.',
+          body: 'Χρησιμοποιούμε Vercel (hosting, προαιρετικά analytics), Google Places API (δημόσιες κριτικές), Cal.com (κρατήσεις ραντεβού), Stripe (online πληρωμές) και εξωτερικές πλατφόρμες κρατήσεων. Οι πάροχοι επεξεργάζονται δεδομένα ως εκτελούντες την επεξεργασία ή ανεξάρτητοι υπεύθυνοι, σύμφωνα με τις δικές τους πολιτικές.',
         },
         {
           title: 'Διάρκεια διατήρησης',
@@ -449,7 +529,7 @@ export const el = {
         },
         {
           title: 'Εξωτερικοί σύνδεσμοι',
-          body: 'Συνδέσμοι προς τρίτους (π.χ. κρατήσεις, social media, Google Maps) οδηγούν σε εξωτερικούς ιστότοπους με δικές τους πολιτικές. Δεν ευθυνόμαστε για το περιεχόμενό τους.',
+          body: 'Συνδέσμοι προς τρίτους (π.χ. κρατήσεις, πληρωμές μέσω Stripe, social media, Google Maps) οδηγούν σε εξωτερικούς ιστότοπους με δικές τους πολιτικές. Δεν ευθυνόμαστε για το περιεχόμενό τους.',
         },
         {
           title: 'Περιορισμός ευθύνης',

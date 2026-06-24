@@ -15,7 +15,7 @@ const nav = [
 ] as const
 
 const posingCtaClass =
-  'inline-flex items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-black shadow-[0_6px_24px_-6px_rgba(192,38,211,0.5)] transition hover:brightness-110 sm:px-5 sm:text-sm'
+  'inline-flex items-center justify-center rounded-full border border-fuchsia-200/45 bg-gradient-to-r from-fuchsia-500/88 via-pink-300/88 to-rose-200/88 px-4 py-2 text-xs font-bold text-[#160714] shadow-[0_10px_34px_-12px_rgba(244,114,182,0.9),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition hover:brightness-110 sm:px-5 sm:text-sm'
 
 export function Header() {
   const [open, setOpen] = useState(false)
@@ -26,7 +26,7 @@ export function Header() {
   function navClass(isActive: boolean) {
     if (posing) {
       return `relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-3.5 sm:text-sm ${
-        isActive ? 'text-black' : 'text-white/65 hover:text-white'
+        isActive ? 'text-white' : 'text-white/58 hover:text-white'
       }`
     }
     return `relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-3.5 sm:text-sm ${
@@ -44,11 +44,11 @@ export function Header() {
     <header
       className={
         posing
-          ? 'sticky top-0 z-50 border-b border-white/10 bg-[#08080c]/90 backdrop-blur-xl backdrop-saturate-150'
+          ? 'sticky top-0 z-50 border-b border-fuchsia-200/18 bg-[#07070b]/88 shadow-[0_16px_54px_-32px_rgba(244,114,182,0.9)] backdrop-blur-2xl backdrop-saturate-150'
           : 'sticky top-0 z-50 border-b border-moove-border/70 bg-moove-surface/75 backdrop-blur-xl backdrop-saturate-150'
       }
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center px-4 sm:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-6">
+      <div className={`mx-auto flex items-center px-4 sm:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'h-16 max-w-7xl lg:gap-8' : 'h-14 max-w-6xl lg:gap-6'}`}>
         <div className="flex min-w-0 flex-1 items-center lg:hidden">
           <div className="w-10 shrink-0" aria-hidden />
           <div className="flex flex-1 justify-center">
@@ -56,7 +56,7 @@ export function Header() {
               <img
                 src={logoSrc}
                 alt={logoAlt}
-                className={`w-auto shrink-0 ${posing ? 'h-11' : 'h-10'}`}
+                className={`w-auto shrink-0 ${posing ? 'h-12' : 'h-10'}`}
                 width={posing ? 120 : 180}
                 height={posing ? 48 : 48}
               />
@@ -86,16 +86,16 @@ export function Header() {
           <img
             src={logoSrc}
             alt={logoAlt}
-            className="h-12 w-auto shrink-0"
-            width={posing ? 140 : 240}
-            height={48}
+            className={`w-auto shrink-0 ${posing ? 'h-14' : 'h-12'}`}
+            width={posing ? 180 : 240}
+            height={posing ? 64 : 48}
           />
         </NavLink>
 
         <nav
           className={
             posing
-              ? 'hidden items-center justify-center gap-0.5 self-center rounded-full border border-white/10 bg-white/[0.04] p-0.5 lg:flex'
+              ? 'hidden items-center justify-center gap-0.5 self-center rounded-full border border-fuchsia-200/18 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(244,114,182,0.08),rgba(0,0,0,0.18))] p-1 shadow-[0_12px_38px_-28px_rgba(244,114,182,0.95),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-md lg:flex'
               : 'hidden items-center justify-center gap-0.5 self-center rounded-full border border-moove-border/80 bg-moove-elevated/50 p-0.5 lg:flex'
           }
           aria-label={t('nav.main')}
@@ -113,7 +113,7 @@ export function Header() {
                     <span
                       className={
                         posing
-                          ? 'absolute inset-0 rounded-full bg-gradient-to-r from-fuchsia-400 to-cyan-300 shadow-sm'
+                          ? 'absolute inset-0 rounded-full border border-fuchsia-100/35 bg-gradient-to-r from-fuchsia-500/65 via-pink-300/50 to-rose-200/42 shadow-[0_0_28px_-8px_rgba(244,114,182,0.95)]'
                           : 'absolute inset-0 rounded-full bg-moove-lime/90 shadow-sm'
                       }
                       aria-hidden
@@ -154,7 +154,7 @@ export function Header() {
           id="mobile-nav"
           className={
             posing
-              ? 'border-t border-white/10 bg-[#0c0c12]/98 px-4 py-4 backdrop-blur-xl lg:hidden'
+              ? 'border-t border-fuchsia-200/18 bg-[#09090f]/98 px-4 py-4 shadow-[0_18px_58px_-34px_rgba(244,114,182,0.85)] backdrop-blur-xl lg:hidden'
               : 'border-t border-moove-border/80 bg-moove-surface/95 px-4 py-4 backdrop-blur-xl lg:hidden'
           }
         >
@@ -171,7 +171,7 @@ export function Header() {
                   posing
                     ? `rounded-xl px-4 py-2.5 text-sm font-medium ${
                         isActive
-                          ? 'bg-gradient-to-r from-fuchsia-500/25 to-cyan-400/20 text-white'
+                          ? 'border border-fuchsia-100/30 bg-gradient-to-r from-fuchsia-500/30 to-rose-200/18 text-white'
                           : 'text-white/65'
                       }`
                     : `rounded-xl px-4 py-2.5 text-sm font-medium ${

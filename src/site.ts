@@ -30,12 +30,12 @@ export const site = {
   posing: {
     brandName: 'Move & Pose',
     brandSubtitle: 'The Posing Academy',
-    logo: '/pose1.png',
+    logo: '/pose1-no-bg.png',
     /** Hero image (αριστερά) στη σελίδα posing — ξεχωριστό από το logo mark. */
     heroImage: '/pose2.png',
     instagram: 'https://www.instagram.com/theposingacademygr/',
     /** Cal.com inline embed path — username ή username/event-slug */
-    calLink: '',
+    calLink: 'μαγδα-σαμαρα-awut2i/online-posing-session',
     coachName: 'Μαγδα Σαμαρά',
   },
 } as const
