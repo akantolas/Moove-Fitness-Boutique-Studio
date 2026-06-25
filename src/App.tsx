@@ -10,6 +10,7 @@ import { PrivacyPage } from './pages/Privacy'
 import { ServiceTermsPage } from './pages/ServiceTerms'
 import { TermsOfUsePage } from './pages/TermsOfUse'
 import { PosingPage } from './pages/Posing'
+import { PosingAboutPage } from './pages/PosingAbout'
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/terms" element={<TermsOfUsePage />} />
           <Route path="/service-terms" element={<ServiceTermsPage />} />
           <Route path="/posing" element={<PosingPage />} />
+          <Route path="/posing/about" element={<PosingAboutPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

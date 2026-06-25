@@ -2,6 +2,7 @@ export const en = {
   meta: {
     studioTitle: '{{owner}} · {{tagline}} Volos',
     posingTitle: '{{brand}} — Online posing coaching',
+    posingAboutTitle: '{{brand}} — About',
   },
   lang: {
     el: 'Ελληνικά',
@@ -13,6 +14,7 @@ export const en = {
     classes: 'Classes',
     about: 'About',
     contact: 'Contact',
+    packages: 'Packages',
     main: 'Main navigation',
     mobile: 'Mobile navigation',
     openMenu: 'Open menu',
@@ -103,11 +105,33 @@ export const en = {
   about: {
     eyebrow: 'About',
     description: 'Founder and instructor at {{name}}. Every class is taught by her in small groups.',
-    philosophyTitle: 'Philosophy',
-    philosophy1:
-      'At {{name}}, Pilates is not treated as generic exercise. It is breath, alignment, and controlled movement — with safe, gradual progress as the goal.',
-    philosophy2:
-      'Reformer, Mat, TRX, and Bootycamp all follow the same approach: attention to technique, corrections when needed, and a pace that respects your body. The studio is quiet, clean, and built for real work — without pressure.',
+    experienceTitle: 'Background',
+    experienceBody:
+      'Magda Samara is a graduate of the University of Thessaly with a specialization in Adapted Physical Education. She brings years of experience in exercise, wellness, and physical conditioning. She has worked with leading gyms and fitness centres in Volos and across Thessaly, offering personalised coaching to clients of all ages and levels.',
+    highlights: [
+      'University of Thessaly',
+      'Adapted Physical Education',
+      'Volos & Thessaly',
+    ],
+    specializationsTitle: 'Specializations',
+    specializations: [
+      {
+        title: 'Pilates Mat',
+        body: 'Mat classes focused on technique, movement control, and safe, progressive training.',
+      },
+      {
+        title: 'Pilates Equipment',
+        body: 'Equipment-based Pilates for tailored guidance and targeted strengthening.',
+      },
+      {
+        title: 'Pilates Reformer',
+        body: 'Specialised Reformer instruction in small groups, with close attention to form.',
+      },
+      {
+        title: 'Pre, during & post pregnancy',
+        body: 'Safe, effective exercise at every stage to support lasting improvements in physical condition.',
+      },
+    ],
     studioTitle: 'The studio',
     studioBody:
       'Natural light, clean lines, and modern equipment — on Korai street, minutes from downtown Volos.',
@@ -230,6 +254,21 @@ export const en = {
       openCal: 'Open Cal.com',
       byCoach: 'by {{coach}}',
       chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Stripe payments'],
+    },
+    about: {
+      eyebrow: 'About us',
+      headline: 'Are you a Beginner or a Pro in the fitness industry?',
+      lead: 'We are here to guarantee the best version of your performance.',
+      paragraphs: [
+        'With a BSc Degree in Physical Education & Sport Science and through kinesiology knowledge, our Head Coach will guide you through your posing journey step by step with all the necessary tips & tricks to make your physique stand out on stage!',
+        'As a professional dance instructor, champion, international adjudicator & fitness athlete, our Head Coach will provide you with all the secrets you need to add character & charisma to your performance!',
+      ],
+      closing: 'Work with us & bring the magic on stage!',
+      viewPackages: 'View packages',
+      bookSession: 'Book a session',
+      studioNote:
+        'Move & Pose is a separate service from Moove studio classes — online and live posing coaching for bodybuilding shows.',
+      backToPosing: '← Back to Move & Pose',
     },
     service: {
       eyebrow: 'The service',

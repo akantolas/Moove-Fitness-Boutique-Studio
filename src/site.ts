@@ -30,7 +30,7 @@ export const site = {
   posing: {
     brandName: 'Move & Pose',
     brandSubtitle: 'The Posing Academy',
-    logo: '/pose1-no-bg.png',
+    logo: '/pose1-transparent.png',
     /** Hero image (αριστερά) στη σελίδα posing — ξεχωριστό από το logo mark. */
     heroImage: '/pose2.png',
     instagram: 'https://www.instagram.com/theposingacademygr/',

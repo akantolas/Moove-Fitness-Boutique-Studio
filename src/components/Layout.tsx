@@ -1,11 +1,11 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { CookieBanner } from './CookieBanner'
 import { CookiePreferencesPanel } from './CookiePreferencesPanel'
 import { Header } from './Header'
 import { Footer } from './Footer'
 import { site } from '../site'
-import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
+import { useIsPosingRoute, posingBookingHref } from '../hooks/useIsPosingRoute'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 function CalendarGlyph({ className }: { className?: string }) {
@@ -49,6 +49,8 @@ function ChevronGlyph({ className }: { className?: string }) {
 
 export function Layout() {
   const isPosing = useIsPosingRoute()
+  const { pathname } = useLocation()
+  const isPosingAbout = pathname === '/posing/about'
   const { t, locale } = useTranslation()
   const vars = useSiteVars()
 
@@ -61,9 +63,11 @@ export function Layout() {
 
   useEffect(() => {
     const prevTitle = document.title
-    document.title = isPosing
-      ? t('meta.posingTitle', vars)
-      : t('meta.studioTitle', vars)
+    document.title = isPosingAbout
+      ? t('meta.posingAboutTitle', vars)
+      : isPosing
+        ? t('meta.posingTitle', vars)
+        : t('meta.studioTitle', vars)
 
     let themeMeta = document.querySelector('meta[name="theme-color"]')
     const created = !themeMeta
@@ -83,7 +87,7 @@ export function Layout() {
         themeMeta?.setAttribute('content', prevTheme)
       }
     }
-  }, [isPosing, t, locale, vars])
+  }, [isPosing, isPosingAbout, t, locale, vars])
 
   return (
     <div
@@ -106,7 +110,7 @@ export function Layout() {
             }`}
           >
             <a
-              href={isPosing ? '#booking' : site.bookingUrl}
+              href={isPosing ? posingBookingHref : site.bookingUrl}
               className={`flex min-h-[3.35rem] items-center gap-2 rounded-[0.85rem] px-2 py-2 no-underline transition active:scale-[0.98] sm:px-3 ${
                 isPosing
                   ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black shadow-[0_8px_28px_-6px_rgba(192,38,211,0.45)] active:brightness-[0.97]'

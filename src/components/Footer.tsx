@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCookieConsent } from '../cookies/CookieConsentProvider'
 import { site } from '../site'
-import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
+import { useIsPosingRoute, posingBookingHref } from '../hooks/useIsPosingRoute'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 export function Footer() {
@@ -74,16 +74,25 @@ export function Footer() {
                 </Link>
               </li>
             ) : null}
-            <li>
-              <Link to="/posing" className={linkClass}>
-                {t('footer.moveAndPose')}
-              </Link>
-            </li>
             {posing ? (
+              <>
+                <li>
+                  <Link to="/posing/about" className={linkClass}>
+                    {t('nav.about')}
+                  </Link>
+                </li>
+                <li>
+                  <a href={posingBookingHref} className={linkClass}>
+                    {t('common.bookPosingSession')}
+                  </a>
+                </li>
+              </>
+            ) : null}
+            {!posing ? (
               <li>
-                <a href="#booking" className={linkClass}>
-                  {t('common.bookPosingSession')}
-                </a>
+                <Link to="/posing" className={linkClass}>
+                  {t('footer.moveAndPose')}
+                </Link>
               </li>
             ) : null}
             <li>

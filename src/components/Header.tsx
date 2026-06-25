@@ -2,16 +2,26 @@ import { NavLink } from 'react-router-dom'
 import { useState } from 'react'
 import { site } from '../site'
 import { ButtonLink } from './Links'
-import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
+import {
+  posingBookingHref,
+  posingPackagesHref,
+  useIsPosingRoute,
+} from '../hooks/useIsPosingRoute'
 import { PosePromoBubble } from './PosePromoBubble'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useTranslation } from '../i18n/useTranslation'
 
-const nav = [
-  { to: '/', labelKey: 'nav.home' },
+const studioNav = [
+  { to: '/', labelKey: 'nav.home', end: true },
   { to: '/mathimata', labelKey: 'nav.classes' },
   { to: '/sxetika', labelKey: 'nav.about' },
   { to: '/epikoinonia', labelKey: 'nav.contact' },
+] as const
+
+const posingNav = [
+  { to: '/posing', labelKey: 'nav.home', end: true },
+  { to: '/posing/about', labelKey: 'nav.about' },
+  { href: posingPackagesHref, labelKey: 'nav.packages' },
 ] as const
 
 const posingCtaClass =
@@ -22,6 +32,7 @@ export function Header() {
   const posing = useIsPosingRoute()
   const { posing: posingBrand } = site
   const { t } = useTranslation()
+  const navItems = posing ? posingNav : studioNav
 
   function navClass(isActive: boolean) {
     if (posing) {
@@ -100,30 +111,36 @@ export function Header() {
           }
           aria-label={t('nav.main')}
         >
-          {nav.map(({ to, labelKey }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) => navClass(isActive)}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive ? (
-                    <span
-                      className={
-                        posing
-                          ? 'absolute inset-0 rounded-full border border-fuchsia-100/35 bg-gradient-to-r from-fuchsia-500/65 via-pink-300/50 to-rose-200/42 shadow-[0_0_28px_-8px_rgba(244,114,182,0.95)]'
-                          : 'absolute inset-0 rounded-full bg-moove-lime/90 shadow-sm'
-                      }
-                      aria-hidden
-                    />
-                  ) : null}
-                  <span className="relative z-10">{t(labelKey)}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
+          {navItems.map((item) =>
+            'href' in item ? (
+              <a key={item.href} href={item.href} className={navClass(false)}>
+                <span className="relative z-10">{t(item.labelKey)}</span>
+              </a>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={'end' in item ? item.end : false}
+                className={({ isActive }) => navClass(isActive)}
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive ? (
+                      <span
+                        className={
+                          posing
+                            ? 'absolute inset-0 rounded-full border border-fuchsia-100/35 bg-gradient-to-r from-fuchsia-500/65 via-pink-300/50 to-rose-200/42 shadow-[0_0_28px_-8px_rgba(244,114,182,0.95)]'
+                            : 'absolute inset-0 rounded-full bg-moove-lime/90 shadow-sm'
+                        }
+                        aria-hidden
+                      />
+                    ) : null}
+                    <span className="relative z-10">{t(item.labelKey)}</span>
+                  </>
+                )}
+              </NavLink>
+            ),
+          )}
         </nav>
 
         <div className="hidden items-center justify-end gap-2 lg:flex">
@@ -134,7 +151,7 @@ export function Header() {
             <PosePromoBubble variant="header" />
           )}
           {posing ? (
-            <a href="#booking" className={posingCtaClass}>
+            <a href={posingBookingHref} className={posingCtaClass}>
               {t('header.bookPosingShort')}
             </a>
           ) : (
@@ -162,29 +179,44 @@ export function Header() {
             <LanguageSwitcher />
           </div>
           <nav className="flex flex-col gap-1" aria-label={t('nav.mobile')}>
-            {nav.map(({ to, labelKey }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === '/'}
-                className={({ isActive }) =>
-                  posing
-                    ? `rounded-xl px-4 py-2.5 text-sm font-medium ${
-                        isActive
-                          ? 'border border-fuchsia-100/30 bg-gradient-to-r from-fuchsia-500/30 to-rose-200/18 text-white'
-                          : 'text-white/65'
-                      }`
-                    : `rounded-xl px-4 py-2.5 text-sm font-medium ${
-                        isActive
-                          ? 'bg-moove-lime/20 text-moove-ink'
-                          : 'text-moove-muted'
-                      }`
-                }
-                onClick={() => setOpen(false)}
-              >
-                {t(labelKey)}
-              </NavLink>
-            ))}
+            {navItems.map((item) =>
+              'href' in item ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className={
+                    posing
+                      ? 'rounded-xl px-4 py-2.5 text-sm font-medium text-white/65'
+                      : 'rounded-xl px-4 py-2.5 text-sm font-medium text-moove-muted'
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  {t(item.labelKey)}
+                </a>
+              ) : (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={'end' in item ? item.end : false}
+                  className={({ isActive }) =>
+                    posing
+                      ? `rounded-xl px-4 py-2.5 text-sm font-medium ${
+                          isActive
+                            ? 'border border-fuchsia-100/30 bg-gradient-to-r from-fuchsia-500/30 to-rose-200/18 text-white'
+                            : 'text-white/65'
+                        }`
+                      : `rounded-xl px-4 py-2.5 text-sm font-medium ${
+                          isActive
+                            ? 'bg-moove-lime/20 text-moove-ink'
+                            : 'text-moove-muted'
+                        }`
+                  }
+                  onClick={() => setOpen(false)}
+                >
+                  {t(item.labelKey)}
+                </NavLink>
+              ),
+            )}
             {!posing ? (
               <div className="mt-2">
                 <PosePromoBubble variant="menu" onNavigate={() => setOpen(false)} />
@@ -198,7 +230,7 @@ export function Header() {
               className={`mt-3 border-t pt-4 ${posing ? 'border-white/10' : 'border-moove-border'}`}
             >
               {posing ? (
-                <a href="#booking" className={`w-full ${posingCtaClass} !py-3`}>
+                <a href={posingBookingHref} className={`w-full ${posingCtaClass} !py-3`}>
                   {t('common.bookPosingSession')}
                 </a>
               ) : (
