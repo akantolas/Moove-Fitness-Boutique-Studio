@@ -7,6 +7,19 @@ type PosePromoBubbleProps = {
   onNavigate?: () => void
 }
 
+type PosingBubbleVariant = 'header' | 'menu' | 'home'
+
+function posingLogoClass(variant: PosingBubbleVariant) {
+  const base = 'w-auto shrink-0 object-contain'
+  if (variant === 'home') {
+    return `${base} h-14 max-w-[7.5rem] sm:h-16 sm:max-w-[9rem]`
+  }
+  if (variant === 'menu') {
+    return `${base} h-10`
+  }
+  return `${base} h-7`
+}
+
 export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
   const { posing } = site
   const { t } = useTranslation()
@@ -33,7 +46,7 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
         <img
           src={site.logoMark}
           alt={site.name}
-          className={`w-auto shrink-0 opacity-85 grayscale ${isMenu ? 'h-8' : 'h-6'}`}
+          className={`w-auto shrink-0 object-contain opacity-85 grayscale ${isMenu ? 'h-8' : 'h-6'}`}
           width={isMenu ? 120 : 96}
           height={isMenu ? 36 : 28}
         />
@@ -57,44 +70,39 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
     )
   }
 
-  const sharedInner = (
-    <>
-      <img
-        src={posing.logo}
-        alt=""
-        className={
+  const brandLabel = (
+    <span className="min-w-0 text-left">
+      <span
+        className={`block font-semibold leading-tight ${
           variant === 'home'
-            ? 'h-14 w-auto shrink-0 sm:h-16'
+            ? 'text-base text-white sm:text-lg'
             : variant === 'menu'
-              ? 'h-10 w-auto shrink-0'
-              : 'h-7 w-auto shrink-0'
-        }
-        width={variant === 'home' ? 80 : 56}
-        height={variant === 'home' ? 56 : 40}
-      />
-      <span className="min-w-0 text-left">
+              ? 'text-sm text-white'
+              : 'text-[11px] text-white sm:text-xs'
+        }`}
+      >
+        {posing.brandName}
+      </span>
+      {(variant === 'menu' || variant === 'home') && (
         <span
-          className={`block font-semibold leading-tight ${
-            variant === 'home'
-              ? 'text-base text-white sm:text-lg'
-              : variant === 'menu'
-                ? 'text-sm text-white'
-                : 'text-[11px] text-white sm:text-xs'
+          className={`mt-0.5 block leading-snug text-cyan-300/80 ${
+            variant === 'home' ? 'text-sm' : 'text-xs'
           }`}
         >
-          {posing.brandName}
+          {t('poseBubble.tagline')}
         </span>
-        {(variant === 'menu' || variant === 'home') && (
-          <span
-            className={`mt-0.5 block leading-snug text-cyan-300/80 ${
-              variant === 'home' ? 'text-sm' : 'text-xs'
-            }`}
-          >
-            {t('poseBubble.tagline')}
-          </span>
-        )}
-      </span>
-    </>
+      )}
+    </span>
+  )
+
+  const posingLogo = (bubbleVariant: PosingBubbleVariant) => (
+    <img
+      src={posing.logo}
+      alt=""
+      className={posingLogoClass(bubbleVariant)}
+      width={bubbleVariant === 'home' ? 80 : 56}
+      height={bubbleVariant === 'home' ? 56 : 40}
+    />
   )
 
   if (variant === 'home') {
@@ -112,11 +120,14 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
           aria-hidden
         />
         <div className="relative flex flex-1 flex-col gap-5 sm:flex-row sm:items-center">
-          {sharedInner}
+          <div className="relative flex w-fit max-w-full items-center gap-4 self-start">
+            {posingLogo('home')}
+            {brandLabel}
+          </div>
           <p className="relative flex-1 text-sm leading-relaxed text-white/60 sm:text-base">
             {t('poseBubble.homeBody')}
           </p>
-          <span className="relative inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-black transition group-hover:brightness-110">
+          <span className="relative inline-flex shrink-0 items-center justify-center self-start rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-black transition group-hover:brightness-110 sm:self-center">
             {t('common.learnMore')}
           </span>
         </div>
@@ -131,7 +142,8 @@ export function PosePromoBubble({ variant, onNavigate }: PosePromoBubbleProps) {
 
   return (
     <Link to="/posing" onClick={onNavigate} className={compactClass}>
-      {sharedInner}
+      {posingLogo(variant)}
+      {brandLabel}
       {variant === 'header' ? (
         <span className="pr-1 text-[10px] font-medium text-cyan-300/75 sm:text-[11px]" aria-hidden>
           →
