@@ -12,7 +12,7 @@ export const site = {
    */
   bookingUrl: 'https://members.moovefitness.gr/',
   phone: '+30 2421 070 751',
-  email: 'hello@moovestudio.gr',
+  email: 'info@moovefitness.gr',
   addressLine: 'Δημάρχου Γεωργιάδου, Κοραή 106Γ, Βόλος 383 33',
   mapsUrl: 'https://maps.app.goo.gl/qbPoUKU4BxiLjdpj6',
   /** Σύνδεσμος προς κριτικές Google Maps (προφίλ επιχείρησης). */
