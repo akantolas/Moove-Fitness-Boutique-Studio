@@ -3,13 +3,12 @@ import { GoogleReviews } from '../components/GoogleReviews'
 import { PosePromoBubble } from '../components/PosePromoBubble'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
-import { useSiteVars, useTranslation } from '../i18n/useTranslation'
+import { useTranslation } from '../i18n/useTranslation'
 
 const classTitles = ['Reformer', 'Pilates Mat', 'TRX & Functional', "Magda's Bootycamp"] as const
 
 export function HomePage() {
   const { t, dictionary } = useTranslation()
-  const vars = useSiteVars()
 
   const stats = [
     { value: t('home.stats.reformer'), label: t('home.stats.reformerLabel') },
@@ -34,11 +33,18 @@ export function HomePage() {
             <p className="moove-eyebrow">{site.tagline}</p>
             <h1 className="font-display mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.35rem]">
               {t('home.hero.title')}
-              <span className="mt-2 block text-gradient-lime">{t('home.hero.titleAccent')}</span>
+              {t('home.hero.titleAccent') ? (
+                <span className="mt-2 block text-gradient-lime">{t('home.hero.titleAccent')}</span>
+              ) : null}
             </h1>
             <p className="mt-6 max-w-lg text-base leading-relaxed text-moove-muted sm:text-lg">
-              {t('home.hero.body', vars)}
+              {t('home.hero.body')}
             </p>
+            {t('home.hero.body2') ? (
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-moove-muted sm:text-lg">
+                {t('home.hero.body2')}
+              </p>
+            ) : null}
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
                 {t('common.bookSpot')}

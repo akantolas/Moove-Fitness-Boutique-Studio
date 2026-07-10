@@ -55,9 +55,11 @@ export const en = {
   },
   home: {
     hero: {
-      title: 'Pilates & Reformer in Volos.',
-      titleAccent: 'Small groups, personal guidance.',
-      body: '{{name}} is {{owner}}’s studio on Korai street. Every class is taught by her in small groups, with a focus on safety and proper technique.',
+      title: 'Welcome to Moove Fitness Boutique Studio',
+      titleAccent: '',
+      body: 'Moove Fitness Boutique Studio, founded by Magda Samara, is a boutique training space dedicated to quality and safe exercise.',
+      body2:
+        'All classes are held in small groups and taught with emphasis on proper technique, personalised guidance, and a unique training experience.',
       heroImageAlt: 'Pilates class at Moove',
       location: 'Korai 106G · Volos',
       viewClasses: 'View classes',
