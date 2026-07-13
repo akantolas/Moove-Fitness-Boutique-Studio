@@ -83,6 +83,15 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 Το `/posing/account` διαβάζει δεδομένα απευθείας από Supabase (RLS) — δεν χρειάζεται service role για το dashboard.
 
+### Troubleshooting: `server_config_error` ή `FUNCTION_INVOCATION_FAILED` στο ημερολόγιο
+
+1. `GET /api/posing/health` — αν crashάρει ή `hasServiceKey: false`:
+   - Όρισε `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` στο Vercel (Production)
+   - **Redeploy** μετά από κάθε αλλαγή env
+2. Αν το health είναι OK αλλά δεν φαίνονται ώρες (`—` σε κάθε μέρα):
+   - Πρόσθεσε slots από `/posing/admin` (weekly calendar)
+3. Τα `/api/posing/*` routes εισάγουν το shared module ως `./_lib.js` (όχι `../_lib.js`) — λάθος path προκαλεί crash σε όλα τα posing API.
+
 ## 5. Site routes
 
 | Route | Ρόλος |

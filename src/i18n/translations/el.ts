@@ -399,6 +399,10 @@ export const el = {
       signupSuccessTitle: 'Έλεγξε το email σου',
       signupSuccessBody: 'Σου στείλαμε email επιβεβαίωσης. Μετά την ενεργοποίηση, συνδέσου για να κλείσεις συνεδρία.',
       errorGeneric: 'Κάτι πήγε στραβά. Δοκίμασε ξανά.',
+      invalidCredentials:
+        'Λάθος email ή κωδικός. Αν μόλις έκανες εγγραφή, πρώτα επιβεβαίωσε το email (έλεγξε και spam).',
+      emailNotConfirmed: 'Πρέπει να επιβεβαιώσεις το email πριν τη σύνδεση. Έλεγξε inbox και spam.',
+      rateLimit: 'Πολλά email από το Supabase. Δοκίμασε αργότερα ή δημιούργησε τον χρήστη χειροκίνητα στο dashboard.',
       notConfigured: 'Το σύστημα κρατήσεων ρυθμίζεται. Επικοινώνησε μαζί μας για κράτηση.',
     },
     account: {
@@ -466,6 +470,8 @@ export const el = {
         avatar_too_large: 'Μέγιστο μέγεθος 2 MB.',
         avatar_resize_failed: 'Αποτυχία επεξεργασίας εικόνας.',
         avatar_upload_failed: 'Το ανέβασμα απέτυχε. Δοκίμασε ξανά.',
+        migration_avatar_required:
+          'Για avatars τρέξε το supabase/migrations/003_profile_avatar.sql στο Supabase SQL Editor.',
       },
     },
     calendar: {
@@ -479,6 +485,14 @@ export const el = {
       error: 'Η κράτηση απέτυχε. Δοκίμασε ξανά.',
       slotTaken: 'Η ώρα μόλις κλείστηκε. Επίλεξε άλλη.',
       loginRequired: 'Συνδέσου για να κλείσεις ώρα.',
+      errors: {
+        server_config_error:
+          'Πρόβλημα ρύθμισης server. Έλεγξε SUPABASE_URL και SUPABASE_SERVICE_ROLE_KEY στο Vercel και κάνε redeploy.',
+        missing_supabase_admin_config:
+          'Λείπουν SUPABASE_URL ή SUPABASE_SERVICE_ROLE_KEY στο Vercel. Κάνε redeploy μετά την προσθήκη.',
+        invalid_api_response: 'Μη έγκυρη απάντηση από το server. Δοκίμασε ξανά σε λίγο.',
+        slots_fetch_failed: 'Αποτυχία φόρτωσης ωρών. Δοκίμασε ξανά.',
+      },
     },
     admin: {
       title: 'Διαχείριση',

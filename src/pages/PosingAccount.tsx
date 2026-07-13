@@ -83,6 +83,7 @@ export function PosingAccountPage() {
   const [bookings, setBookings] = useState<PosingBooking[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [fetchError, setFetchError] = useState('')
+  const [profileWarning, setProfileWarning] = useState('')
   const [dataLoading, setDataLoading] = useState(false)
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
@@ -136,6 +137,9 @@ export function PosingAccountPage() {
         setDivision(form.division)
         setNotes(form.notes)
         setFetchError('')
+        setProfileWarning(
+          data.profileError ? translateAccountError(data.profileError, t) : '',
+        )
       })
       .catch((err) => {
         if (cancelled) return
@@ -302,6 +306,12 @@ export function PosingAccountPage() {
       {fetchError ? (
         <p className="mt-6 rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
           {fetchError}
+        </p>
+      ) : null}
+
+      {profileWarning ? (
+        <p className="mt-6 rounded-xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          {profileWarning}
         </p>
       ) : null}
 

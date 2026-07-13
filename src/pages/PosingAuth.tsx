@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PasswordInput } from '../components/PasswordInput'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
+import { translateAuthError } from '../lib/posingAuthErrors'
 import { useTranslation } from '../i18n/useTranslation'
 
 const inputClass =
@@ -30,7 +31,7 @@ export function PosingLoginPage() {
       await signIn(email, password)
       navigate(redirect, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('posing.auth.errorGeneric'))
+      setError(translateAuthError(err, t))
     } finally {
       setSubmitting(false)
     }
@@ -138,7 +139,7 @@ export function PosingSignupPage() {
       await signUp(email, password, fullName)
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('posing.auth.errorGeneric'))
+      setError(translateAuthError(err, t))
     } finally {
       setSubmitting(false)
     }

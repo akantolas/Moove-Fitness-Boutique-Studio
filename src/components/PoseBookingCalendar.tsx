@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { createPosingBooking, fetchPosingSlots } from '../lib/posingApi'
+import { translateSlotsError } from '../lib/posingSlotsErrors'
 import { isSupabaseConfigured } from '../lib/supabase'
 import type { PosingPackageKey } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
@@ -77,12 +78,13 @@ export function PoseBookingCalendar({
       const data = await fetchPosingSlots(range.from, range.to)
       setSlots(data.filter((s) => new Date(s.start_at) > new Date()))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'slots_failed')
+      const code = err instanceof Error ? err.message : 'slots_fetch_failed'
+      setError(translateSlotsError(code, t))
       setSlots([])
     } finally {
       setLoading(false)
     }
-  }, [range.from, range.to])
+  }, [range.from, range.to, t])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async slot fetch

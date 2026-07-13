@@ -23,7 +23,59 @@ const AVATAR_BUCKET = 'posing-avatars'
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
-const profileSelect = 'full_name, email, phone, division, notes, avatar_url, role, created_at'
+const profileSelectBase = 'full_name, email, phone, division, notes, role, created_at'
+const profileSelect = `${profileSelectBase}, avatar_url`
+
+function isMissingAvatarColumn(message: string) {
+  return message.toLowerCase().includes('avatar_url')
+}
+
+async function fetchProfileRow(userId: string) {
+  const supabase = createSupabaseClient()
+  const full = await supabase.from('profiles').select(profileSelect).eq('id', userId).maybeSingle()
+
+  if (!full.error) {
+    return { profile: full.data as PosingProfile | null, profileError: null as string | null }
+  }
+
+  if (isMissingAvatarColumn(full.error.message)) {
+    const base = await supabase
+      .from('profiles')
+      .select(profileSelectBase)
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (!base.error && base.data) {
+      return {
+        profile: { ...base.data, avatar_url: null } as PosingProfile,
+        profileError: 'migration_avatar_required',
+      }
+    }
+  }
+
+  return { profile: null, profileError: full.error.message }
+}
+
+async function selectProfileAfterWrite(
+  supabase: ReturnType<typeof createSupabaseClient>,
+  userId: string,
+) {
+  const full = await supabase.from('profiles').select(profileSelect).eq('id', userId).maybeSingle()
+  if (!full.error && full.data) return full.data as PosingProfile
+
+  if (full.error && isMissingAvatarColumn(full.error.message)) {
+    const base = await supabase
+      .from('profiles')
+      .select(profileSelectBase)
+      .eq('id', userId)
+      .maybeSingle()
+    if (!base.error && base.data) {
+      return { ...base.data, avatar_url: null } as PosingProfile
+    }
+  }
+
+  throw new Error(full.error?.message ?? 'profile_save_failed')
+}
 
 export function getProfileInitials(fullName: string | null, email: string) {
   if (fullName?.trim()) {
@@ -132,7 +184,7 @@ export async function fetchPosingIsAdmin(userId: string): Promise<boolean> {
 export async function fetchPosingAccountData(userId: string) {
   const supabase = createSupabaseClient()
 
-  const [packagesRes, bookingsRes, profileRes] = await Promise.all([
+  const [packagesRes, bookingsRes, profileResult, isAdmin] = await Promise.all([
     supabase
       .from('user_packages')
       .select('id, plan_key, sessions_total, sessions_used, status, period_start, period_end, created_at')
@@ -141,13 +193,14 @@ export async function fetchPosingAccountData(userId: string) {
       .from('posing_bookings')
       .select('id, plan_key, status, created_at, slot:availability_slots(start_at, end_at)')
       .order('created_at', { ascending: false }),
-    supabase.from('profiles').select(profileSelect).eq('id', userId).maybeSingle(),
+    fetchProfileRow(userId),
+    fetchPosingIsAdmin(userId).catch(() => false),
   ])
 
   if (packagesRes.error) throw new Error(packagesRes.error.message)
   if (bookingsRes.error) throw new Error(bookingsRes.error.message)
 
-  const profile = profileRes.error ? null : profileRes.data ?? null
+  const { profile, profileError } = profileResult
 
   const packages: UserPackage[] = (packagesRes.data ?? []).map((p) => ({
     ...p,
@@ -167,7 +220,8 @@ export async function fetchPosingAccountData(userId: string) {
 
   return {
     profile: profile as PosingProfile | null,
-    isAdmin: profile?.role === 'admin',
+    profileError,
+    isAdmin,
     packages,
     bookings,
   }
@@ -187,33 +241,27 @@ export async function updatePosingProfile(
     updated_at: new Date().toISOString(),
   }
 
-  const { data: updated, error: updateError } = await supabase
+  const { error: updateError } = await supabase
     .from('profiles')
     .update(payload)
     .eq('id', userId)
-    .select(profileSelect)
-    .maybeSingle()
 
-  if (!updateError && updated) {
-    return updated as PosingProfile
+  if (!updateError) {
+    return selectProfileAfterWrite(supabase, userId)
   }
 
-  const { data: inserted, error: insertError } = await supabase
-    .from('profiles')
-    .insert({
-      id: userId,
-      email,
-      role: 'client',
-      ...payload,
-    })
-    .select(profileSelect)
-    .single()
+  const { error: insertError } = await supabase.from('profiles').insert({
+    id: userId,
+    email,
+    role: 'client',
+    ...payload,
+  })
 
-  if (insertError || !inserted) {
-    throw new Error(insertError?.message ?? updateError?.message ?? 'profile_save_failed')
+  if (insertError) {
+    throw new Error(insertError.message ?? updateError.message ?? 'profile_save_failed')
   }
 
-  return inserted as PosingProfile
+  return selectProfileAfterWrite(supabase, userId)
 }
 
 export async function deletePosingAccount(accessToken: string, password: string) {

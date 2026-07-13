@@ -1,4 +1,4 @@
-import { cors, getSupabaseAdmin, json } from '../_lib.js'
+import { cors, getSupabaseAdmin, json } from './_lib.js'
 
 export default async function handler(req, res) {
   cors(res)

@@ -9,6 +9,7 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { createSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
+import { normalizeAuthEmail } from '../lib/posingAuthErrors'
 
 type PosingAuthContextValue = {
   configured: boolean
@@ -44,14 +45,17 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const supabase = createSupabaseClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email: normalizeAuthEmail(email),
+      password,
+    })
     if (error) throw error
   }, [])
 
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
     const supabase = createSupabaseClient()
     const { error } = await supabase.auth.signUp({
-      email,
+      email: normalizeAuthEmail(email),
       password,
       options: {
         data: { full_name: fullName },

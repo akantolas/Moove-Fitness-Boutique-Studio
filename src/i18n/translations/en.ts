@@ -400,6 +400,10 @@ export const en = {
       signupSuccessTitle: 'Check your email',
       signupSuccessBody: 'We sent a confirmation email. After verifying, sign in to book a session.',
       errorGeneric: 'Something went wrong. Please try again.',
+      invalidCredentials:
+        'Wrong email or password. If you just signed up, confirm your email first (check spam too).',
+      emailNotConfirmed: 'Confirm your email before signing in. Check your inbox and spam folder.',
+      rateLimit: 'Too many emails from Supabase. Try later or create the user manually in the dashboard.',
       notConfigured: 'The booking system is being set up. Contact us to book.',
     },
     account: {
@@ -467,6 +471,8 @@ export const en = {
         avatar_too_large: 'Maximum file size is 2 MB.',
         avatar_resize_failed: 'Could not process the image.',
         avatar_upload_failed: 'Upload failed. Please try again.',
+        migration_avatar_required:
+          'For avatars, run supabase/migrations/003_profile_avatar.sql in the Supabase SQL Editor.',
       },
     },
     calendar: {
@@ -480,6 +486,14 @@ export const en = {
       error: 'Booking failed. Please try again.',
       slotTaken: 'This slot was just taken. Pick another.',
       loginRequired: 'Sign in to book a slot.',
+      errors: {
+        server_config_error:
+          'Server configuration issue. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on Vercel, then redeploy.',
+        missing_supabase_admin_config:
+          'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing on Vercel. Redeploy after adding them.',
+        invalid_api_response: 'Invalid server response. Please try again shortly.',
+        slots_fetch_failed: 'Could not load available times. Please try again.',
+      },
     },
     admin: {
       title: 'Admin',

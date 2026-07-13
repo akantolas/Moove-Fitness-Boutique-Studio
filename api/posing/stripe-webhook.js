@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { getSupabaseAdmin, json, readRawBody } from '../_lib.js'
+import { getSupabaseAdmin, json, readRawBody } from './_lib.js'
 
 export const config = {
   api: {

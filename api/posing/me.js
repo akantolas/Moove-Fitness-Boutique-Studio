@@ -4,7 +4,7 @@ import {
   getSupabaseAdmin,
   getUserFromRequest,
   json,
-} from '../_lib.js'
+} from './_lib.js'
 
 export default async function handler(req, res) {
   cors(res)
