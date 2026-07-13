@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { PasswordInput } from '../components/PasswordInput'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { useTranslation } from '../i18n/useTranslation'
 
@@ -71,20 +72,13 @@ export function PosingLoginPage() {
             className={inputClass}
           />
         </div>
-        <div>
-          <label htmlFor="login-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-            {t('posing.auth.password')}
-          </label>
-          <input
-            id="login-password"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
-        </div>
+        <PasswordInput
+          id="login-password"
+          label={t('posing.auth.password')}
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+        />
         {error ? (
           <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
             {error}
@@ -121,6 +115,7 @@ export function PosingSignupPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -132,6 +127,12 @@ export function PosingSignupPage() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     setError('')
+
+    if (password !== confirmPassword) {
+      setError(t('posing.auth.passwordMismatch'))
+      return
+    }
+
     setSubmitting(true)
     try {
       await signUp(email, password, fullName)
@@ -204,21 +205,22 @@ export function PosingSignupPage() {
             className={inputClass}
           />
         </div>
-        <div>
-          <label htmlFor="signup-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-            {t('posing.auth.password')}
-          </label>
-          <input
-            id="signup-password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
-        </div>
+        <PasswordInput
+          id="signup-password"
+          label={t('posing.auth.password')}
+          value={password}
+          onChange={setPassword}
+          autoComplete="new-password"
+          minLength={8}
+        />
+        <PasswordInput
+          id="signup-confirm-password"
+          label={t('posing.auth.confirmPassword')}
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          autoComplete="new-password"
+          minLength={8}
+        />
         {error ? (
           <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
             {error}

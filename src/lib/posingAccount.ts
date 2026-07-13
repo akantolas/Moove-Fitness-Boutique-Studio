@@ -140,3 +140,33 @@ export async function deletePosingAccount(accessToken: string, password: string)
     throw new Error(String(data.error ?? 'delete_failed'))
   }
 }
+
+const MIN_PASSWORD_LENGTH = 8
+
+export async function changePosingPassword(
+  email: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    throw new Error('password_too_short')
+  }
+  if (currentPassword === newPassword) {
+    throw new Error('password_same_as_current')
+  }
+
+  const supabase = createSupabaseClient()
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  })
+  if (signInError) throw new Error('invalid_password')
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) {
+    if (error.message.toLowerCase().includes('same')) {
+      throw new Error('password_same_as_current')
+    }
+    throw new Error(error.message)
+  }
+}

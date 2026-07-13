@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import {
+  changePosingPassword,
   deletePosingAccount,
   fetchPosingAccountData,
   updatePosingProfile,
@@ -65,6 +66,12 @@ export function PosingAccountPage() {
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [passwordError, setPasswordError] = useState('')
   const lastFetchedUserId = useRef<string | null>(null)
 
   useEffect(() => {
@@ -150,6 +157,33 @@ export function PosingAccountPage() {
       setProfileError(err instanceof Error ? err.message : 'profile_save_failed')
     } finally {
       setProfileSaving(false)
+    }
+  }
+
+  async function handleChangePassword(event: React.FormEvent) {
+    event.preventDefault()
+    if (!user?.email) return
+    setPasswordSaving(true)
+    setPasswordError('')
+    setPasswordMessage('')
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError(t('posing.account.passwordMismatch'))
+      setPasswordSaving(false)
+      return
+    }
+
+    try {
+      await changePosingPassword(user.email, currentPassword, newPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordMessage(t('posing.account.passwordChanged'))
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'password_change_failed'
+      setPasswordError(translateAccountError(code, t))
+    } finally {
+      setPasswordSaving(false)
     }
   }
 
@@ -296,6 +330,76 @@ export function PosingAccountPage() {
             className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
           >
             {profileSaving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
+          </button>
+        </form>
+      </section>
+
+      <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-white">{t('posing.account.passwordTitle')}</h2>
+        <p className="mt-2 text-sm text-white/55">{t('posing.account.passwordBody')}</p>
+        <form className="mt-6 space-y-4" onSubmit={handleChangePassword}>
+          <div>
+            <label htmlFor="current-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+              {t('posing.account.currentPassword')}
+            </label>
+            <input
+              id="current-password"
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className={inputClass}
+              autoComplete="current-password"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="new-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.newPassword')}
+              </label>
+              <input
+                id="new-password"
+                type="password"
+                required
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className={inputClass}
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirm-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.confirmPassword')}
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                required
+                minLength={8}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={inputClass}
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+          {passwordError ? (
+            <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              {passwordError}
+            </p>
+          ) : null}
+          {passwordMessage ? (
+            <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+              {passwordMessage}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={passwordSaving}
+            className="rounded-full border border-fuchsia-200/35 bg-fuchsia-500/10 px-6 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/20 disabled:opacity-50"
+          >
+            {passwordSaving ? t('posing.account.changingPassword') : t('posing.account.changePassword')}
           </button>
         </form>
       </section>
