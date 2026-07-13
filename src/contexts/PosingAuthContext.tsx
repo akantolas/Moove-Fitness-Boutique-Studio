@@ -32,11 +32,6 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) return
 
     const supabase = createSupabaseClient()
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-    })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)

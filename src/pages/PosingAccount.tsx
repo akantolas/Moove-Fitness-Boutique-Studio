@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPosingAccountData } from '../lib/posingAccount'
@@ -31,7 +31,8 @@ export function PosingAccountPage() {
   const [bookings, setBookings] = useState<PosingBooking[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [fetchError, setFetchError] = useState('')
-  const [dataLoading, setDataLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(false)
+  const lastFetchedUserId = useRef<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,21 +41,39 @@ export function PosingAccountPage() {
   }, [loading, navigate, user])
 
   useEffect(() => {
-    if (!user) return
+    const userId = user?.id
+    if (!userId) {
+      lastFetchedUserId.current = null
+      return
+    }
+    if (lastFetchedUserId.current === userId) return
+
+    let cancelled = false
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async account fetch
     setDataLoading(true)
-    fetchPosingAccountData(user.id)
+
+    fetchPosingAccountData(userId)
       .then((data) => {
+        if (cancelled) return
         setPackages(data.packages)
         setBookings(data.bookings)
         setIsAdmin(data.isAdmin)
         setFetchError('')
       })
       .catch((err) => {
+        if (cancelled) return
         setFetchError(err instanceof Error ? err.message : 'fetch_failed')
       })
-      .finally(() => setDataLoading(false))
-  }, [user])
+      .finally(() => {
+        if (cancelled) return
+        lastFetchedUserId.current = userId
+        setDataLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   const activePackages = useMemo(
     () => packages.filter((p) => p.status === 'active'),
@@ -72,6 +91,9 @@ export function PosingAccountPage() {
     [bookings],
   )
 
+  const awaitingData = Boolean(user?.id) && lastFetchedUserId.current !== user?.id
+  const pageReady = !loading && Boolean(user) && !awaitingData && !dataLoading
+
   if (!configured) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center text-white/70">
@@ -80,7 +102,7 @@ export function PosingAccountPage() {
     )
   }
 
-  if (loading || !user) {
+  if (!pageReady) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center text-white/60">
         {t('posing.account.loading')}
@@ -98,7 +120,7 @@ export function PosingAccountPage() {
           <h1 className="font-display mt-2 text-3xl font-semibold text-white">
             {t('posing.account.title')}
           </h1>
-          <p className="mt-2 text-sm text-white/55">{user.email}</p>
+          <p className="mt-2 text-sm text-white/55">{user!.email}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {isAdmin ? (
@@ -127,9 +149,7 @@ export function PosingAccountPage() {
 
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-white">{t('posing.account.activePackages')}</h2>
-        {dataLoading ? (
-          <p className="mt-4 text-sm text-white/50">{t('posing.account.loading')}</p>
-        ) : activePackages.length === 0 ? (
+        {activePackages.length === 0 ? (
           <p className="mt-4 text-sm text-white/50">{t('posing.account.noPackages')}</p>
         ) : (
           <ul className="mt-4 space-y-3">
@@ -161,7 +181,7 @@ export function PosingAccountPage() {
             {t('posing.account.bookNew')}
           </a>
         </div>
-        {dataLoading ? null : upcomingBookings.length === 0 ? (
+        {upcomingBookings.length === 0 ? (
           <p className="mt-4 text-sm text-white/50">{t('posing.account.noBookings')}</p>
         ) : (
           <ul className="mt-4 space-y-3">

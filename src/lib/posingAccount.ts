@@ -18,7 +18,8 @@ export async function fetchPosingAccountData(userId: string) {
 
   if (packagesRes.error) throw new Error(packagesRes.error.message)
   if (bookingsRes.error) throw new Error(bookingsRes.error.message)
-  if (profileRes.error) throw new Error(profileRes.error.message)
+
+  const profile = profileRes.error ? null : profileRes.data ?? null
 
   const packages: UserPackage[] = (packagesRes.data ?? []).map((p) => ({
     ...p,
@@ -37,8 +38,8 @@ export async function fetchPosingAccountData(userId: string) {
   })
 
   return {
-    profile: profileRes.data ?? null,
-    isAdmin: profileRes.data?.role === 'admin',
+    profile,
+    isAdmin: profile?.role === 'admin',
     packages,
     bookings,
   }
