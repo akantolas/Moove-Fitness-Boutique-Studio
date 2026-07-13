@@ -7,7 +7,9 @@ export type PosingProfile = {
   phone: string | null
   division: string | null
   notes: string | null
+  avatar_url: string | null
   role: string
+  created_at: string
 }
 
 export type PosingProfileInput = {
@@ -17,7 +19,103 @@ export type PosingProfileInput = {
   notes: string
 }
 
-const profileSelect = 'full_name, email, phone, division, notes, role'
+const AVATAR_BUCKET = 'posing-avatars'
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024
+const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
+const profileSelect = 'full_name, email, phone, division, notes, avatar_url, role, created_at'
+
+export function getProfileInitials(fullName: string | null, email: string) {
+  if (fullName?.trim()) {
+    const parts = fullName.trim().split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
+    }
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+  return email.slice(0, 2).toUpperCase()
+}
+
+function resizeImageToAvatar(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      const size = 400
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        URL.revokeObjectURL(url)
+        reject(new Error('avatar_resize_failed'))
+        return
+      }
+      const scale = Math.max(size / img.width, size / img.height)
+      const w = img.width * scale
+      const h = img.height * scale
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url)
+          if (blob) resolve(blob)
+          else reject(new Error('avatar_resize_failed'))
+        },
+        'image/jpeg',
+        0.85,
+      )
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('avatar_invalid_type'))
+    }
+    img.src = url
+  })
+}
+
+export async function uploadPosingAvatar(userId: string, file: File): Promise<string> {
+  if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
+    throw new Error('avatar_invalid_type')
+  }
+  if (file.size > MAX_AVATAR_BYTES) {
+    throw new Error('avatar_too_large')
+  }
+
+  const blob = await resizeImageToAvatar(file)
+  const path = `${userId}/avatar.jpg`
+  const supabase = createSupabaseClient()
+
+  const { error: uploadError } = await supabase.storage
+    .from(AVATAR_BUCKET)
+    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+
+  if (uploadError) throw new Error(uploadError.message)
+
+  const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path)
+  const publicUrl = data.publicUrl
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+
+  if (updateError) throw new Error(updateError.message)
+  return publicUrl
+}
+
+export async function removePosingAvatar(userId: string) {
+  const supabase = createSupabaseClient()
+  const path = `${userId}/avatar.jpg`
+
+  await supabase.storage.from(AVATAR_BUCKET).remove([path])
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ avatar_url: null, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+
+  if (error) throw new Error(error.message)
+}
 
 export async function fetchPosingIsAdmin(userId: string): Promise<boolean> {
   const supabase = createSupabaseClient()

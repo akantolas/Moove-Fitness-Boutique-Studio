@@ -5,15 +5,22 @@ import {
   changePosingPassword,
   deletePosingAccount,
   fetchPosingAccountData,
+  removePosingAvatar,
   updatePosingProfile,
+  uploadPosingAvatar,
   type PosingProfile,
 } from '../lib/posingAccount'
 import type { PosingBooking, UserPackage } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
+import { AccountProfileHero } from '../components/AccountProfileHero'
+import { AccountQuickStats } from '../components/AccountQuickStats'
+import { PasswordInput } from '../components/PasswordInput'
 
 const inputClass =
   'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
+
+const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
 
 function formatSlotTime(startAt: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
@@ -32,6 +39,21 @@ function statusLabel(status: string, t: (key: string) => string) {
   return translated === key ? status : translated
 }
 
+function statusChipClass(status: string) {
+  switch (status) {
+    case 'confirmed':
+      return 'border-emerald-300/35 bg-emerald-400/15 text-emerald-100'
+    case 'pending_payment':
+      return 'border-amber-300/35 bg-amber-400/15 text-amber-100'
+    case 'cancelled':
+      return 'border-white/20 bg-white/5 text-white/50'
+    case 'completed':
+      return 'border-cyan-300/35 bg-cyan-400/10 text-cyan-100'
+    default:
+      return 'border-white/20 bg-white/5 text-white/60'
+  }
+}
+
 function profileToForm(profile: PosingProfile | null) {
   return {
     fullName: profile?.full_name ?? '',
@@ -47,10 +69,16 @@ function translateAccountError(code: string, t: (key: string) => string) {
   return translated === key ? code : translated
 }
 
+function avatarWithCache(url: string | null, cacheBust: number) {
+  if (!url) return null
+  return `${url}${url.includes('?') ? '&' : '?'}v=${cacheBust}`
+}
+
 export function PosingAccountPage() {
   const { t, locale } = useTranslation()
   const navigate = useNavigate()
   const { configured, loading, user, accessToken, signOut } = usePosingAuth()
+  const [profile, setProfile] = useState<PosingProfile | null>(null)
   const [packages, setPackages] = useState<UserPackage[]>([])
   const [bookings, setBookings] = useState<PosingBooking[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
@@ -60,12 +88,15 @@ export function PosingAccountPage() {
   const [phone, setPhone] = useState('')
   const [division, setDivision] = useState('')
   const [notes, setNotes] = useState('')
+  const [avatarCacheBust, setAvatarCacheBust] = useState(0)
+  const [avatarBusy, setAvatarBusy] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
   const [profileError, setProfileError] = useState('')
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [dangerOpen, setDangerOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -95,6 +126,7 @@ export function PosingAccountPage() {
     fetchPosingAccountData(userId)
       .then((data) => {
         if (cancelled) return
+        setProfile(data.profile)
         setPackages(data.packages)
         setBookings(data.bookings)
         setIsAdmin(data.isAdmin)
@@ -138,6 +170,31 @@ export function PosingAccountPage() {
 
   const awaitingData = Boolean(user?.id) && lastFetchedUserId.current !== user?.id
   const pageReady = !loading && Boolean(user) && !awaitingData && !dataLoading
+  const displayEmail = profile?.email ?? user?.email ?? ''
+  const avatarUrl = avatarWithCache(profile?.avatar_url ?? null, avatarCacheBust)
+
+  async function handleAvatarUpload(file: File) {
+    if (!user?.id) return
+    setAvatarBusy(true)
+    try {
+      const url = await uploadPosingAvatar(user.id, file)
+      setProfile((prev) => (prev ? { ...prev, avatar_url: url } : prev))
+      setAvatarCacheBust(Date.now())
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
+
+  async function handleAvatarRemove() {
+    if (!user?.id) return
+    setAvatarBusy(true)
+    try {
+      await removePosingAvatar(user.id)
+      setProfile((prev) => (prev ? { ...prev, avatar_url: null } : prev))
+    } finally {
+      setAvatarBusy(false)
+    }
+  }
 
   async function handleSaveProfile(event: React.FormEvent) {
     event.preventDefault()
@@ -146,12 +203,13 @@ export function PosingAccountPage() {
     setProfileError('')
     setProfileMessage('')
     try {
-      await updatePosingProfile(user.id, user.email, {
+      const updated = await updatePosingProfile(user.id, user.email, {
         full_name: fullName,
         phone,
         division,
         notes,
       })
+      setProfile((prev) => (prev ? { ...prev, ...updated } : updated))
       setProfileMessage(t('posing.account.profileSaved'))
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'profile_save_failed')
@@ -206,7 +264,7 @@ export function PosingAccountPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center text-white/70">
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-white/70">
         {t('posing.auth.notConfigured')}
       </div>
     )
@@ -214,42 +272,32 @@ export function PosingAccountPage() {
 
   if (!pageReady) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center text-white/60">
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-white/60">
         {t('posing.account.loading')}
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:py-20">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
-            Move & Pose
-          </p>
-          <h1 className="font-display mt-2 text-3xl font-semibold text-white">
-            {t('posing.account.title')}
-          </h1>
-          <p className="mt-2 text-sm text-white/55">{user!.email}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {isAdmin ? (
-            <Link
-              to="/posing/admin"
-              className="rounded-full border border-fuchsia-200/35 px-4 py-2 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15"
-            >
-              {t('posing.admin.title')}
-            </Link>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/5"
-          >
-            {t('posing.auth.logout')}
-          </button>
-        </div>
-      </div>
+    <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
+      <AccountProfileHero
+        fullName={profile?.full_name ?? fullName}
+        email={displayEmail}
+        avatarUrl={avatarUrl}
+        isAdmin={isAdmin}
+        memberSince={profile?.created_at ?? null}
+        locale={locale}
+        avatarBusy={avatarBusy}
+        onAvatarUpload={handleAvatarUpload}
+        onAvatarRemove={handleAvatarRemove}
+        onSignOut={() => signOut()}
+      />
+
+      <AccountQuickStats
+        activePackages={activePackages.length}
+        upcomingBookings={upcomingBookings.length}
+        division={division}
+      />
 
       {fetchError ? (
         <p className="mt-6 rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
@@ -257,132 +305,220 @@ export function PosingAccountPage() {
         </p>
       ) : null}
 
-      <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-white">{t('posing.account.profileTitle')}</h2>
-        <p className="mt-2 text-sm text-white/55">{t('posing.account.profileBody')}</p>
-        <form className="mt-6 space-y-4" onSubmit={handleSaveProfile}>
-          <div className="grid gap-4 sm:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section className={cardClass}>
+          <h2 className="text-lg font-semibold text-white">{t('posing.account.profileTitle')}</h2>
+          <p className="mt-2 text-sm text-white/55">{t('posing.account.profileBody')}</p>
+          <form className="mt-6 space-y-4" onSubmit={handleSaveProfile}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                  {t('posing.account.fullName')}
+                </label>
+                <input
+                  id="profile-name"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className={inputClass}
+                  autoComplete="name"
+                />
+              </div>
+              <div>
+                <label htmlFor="profile-phone" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                  {t('posing.account.phone')}
+                </label>
+                <input
+                  id="profile-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={inputClass}
+                  autoComplete="tel"
+                />
+              </div>
+            </div>
             <div>
-              <label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.fullName')}
+              <label htmlFor="profile-division" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.division')}
               </label>
               <input
-                id="profile-name"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                id="profile-division"
+                value={division}
+                onChange={(e) => setDivision(e.target.value)}
+                placeholder={t('posing.account.divisionPlaceholder')}
                 className={inputClass}
-                autoComplete="name"
               />
             </div>
             <div>
-              <label htmlFor="profile-phone" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.phone')}
+              <label htmlFor="profile-notes" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.notes')}
               </label>
-              <input
-                id="profile-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={inputClass}
-                autoComplete="tel"
+              <textarea
+                id="profile-notes"
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={t('posing.account.notesPlaceholder')}
+                className={`${inputClass} resize-y`}
               />
             </div>
-          </div>
-          <div>
-            <label htmlFor="profile-division" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-              {t('posing.account.division')}
-            </label>
-            <input
-              id="profile-division"
-              value={division}
-              onChange={(e) => setDivision(e.target.value)}
-              placeholder={t('posing.account.divisionPlaceholder')}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="profile-notes" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-              {t('posing.account.notes')}
-            </label>
-            <textarea
-              id="profile-notes"
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('posing.account.notesPlaceholder')}
-              className={`${inputClass} resize-y`}
-            />
-          </div>
-          {profileError ? (
-            <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-              {profileError}
-            </p>
-          ) : null}
-          {profileMessage ? (
-            <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-              {profileMessage}
-            </p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={profileSaving}
-            className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
-          >
-            {profileSaving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
-          </button>
-        </form>
-      </section>
+            {profileError ? (
+              <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                {profileError}
+              </p>
+            ) : null}
+            {profileMessage ? (
+              <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+                {profileMessage}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={profileSaving}
+              className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
+            >
+              {profileSaving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
+            </button>
+          </form>
+        </section>
 
-      <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-        <h2 className="text-lg font-semibold text-white">{t('posing.account.passwordTitle')}</h2>
+        <div className="space-y-6">
+          <section className={cardClass}>
+            <h2 className="text-lg font-semibold text-white">{t('posing.account.activePackages')}</h2>
+            {activePackages.length === 0 ? (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-white/50">{t('posing.account.noPackages')}</p>
+                <a
+                  href="/posing#booking"
+                  className="mt-4 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-200 hover:underline"
+                >
+                  {t('posing.account.bookNew')}
+                </a>
+              </div>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {activePackages.map((pkg) => (
+                  <li
+                    key={pkg.id}
+                    className="rounded-xl border border-fuchsia-200/20 bg-white/[0.04] px-4 py-3"
+                  >
+                    <p className="font-medium text-white">{pkg.plan_key}</p>
+                    <p className="mt-1 text-sm text-fuchsia-200/80">
+                      {t('posing.account.remaining', {
+                        remaining: pkg.sessions_remaining,
+                        total: pkg.sessions_total,
+                      })}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className={cardClass}>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold text-white">{t('posing.account.upcoming')}</h2>
+              <a
+                href="/posing#booking"
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-200 hover:underline"
+              >
+                {t('posing.account.bookNew')}
+              </a>
+            </div>
+            {upcomingBookings.length === 0 ? (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-white/50">{t('posing.account.noBookings')}</p>
+                <Link
+                  to="/posing#booking"
+                  className="mt-4 inline-block rounded-full border border-fuchsia-200/35 px-4 py-2 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/15"
+                >
+                  {t('posing.account.bookNew')}
+                </Link>
+              </div>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {upcomingBookings.map((booking) => (
+                  <li
+                    key={booking.id}
+                    className="rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="text-sm text-white">
+                        {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
+                      </p>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${statusChipClass(booking.status)}`}
+                      >
+                        {statusLabel(booking.status, t)}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-white/50">{booking.plan_key}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {pastBookings.length > 0 ? (
+        <section className={`mt-6 ${cardClass}`}>
+          <h2 className="text-lg font-semibold text-white">{t('posing.account.history')}</h2>
+          <ul className="mt-4 space-y-3">
+            {pastBookings.map((booking) => (
+              <li
+                key={booking.id}
+                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 opacity-80"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <p className="text-sm text-white">
+                    {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
+                  </p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${statusChipClass(booking.status)}`}
+                  >
+                    {statusLabel(booking.status, t)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-white/50">{booking.plan_key}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className={`mt-6 ${cardClass}`}>
+        <h2 className="text-lg font-semibold text-white">{t('posing.account.securityTitle')}</h2>
         <p className="mt-2 text-sm text-white/55">{t('posing.account.passwordBody')}</p>
         <form className="mt-6 space-y-4" onSubmit={handleChangePassword}>
-          <div>
-            <label htmlFor="current-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-              {t('posing.account.currentPassword')}
-            </label>
-            <input
-              id="current-password"
-              type="password"
-              required
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className={inputClass}
-              autoComplete="current-password"
-            />
-          </div>
+          <PasswordInput
+            id="current-password"
+            label={t('posing.account.currentPassword')}
+            value={currentPassword}
+            onChange={setCurrentPassword}
+            autoComplete="current-password"
+            required
+          />
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="new-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.newPassword')}
-              </label>
-              <input
-                id="new-password"
-                type="password"
-                required
-                minLength={8}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={inputClass}
-                autoComplete="new-password"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirm-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.confirmPassword')}
-              </label>
-              <input
-                id="confirm-password"
-                type="password"
-                required
-                minLength={8}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={inputClass}
-                autoComplete="new-password"
-              />
-            </div>
+            <PasswordInput
+              id="new-password"
+              label={t('posing.account.newPassword')}
+              value={newPassword}
+              onChange={setNewPassword}
+              autoComplete="new-password"
+              minLength={8}
+              required
+            />
+            <PasswordInput
+              id="confirm-password"
+              label={t('posing.account.confirmPassword')}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+              minLength={8}
+              required
+            />
           </div>
           {passwordError ? (
             <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
@@ -404,118 +540,45 @@ export function PosingAccountPage() {
         </form>
       </section>
 
-      <section className="mt-10">
-        <h2 className="text-lg font-semibold text-white">{t('posing.account.activePackages')}</h2>
-        {activePackages.length === 0 ? (
-          <p className="mt-4 text-sm text-white/50">{t('posing.account.noPackages')}</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {activePackages.map((pkg) => (
-              <li
-                key={pkg.id}
-                className="rounded-2xl border border-fuchsia-200/20 bg-white/[0.04] px-5 py-4"
-              >
-                <p className="font-medium text-white">{pkg.plan_key}</p>
-                <p className="mt-1 text-sm text-fuchsia-200/80">
-                  {t('posing.account.remaining', {
-                    remaining: pkg.sessions_remaining,
-                    total: pkg.sessions_total,
-                  })}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="mt-10">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold text-white">{t('posing.account.upcoming')}</h2>
-          <a
-            href="/posing#booking"
-            className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-200 hover:underline"
-          >
-            {t('posing.account.bookNew')}
-          </a>
-        </div>
-        {upcomingBookings.length === 0 ? (
-          <p className="mt-4 text-sm text-white/50">{t('posing.account.noBookings')}</p>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {upcomingBookings.map((booking) => (
-              <li
-                key={booking.id}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4"
-              >
-                <p className="text-sm text-white">
-                  {booking.slot
-                    ? formatSlotTime(booking.slot.start_at, locale)
-                    : '—'}
-                </p>
-                <p className="mt-1 text-xs text-white/50">
-                  {booking.plan_key} · {statusLabel(booking.status, t)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {pastBookings.length > 0 ? (
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold text-white">{t('posing.account.history')}</h2>
-          <ul className="mt-4 space-y-3">
-            {pastBookings.map((booking) => (
-              <li
-                key={booking.id}
-                className="rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4 opacity-80"
-              >
-                <p className="text-sm text-white">
-                  {booking.slot
-                    ? formatSlotTime(booking.slot.start_at, locale)
-                    : '—'}
-                </p>
-                <p className="mt-1 text-xs text-white/50">
-                  {booking.plan_key} · {statusLabel(booking.status, t)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       {!isAdmin ? (
-        <section className="mt-12 rounded-2xl border border-rose-300/20 bg-rose-400/5 p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-rose-100">{t('posing.account.deleteTitle')}</h2>
-          <p className="mt-2 text-sm text-white/55">{t('posing.account.deleteBody')}</p>
-          <form className="mt-5 space-y-4" onSubmit={handleDeleteAccount}>
+        <section className="mt-6 overflow-hidden rounded-2xl border border-rose-300/15 bg-rose-400/[0.03]">
+          <button
+            type="button"
+            onClick={() => setDangerOpen((open) => !open)}
+            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6"
+          >
             <div>
-              <label htmlFor="delete-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.deletePassword')}
-              </label>
-              <input
-                id="delete-password"
-                type="password"
-                required
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                className={inputClass}
-                autoComplete="current-password"
-              />
+              <h2 className="text-sm font-semibold text-rose-100">{t('posing.account.dangerZoneTitle')}</h2>
+              <p className="mt-1 text-xs text-white/45">{t('posing.account.deleteBody')}</p>
             </div>
-            {deleteError ? (
-              <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-                {deleteError}
-              </p>
-            ) : null}
-            <button
-              type="submit"
-              disabled={deleteBusy}
-              className="rounded-full border border-rose-300/40 bg-rose-500/15 px-6 py-2.5 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:opacity-50"
-            >
-              {deleteBusy ? t('posing.account.deleting') : t('posing.account.deleteConfirm')}
-            </button>
-          </form>
+            <span className="shrink-0 text-xs text-white/50">
+              {dangerOpen ? '−' : t('posing.account.dangerZoneExpand')}
+            </span>
+          </button>
+          {dangerOpen ? (
+            <form className="space-y-4 border-t border-rose-300/15 px-5 py-5 sm:px-6" onSubmit={handleDeleteAccount}>
+              <PasswordInput
+                id="delete-password"
+                label={t('posing.account.deletePassword')}
+                value={deletePassword}
+                onChange={setDeletePassword}
+                autoComplete="current-password"
+                required
+              />
+              {deleteError ? (
+                <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                  {deleteError}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={deleteBusy}
+                className="rounded-full border border-rose-300/40 bg-rose-500/15 px-6 py-2.5 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:opacity-50"
+              >
+                {deleteBusy ? t('posing.account.deleting') : t('posing.account.deleteConfirm')}
+              </button>
+            </form>
+          ) : null}
         </section>
       ) : null}
     </div>

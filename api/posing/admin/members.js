@@ -1,6 +1,6 @@
 import { cors, ensureAdmin, getSupabaseAdmin, getUserFromRequest, json } from '../_lib.js'
 
-const PROFILE_SELECT = 'id, full_name, email, phone, division, role, created_at, updated_at'
+const PROFILE_SELECT = 'id, full_name, email, phone, division, role, avatar_url, created_at, updated_at'
 
 export default async function handler(req, res) {
   cors(res)

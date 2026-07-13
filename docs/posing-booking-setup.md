@@ -13,6 +13,7 @@
 4. **SQL Editor:** τρέξε τα migrations:
    - `supabase/migrations/001_posing_booking.sql`
    - `supabase/migrations/002_profile_fields.sql` (phone, division, notes στο προφίλ)
+   - `supabase/migrations/003_profile_avatar.sql` (avatar_url + bucket `posing-avatars`)
 5. Αντέγραψε:
    - Project URL → `VITE_SUPABASE_URL` + `SUPABASE_URL`
    - anon public key → `VITE_SUPABASE_ANON_KEY`

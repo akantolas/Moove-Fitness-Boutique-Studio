@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ProfileAvatar } from './ProfileAvatar'
 import type { AdminMember } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
@@ -97,17 +98,27 @@ export function AdminMembersList({
                   return (
                     <tr key={member.id} className="border-b border-white/5 last:border-0">
                       <td className="px-4 py-3 text-white">
-                        {member.full_name ?? '—'}
-                        {isSelf ? (
-                          <span className="ml-2 text-[10px] uppercase text-fuchsia-200/70">
-                            ({t('posing.admin.you')})
-                          </span>
-                        ) : null}
-                        {isAdmin ? (
-                          <span className="ml-2 rounded-full border border-fuchsia-300/30 px-1.5 py-0.5 text-[10px] uppercase text-fuchsia-200/80">
-                            Admin
-                          </span>
-                        ) : null}
+                        <div className="flex items-center gap-3">
+                          <ProfileAvatar
+                            fullName={member.full_name}
+                            email={member.email}
+                            avatarUrl={member.avatar_url}
+                            size="sm"
+                          />
+                          <div>
+                            {member.full_name ?? '—'}
+                            {isSelf ? (
+                              <span className="ml-2 text-[10px] uppercase text-fuchsia-200/70">
+                                ({t('posing.admin.you')})
+                              </span>
+                            ) : null}
+                            {isAdmin ? (
+                              <span className="ml-2 rounded-full border border-fuchsia-300/30 px-1.5 py-0.5 text-[10px] uppercase text-fuchsia-200/80">
+                                Admin
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-white/75">{member.email}</td>
                       <td className="px-4 py-3 text-white/60">{member.phone ?? '—'}</td>

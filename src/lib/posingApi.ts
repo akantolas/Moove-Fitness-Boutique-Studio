@@ -33,6 +33,7 @@ export type AdminMember = {
   email: string
   phone: string | null
   division: string | null
+  avatar_url: string | null
   role: string
   created_at: string
   updated_at: string
