@@ -21,6 +21,7 @@ import {
   bookingStatusLabel,
   planKeyLabel,
 } from '../lib/posingLabels'
+import { sumActiveSessionsRemaining } from '../lib/posingPackages'
 
 const inputClass =
   'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
@@ -142,6 +143,11 @@ export function PosingAccountPage() {
 
   const activePackages = useMemo(
     () => packages.filter((p) => p.status === 'active'),
+    [packages],
+  )
+
+  const sessionsRemaining = useMemo(
+    () => sumActiveSessionsRemaining(packages),
     [packages],
   )
 
@@ -282,7 +288,7 @@ export function PosingAccountPage() {
       />
 
       <AccountQuickStats
-        activePackages={activePackages.length}
+        sessionsRemaining={sessionsRemaining}
         upcomingBookings={upcomingBookings.length}
         division={division}
       />
@@ -406,6 +412,14 @@ export function PosingAccountPage() {
                         total: pkg.sessions_total,
                       })}
                     </p>
+                    {pkg.sessions_remaining > 0 ? (
+                      <Link
+                        to={`/posing?package=${encodeURIComponent(pkg.plan_key)}#booking`}
+                        className="mt-3 inline-block text-xs font-semibold uppercase tracking-[0.16em] text-fuchsia-200 hover:underline"
+                      >
+                        {t('posing.booking.bookWithPackage')}
+                      </Link>
+                    ) : null}
                   </li>
                 ))}
               </ul>

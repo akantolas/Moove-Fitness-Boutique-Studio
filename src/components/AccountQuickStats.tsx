@@ -1,13 +1,13 @@
 import { useTranslation } from '../i18n/useTranslation'
 
 type AccountQuickStatsProps = {
-  activePackages: number
+  sessionsRemaining: number
   upcomingBookings: number
   division: string
 }
 
 export function AccountQuickStats({
-  activePackages,
+  sessionsRemaining,
   upcomingBookings,
   division,
 }: AccountQuickStatsProps) {
@@ -15,8 +15,8 @@ export function AccountQuickStats({
 
   const items = [
     {
-      label: t('posing.account.quickStatsPackages'),
-      value: String(activePackages),
+      label: t('posing.account.quickStatsSessionsRemaining'),
+      value: String(sessionsRemaining),
     },
     {
       label: t('posing.account.quickStatsBookings'),

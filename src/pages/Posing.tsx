@@ -1,10 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
-import { site } from '../site'
+import { fetchPackagePlan } from '../lib/posingPackages'
+import { site, type PosingPackageKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
+
+function packageIndexFromParam(param: string | null, keys: readonly PosingPackageKey[]) {
+  if (!param) return 0
+  const idx = keys.indexOf(param as PosingPackageKey)
+  return idx >= 0 ? idx : 0
+}
 
 export function PosingPage() {
   const { posing } = site
@@ -17,12 +24,31 @@ export function PosingPage() {
     (location.state as { accountDeleted?: boolean } | null)?.accountDeleted,
   )
   const { user } = usePosingAuth()
-  const [selectedPackageIndex, setSelectedPackageIndex] = useState(0)
+  const [selectedPackageIndex, setSelectedPackageIndex] = useState(() =>
+    packageIndexFromParam(searchParams.get('package'), posing.packageKeys),
+  )
+  const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
   const selectedPackage = dictionary.posing.pricing.packages[selectedPackageIndex]?.name ?? ''
   const selectedPackageKey = useMemo(
     () => posing.packageKeys[selectedPackageIndex] ?? posing.packageKeys[0],
     [posing.packageKeys, selectedPackageIndex],
   )
+
+  useEffect(() => {
+    const param = searchParams.get('package')
+    const idx = packageIndexFromParam(param, posing.packageKeys)
+    setSelectedPackageIndex(idx)
+  }, [searchParams, posing.packageKeys])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchPackagePlan(selectedPackageKey).then((plan) => {
+      if (!cancelled) setSessionsTotal(plan?.sessions_total ?? null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedPackageKey])
 
   return (
     <div className="pose-page bg-[#08080c] text-white">
@@ -151,7 +177,11 @@ export function PosingPage() {
             {dictionary.posing.pricing.packages.map((pack, index) => (
               <article
                 key={pack.name}
-                className="relative flex min-h-[28rem] overflow-hidden rounded-2xl border border-fuchsia-200/25 bg-black shadow-[0_24px_70px_-34px_rgba(217,70,239,0.85)]"
+                className={`relative flex min-h-[28rem] overflow-hidden rounded-2xl border bg-black shadow-[0_24px_70px_-34px_rgba(217,70,239,0.85)] ${
+                  selectedPackageIndex === index
+                    ? 'border-fuchsia-300/60 ring-2 ring-fuchsia-300/35'
+                    : 'border-fuchsia-200/25'
+                }`}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center opacity-85"
@@ -277,11 +307,16 @@ export function PosingPage() {
             </p>
           </div>
           <div className="mt-10 overflow-hidden rounded-3xl border border-fuchsia-200/20 bg-white/[0.035] p-3 shadow-[0_26px_80px_-44px_rgba(217,70,239,0.85)] sm:p-5">
-            <div className="mb-4 rounded-2xl border border-white/10 bg-black/35 px-4 py-4">
+            <div className="mb-4 rounded-2xl border border-fuchsia-200/30 bg-black/35 px-4 py-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
                 {t('posing.booking.selectedLabel')}
               </p>
               <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackage}</p>
+              {sessionsTotal != null ? (
+                <p className="mt-1 text-sm text-fuchsia-100/75">
+                  {t('posing.booking.sessionsIncluded', { count: sessionsTotal })}
+                </p>
+              ) : null}
             </div>
             <PoseBookingCalendar
               selectedPackageKey={selectedPackageKey}

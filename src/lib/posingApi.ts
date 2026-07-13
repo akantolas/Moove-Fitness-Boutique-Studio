@@ -69,7 +69,14 @@ export async function createPosingBooking(
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'booking_failed'))
-  return data
+  return data as {
+    ok: boolean
+    booking_id?: string
+    booking_type?: 'new_package' | 'included_session'
+    status?: string
+    sessions_remaining?: number
+    message?: string
+  }
 }
 
 export async function fetchPosingMe(accessToken: string) {

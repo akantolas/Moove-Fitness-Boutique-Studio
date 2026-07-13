@@ -1,7 +1,9 @@
 import {
+  buildConfirmationEmail,
   buildPaymentEmail,
   cors,
   createStripeCheckoutUrl,
+  findBookablePackage,
   formatSessionTime,
   getSupabaseAdmin,
   getUserFromRequest,
@@ -10,6 +12,18 @@ import {
   readJsonBody,
   sendResendEmail,
 } from './_lib.js'
+
+async function sendBookingNotify({ from, profileName, userEmail, packageName, sessionTime, bookingId }) {
+  const notifyEmail = process.env.POSE_NOTIFY_EMAIL
+  if (!notifyEmail) return
+  await sendResendEmail({
+    from,
+    to: [notifyEmail],
+    subject: `New Move & Pose booking — ${profileName}`,
+    html: `<p>New booking: ${profileName} (${userEmail})<br/>${packageName}<br/>${sessionTime}</p>`,
+    idempotencyKey: `posing-notify-${bookingId}`,
+  })
+}
 
 export default async function handler(req, res) {
   cors(res)
@@ -62,6 +76,90 @@ export default async function handler(req, res) {
 
   if (!plan) return json(res, 400, { ok: false, error: 'invalid_plan' })
 
+  const profileName =
+    user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
+  const packageName = locale === 'el' ? plan.name_el : plan.name_en
+  const sessionTime = formatSessionTime(slot.start_at, locale)
+  const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <onboarding@resend.dev>'
+
+  const bookable = await findBookablePackage(supabase, user.id, planKey)
+
+  if (bookable.mode === 'blocked_pending') {
+    return json(res, 409, { ok: false, error: 'payment_required_first' })
+  }
+
+  if (bookable.mode === 'use_existing') {
+    const userPackage = bookable.userPackage
+    if (userPackage.sessions_used >= userPackage.sessions_total) {
+      return json(res, 409, { ok: false, error: 'package_sessions_exhausted' })
+    }
+
+    const { data: booking, error: bookError } = await supabase
+      .from('posing_bookings')
+      .insert({
+        user_id: user.id,
+        slot_id: slotId,
+        plan_key: planKey,
+        user_package_id: userPackage.id,
+        status: 'confirmed',
+      })
+      .select('id')
+      .single()
+
+    if (bookError || !booking) {
+      return json(res, 500, { ok: false, error: bookError?.message ?? 'booking_create_failed' })
+    }
+
+    const now = new Date().toISOString()
+    await supabase
+      .from('user_packages')
+      .update({
+        sessions_used: userPackage.sessions_used + 1,
+        updated_at: now,
+      })
+      .eq('id', userPackage.id)
+
+    try {
+      await sendResendEmail({
+        from,
+        to: [user.email],
+        subject:
+          locale === 'el'
+            ? 'Move & Pose — επιβεβαίωση συνεδρίας'
+            : 'Move & Pose — session confirmed',
+        html: buildConfirmationEmail({
+          attendeeName: profileName,
+          packageName,
+          sessionTime,
+          locale,
+        }),
+        idempotencyKey: `posing-booking-confirm-${booking.id}`,
+      })
+      await sendBookingNotify({
+        from,
+        profileName,
+        userEmail: user.email,
+        packageName,
+        sessionTime,
+        bookingId: booking.id,
+      })
+    } catch (error) {
+      console.error('posing included session email error:', error)
+    }
+
+    return json(res, 201, {
+      ok: true,
+      booking_id: booking.id,
+      booking_type: 'included_session',
+      status: 'confirmed',
+      sessions_remaining: userPackage.sessions_total - userPackage.sessions_used - 1,
+      message:
+        locale === 'el'
+          ? 'Η συνεδρία επιβεβαιώθηκε.'
+          : 'Your session is confirmed.',
+    })
+  }
+
   const now = new Date()
   const periodEnd = new Date(now)
   periodEnd.setDate(periodEnd.getDate() + plan.period_days)
@@ -101,14 +199,6 @@ export default async function handler(req, res) {
     return json(res, 500, { ok: false, error: bookError?.message ?? 'booking_create_failed' })
   }
 
-  const profileName =
-    user.user_metadata?.full_name ??
-    user.email?.split('@')[0] ??
-    'there'
-  const packageName = locale === 'el' ? plan.name_el : plan.name_en
-  const sessionTime = formatSessionTime(slot.start_at, locale)
-  const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <onboarding@resend.dev>'
-
   let stripeLink = ''
   try {
     const checkout = await createStripeCheckoutUrl({
@@ -145,17 +235,14 @@ export default async function handler(req, res) {
       }),
       idempotencyKey: `posing-booking-${booking.id}`,
     })
-
-    const notifyEmail = process.env.POSE_NOTIFY_EMAIL
-    if (notifyEmail) {
-      await sendResendEmail({
-        from,
-        to: [notifyEmail],
-        subject: `New Move & Pose booking — ${profileName}`,
-        html: `<p>New booking: ${profileName} (${user.email})<br/>${packageName}<br/>${sessionTime}</p>`,
-        idempotencyKey: `posing-notify-${booking.id}`,
-      })
-    }
+    await sendBookingNotify({
+      from,
+      profileName,
+      userEmail: user.email,
+      packageName,
+      sessionTime,
+      bookingId: booking.id,
+    })
 
     await supabase
       .from('posing_bookings')
@@ -168,6 +255,7 @@ export default async function handler(req, res) {
   return json(res, 201, {
     ok: true,
     booking_id: booking.id,
+    booking_type: 'new_package',
     status: 'pending_payment',
     message:
       locale === 'el'

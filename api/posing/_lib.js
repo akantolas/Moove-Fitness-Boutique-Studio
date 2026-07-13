@@ -210,3 +210,51 @@ export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stri
     ${paySection}
   </body></html>`
 }
+
+export function buildConfirmationEmail({ attendeeName, packageName, sessionTime, locale }) {
+  const isEl = locale === 'el'
+  return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
+    <p>${isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`}</p>
+    <p>${isEl ? 'Η συνεδρία σου επιβεβαιώθηκε.' : 'Your session is confirmed.'}</p>
+    <p><strong>${isEl ? 'Ώρα' : 'Time'}:</strong> ${sessionTime}</p>
+    <p><strong>${isEl ? 'Πακέτο' : 'Package'}:</strong> ${packageName}</p>
+  </body></html>`
+}
+
+export async function findBookablePackage(supabase, userId, planKey) {
+  const now = new Date().toISOString()
+
+  const { data: pending } = await supabase
+    .from('user_packages')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('plan_key', planKey)
+    .eq('status', 'pending_payment')
+    .limit(1)
+    .maybeSingle()
+
+  if (pending) {
+    return { mode: 'blocked_pending' }
+  }
+
+  const { data: activePackages } = await supabase
+    .from('user_packages')
+    .select('id, sessions_total, sessions_used, period_end')
+    .eq('user_id', userId)
+    .eq('plan_key', planKey)
+    .eq('status', 'active')
+    .gt('period_end', now)
+    .order('created_at', { ascending: false })
+
+  const activeWithRoom = (activePackages ?? []).find((p) => p.sessions_used < p.sessions_total)
+
+  if (activeWithRoom) {
+    return {
+      mode: 'use_existing',
+      userPackage: activeWithRoom,
+      remaining: activeWithRoom.sessions_total - activeWithRoom.sessions_used,
+    }
+  }
+
+  return { mode: 'new_purchase' }
+}

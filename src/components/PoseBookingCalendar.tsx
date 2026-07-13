@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { createPosingBooking, fetchPosingSlots } from '../lib/posingApi'
+import {
+  fetchPackagePlan,
+  fetchUserPackageQuota,
+  type PackageQuota,
+} from '../lib/posingPackages'
 import { translateSlotsError } from '../lib/posingSlotsErrors'
 import { isSupabaseConfigured } from '../lib/supabase'
 import type { PosingPackageKey } from '../site'
@@ -46,6 +51,35 @@ function formatTime(startAt: string, locale: Locale) {
   }).format(new Date(startAt))
 }
 
+function translateBookingError(code: string, t: (key: string) => string) {
+  const map: Record<string, string> = {
+    payment_required_first: 'posing.booking.paymentRequiredFirst',
+    package_sessions_exhausted: 'posing.booking.sessionsExhausted',
+  }
+  const key = map[code]
+  if (key) {
+    const translated = t(key)
+    if (translated !== key) return translated
+  }
+  return code
+}
+
+function quotaHint(quota: PackageQuota, t: (key: string, vars?: Record<string, string | number>) => string) {
+  if (quota.status === 'pending_payment') {
+    return t('posing.booking.paymentRequiredFirst')
+  }
+  if (quota.status === 'active' && quota.sessionsRemaining > 0) {
+    return `${t('posing.booking.sessionsRemaining', {
+      remaining: quota.sessionsRemaining,
+      total: quota.sessionsTotal,
+    })} · ${t('posing.booking.paidPackageHint')}`
+  }
+  if (quota.status === 'exhausted') {
+    return t('posing.booking.sessionsExhausted')
+  }
+  return t('posing.booking.newPurchaseHint')
+}
+
 export function PoseBookingCalendar({
   selectedPackageKey,
   selectedPackageName,
@@ -60,12 +94,29 @@ export function PoseBookingCalendar({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [booking, setBooking] = useState(false)
+  const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
+  const [quota, setQuota] = useState<PackageQuota | null>(null)
 
   const range = useMemo(() => {
     const from = weekStart.toISOString()
     const to = addDays(weekStart, 14).toISOString()
     return { from, to }
   }, [weekStart])
+
+  const loadQuota = useCallback(async () => {
+    if (!user?.id) {
+      setQuota(null)
+      const plan = await fetchPackagePlan(selectedPackageKey)
+      setSessionsTotal(plan?.sessions_total ?? null)
+      return
+    }
+    const [plan, userQuota] = await Promise.all([
+      fetchPackagePlan(selectedPackageKey),
+      fetchUserPackageQuota(user.id, selectedPackageKey),
+    ])
+    setSessionsTotal(plan?.sessions_total ?? userQuota.sessionsTotal)
+    setQuota(userQuota)
+  }, [selectedPackageKey, user?.id])
 
   const loadSlots = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -91,6 +142,11 @@ export function PoseBookingCalendar({
     void loadSlots()
   }, [loadSlots])
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async quota fetch
+    void loadQuota()
+  }, [loadQuota])
+
   const days = useMemo(() => {
     return Array.from({ length: 14 }, (_, i) => addDays(weekStart, i))
   }, [weekStart])
@@ -114,8 +170,13 @@ export function PoseBookingCalendar({
     return map
   }, [days, slots])
 
+  const willUseIncludedSession = Boolean(
+    quota?.status === 'active' && quota.sessionsRemaining > 0,
+  )
+  const bookingBlocked = quota?.status === 'pending_payment'
+
   async function handleBook() {
-    if (!selectedSlotId || !accessToken) return
+    if (!selectedSlotId || !accessToken || bookingBlocked) return
     setBooking(true)
     setError('')
     setSuccess('')
@@ -125,15 +186,21 @@ export function PoseBookingCalendar({
         plan_key: selectedPackageKey,
         locale,
       })
-      setSuccess(typeof result.message === 'string' ? result.message : t('posing.calendar.success'))
+      const defaultSuccess =
+        result.booking_type === 'included_session'
+          ? t('posing.booking.successIncluded')
+          : t('posing.calendar.success')
+      setSuccess(typeof result.message === 'string' ? result.message : defaultSuccess)
       setSelectedSlotId(null)
-      await loadSlots()
+      await Promise.all([loadSlots(), loadQuota()])
     } catch (err) {
       const code = err instanceof Error ? err.message : ''
       if (code === 'slot_taken') {
         setError(t('posing.calendar.slotTaken'))
       } else if (code === 'unauthorized') {
         setError(t('posing.calendar.loginRequired'))
+      } else if (code === 'payment_required_first' || code === 'package_sessions_exhausted') {
+        setError(translateBookingError(code, t))
       } else {
         setError(t('posing.calendar.error'))
       }
@@ -152,6 +219,27 @@ export function PoseBookingCalendar({
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/25 p-4 sm:p-6">
+      <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+        <p className="text-sm font-medium text-white">
+          {selectedPackageName}
+          {sessionsTotal != null ? (
+            <span className="text-white/55">
+              {' '}
+              · {t('posing.booking.sessionsIncluded', { count: sessionsTotal })}
+            </span>
+          ) : null}
+        </p>
+        {user && quota ? (
+          <p
+            className={`mt-1 text-xs ${
+              quota.status === 'pending_payment' ? 'text-amber-200/90' : 'text-fuchsia-100/75'
+            }`}
+          >
+            {quotaHint(quota, t)}
+          </p>
+        ) : null}
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
           {t('posing.calendar.title')}
@@ -178,14 +266,14 @@ export function PoseBookingCalendar({
         <div className="mb-6 rounded-xl border border-fuchsia-200/20 bg-fuchsia-500/10 px-4 py-4 text-sm text-fuchsia-100">
           {t('posing.calendar.loginPrompt')}{' '}
           <Link
-            to={`/posing/login?redirect=${encodeURIComponent('/posing#booking')}`}
+            to={`/posing/login?redirect=${encodeURIComponent(`/posing?package=${selectedPackageKey}#booking`)}`}
             className="font-semibold underline underline-offset-2"
           >
             {t('posing.auth.login')}
           </Link>
           {' · '}
           <Link
-            to={`/posing/signup?redirect=${encodeURIComponent('/posing#booking')}`}
+            to={`/posing/signup?redirect=${encodeURIComponent(`/posing?package=${selectedPackageKey}#booking`)}`}
             className="font-semibold underline underline-offset-2"
           >
             {t('posing.auth.signup')}
@@ -247,13 +335,22 @@ export function PoseBookingCalendar({
           <p className="text-sm text-white">
             {t('posing.booking.selectedLabel')}: <strong>{selectedPackageName}</strong>
           </p>
+          {willUseIncludedSession && quota ? (
+            <p className="mt-1 text-xs text-fuchsia-100/80">
+              {t('posing.booking.sessionsRemainingShort', { remaining: quota.sessionsRemaining })}
+            </p>
+          ) : null}
           <button
             type="button"
-            disabled={!user || booking}
+            disabled={!user || booking || bookingBlocked}
             onClick={handleBook}
             className="mt-4 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {booking ? t('posing.calendar.booking') : t('posing.calendar.confirm')}
+            {booking
+              ? t('posing.calendar.booking')
+              : willUseIncludedSession
+                ? t('posing.booking.confirmIncluded')
+                : t('posing.calendar.confirm')}
           </button>
         </div>
       ) : null}
