@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPosingIsAdmin } from '../lib/posingAccount'
-import { adminCreateSlot, adminDeleteSlot } from '../lib/posingApi'
+import {
+  adminCreateSlot,
+  adminDeleteMember,
+  adminDeleteSlot,
+  fetchAdminMembers,
+  type AdminMember,
+} from '../lib/posingApi'
 import {
   addDays,
   athensDateKey,
@@ -48,6 +55,7 @@ export function PosingAdminPage() {
       slot?: { start_at: string; end_at: string } | null
     }>
   >([])
+  const [members, setMembers] = useState<AdminMember[]>([])
   const [duration, setDuration] = useState(30)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -102,18 +110,20 @@ export function PosingAdminPage() {
     setDataLoading(true)
     setError('')
     try {
-      const [slotsRes, bookingsRes] = await Promise.all([
+      const [slotsRes, bookingsRes, membersList] = await Promise.all([
         fetch(`/api/posing/admin/slots?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         }).then((r) => r.json()),
         fetch('/api/posing/admin/bookings', {
           headers: { Authorization: `Bearer ${accessToken}` },
         }).then((r) => r.json()),
+        fetchAdminMembers(accessToken),
       ])
       if (!slotsRes.ok) throw new Error(slotsRes.error ?? 'slots_failed')
       if (!bookingsRes.ok) throw new Error(bookingsRes.error ?? 'bookings_failed')
       setSlots(slotsRes.slots ?? [])
       setBookings(bookingsRes.bookings ?? [])
+      setMembers(membersList)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'load_failed')
     } finally {
@@ -198,6 +208,17 @@ export function PosingAdminPage() {
     }
   }
 
+  async function handleDeleteMember(memberId: string) {
+    if (!accessToken) return
+    setBusy(true)
+    try {
+      await adminDeleteMember(accessToken, memberId)
+      await loadData()
+    } finally {
+      setBusy(false)
+    }
+  }
+
   if (loading || authorized === null) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center text-white/60">
@@ -273,6 +294,16 @@ export function PosingAdminPage() {
           </ul>
         )}
       </section>
+
+      {user ? (
+        <AdminMembersList
+          members={members}
+          locale={locale}
+          currentUserId={user.id}
+          busy={busy || dataLoading}
+          onDeleteMember={handleDeleteMember}
+        />
+      ) : null}
     </div>
   )
 }

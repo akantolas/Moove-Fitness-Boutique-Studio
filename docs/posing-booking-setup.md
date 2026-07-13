@@ -103,6 +103,8 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 | `POST /api/posing/admin/slots` | Προσθήκη slot |
 | `DELETE /api/posing/admin/slots?id=` | Διαγραφή ελεύθερου slot |
 | `GET /api/posing/admin/bookings` | Λίστα κρατήσεων |
+| `GET /api/posing/admin/members` | Λίστα μελών (admin) |
+| `DELETE /api/posing/admin/members?id=` | Διαγραφή μέλους (admin, όχι admin accounts) |
 | `POST /api/posing/stripe-webhook` | Επιβεβαίωση πληρωμής |
 
 ## 7. Test checklist

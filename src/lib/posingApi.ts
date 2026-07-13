@@ -27,6 +27,17 @@ export type PosingBooking = {
   slot: { start_at: string; end_at: string } | null
 }
 
+export type AdminMember = {
+  id: string
+  full_name: string | null
+  email: string
+  phone: string | null
+  division: string | null
+  role: string
+  created_at: string
+  updated_at: string
+}
+
 async function parseApiJson(res: Response) {
   const text = await res.text()
   try {
@@ -95,6 +106,24 @@ export async function adminDeleteSlot(accessToken: string, id: string) {
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_delete_failed'))
+}
+
+export async function fetchAdminMembers(accessToken: string): Promise<AdminMember[]> {
+  const res = await fetch('/api/posing/admin/members', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'members_fetch_failed'))
+  return data.members as AdminMember[]
+}
+
+export async function adminDeleteMember(accessToken: string, memberId: string) {
+  const res = await fetch(`/api/posing/admin/members?id=${encodeURIComponent(memberId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'delete_member_failed'))
 }
 
 export const posingPackageKeys = site.posing.packageKeys
