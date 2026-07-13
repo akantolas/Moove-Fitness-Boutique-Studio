@@ -300,10 +300,23 @@ export async function activatePackagePayment(
   if (paymentMethod) pkgUpdate.payment_method = paymentMethod
   if (confirmedBy) pkgUpdate.confirmed_by = confirmedBy
 
-  const { error: pkgError } = await supabase
+  let { error: pkgError } = await supabase
     .from('user_packages')
     .update(pkgUpdate)
     .eq('id', packageId)
+
+  if (pkgError && /payment_method|confirmed_by/.test(pkgError.message)) {
+    const fallbackUpdate = {
+      status: 'active',
+      stripe_payment_id: paymentRef,
+      sessions_used: 1,
+      updated_at: now,
+    }
+    ;({ error: pkgError } = await supabase
+      .from('user_packages')
+      .update(fallbackUpdate)
+      .eq('id', packageId))
+  }
 
   if (pkgError) return { ok: false, error: pkgError.message }
 

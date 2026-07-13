@@ -193,7 +193,7 @@ export async function cancelPosingBooking(accessToken: string, bookingId: string
 }
 
 export async function fetchAdminOverview(accessToken: string): Promise<AdminOverviewStats> {
-  const res = await fetch('/api/posing/admin/overview', {
+  const res = await fetch('/api/posing/admin/bookings?view=stats', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
@@ -202,7 +202,7 @@ export async function fetchAdminOverview(accessToken: string): Promise<AdminOver
 }
 
 export async function fetchAdminPayments(accessToken: string): Promise<AdminPayment[]> {
-  const res = await fetch('/api/posing/admin/payments', {
+  const res = await fetch('/api/posing/admin/bookings?view=payments', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
@@ -211,7 +211,7 @@ export async function fetchAdminPayments(accessToken: string): Promise<AdminPaym
 }
 
 export async function adminConfirmPayment(accessToken: string, bookingId: string) {
-  const res = await fetch('/api/posing/admin/confirm-payment', {
+  const res = await fetch('/api/posing/admin/bookings', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
