@@ -36,9 +36,13 @@ export function AboutPage() {
         <div className="flex flex-col gap-8">
           <section className="moove-card p-8 sm:p-10">
             <p className="moove-eyebrow">{t('about.experienceTitle')}</p>
-            <p className="mt-5 text-sm leading-relaxed text-moove-muted sm:text-base">
-              {t('about.experienceBody')}
-            </p>
+            <div className="mt-5 space-y-4">
+              {dictionary.about.paragraphs.map((paragraph) => (
+                <p key={paragraph} className="text-sm leading-relaxed text-moove-muted sm:text-base">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
             <div className="mt-6 flex flex-wrap gap-2">
               {dictionary.about.highlights.map((highlight) => (
                 <span
@@ -59,30 +63,6 @@ export function AboutPage() {
           </section>
         </div>
       </div>
-
-      <section className="mt-16 border-t border-moove-border/80 pt-16 sm:pt-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="moove-eyebrow">{t('about.specializationsTitle')}</p>
-          <div className="moove-rule mx-auto mt-6" aria-hidden />
-        </div>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2">
-          {dictionary.about.specializations.map((item, i) => (
-            <article
-              key={item.title}
-              className="group moove-card p-8 transition duration-300 hover:-translate-y-1 hover:shadow-moove-soft"
-            >
-              <span className="font-display text-3xl font-semibold text-moove-lime/50 transition group-hover:text-moove-lime/80">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <h3 className="font-display mt-4 text-xl font-semibold text-moove-silver">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-moove-muted">{item.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <div className="mt-16 grid gap-4 sm:grid-cols-3">
         {gallery.map((img) => (

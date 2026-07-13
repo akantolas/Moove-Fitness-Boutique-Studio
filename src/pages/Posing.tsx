@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { CalPosingEmbed } from '../components/CalPosingEmbed'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
@@ -6,11 +7,17 @@ import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 export function PosingPage() {
   const { posing } = site
-  const { t, dictionary } = useTranslation()
+  const { t, dictionary, locale } = useTranslation()
   const vars = useSiteVars()
+  const [searchParams] = useSearchParams()
+  const paymentSuccess = searchParams.get('payment') === 'success'
   const calUrl = posing.calLink ? `https://cal.com/${posing.calLink}` : null
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(0)
   const selectedPackage = dictionary.posing.pricing.packages[selectedPackageIndex]?.name ?? ''
+  const selectedPackageKey = useMemo(
+    () => posing.packageKeys[selectedPackageIndex] ?? posing.packageKeys[0],
+    [posing.packageKeys, selectedPackageIndex],
+  )
 
   return (
     <div className="pose-page bg-[#08080c] text-white">
@@ -238,6 +245,11 @@ export function PosingPage() {
 
       <section id="booking" className="scroll-mt-20 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          {paymentSuccess ? (
+            <div className="mx-auto mb-8 max-w-2xl rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 text-center text-sm leading-relaxed text-emerald-100">
+              {t('posing.booking.paymentSuccess')}
+            </div>
+          ) : null}
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
               {t('posing.booking.eyebrow')}
@@ -250,27 +262,19 @@ export function PosingPage() {
             </p>
           </div>
           <div className="mt-10 overflow-hidden rounded-3xl border border-fuchsia-200/20 bg-white/[0.035] p-3 shadow-[0_26px_80px_-44px_rgba(217,70,239,0.85)] sm:p-5">
-            <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/35 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
-                  {t('posing.booking.selectedLabel')}
-                </p>
-                <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackage}</p>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/62">
-                <span className="rounded-full border border-white/10 bg-white/8 px-3 py-2">
-                  Cal.com
-                </span>
-                <span className="rounded-full border border-white/10 bg-white/8 px-3 py-2">
-                  Stripe
-                </span>
-              </div>
+            <div className="mb-4 rounded-2xl border border-white/10 bg-black/35 px-4 py-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
+                {t('posing.booking.selectedLabel')}
+              </p>
+              <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackage}</p>
             </div>
-            <CalPosingEmbed calLink={posing.calLink} />
+            <CalPosingEmbed
+              calLink={posing.calLink}
+              selectedPackageKey={selectedPackageKey}
+              selectedPackageName={selectedPackage}
+              locale={locale}
+            />
           </div>
-          <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-white/45">
-            {t('posing.booking.paymentNote')}
-          </p>
         </div>
       </section>
 

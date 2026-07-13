@@ -94,7 +94,7 @@ export const en = {
     classes: {
       eyebrow: 'Classes',
       title: 'Our classes',
-      body: 'From Reformer intro sessions to more demanding workouts. Pick what fits you — coaching adapts to your level.',
+      body: 'Pick the program that fits you — coaching adapts to your level.',
       viewProgram: 'View schedule',
       imageAlt: 'Pilates at Moove',
     },
@@ -106,33 +106,19 @@ export const en = {
   },
   about: {
     eyebrow: 'About',
-    description: 'Founder and instructor at {{name}}. Every class is taught by her in small groups.',
+    description: 'Founder of {{name}} · Instructor · Creator of Move & Pose',
     experienceTitle: 'Background',
-    experienceBody:
-      'Magda Samara is a graduate of the University of Thessaly with a specialization in Adapted Physical Education. She brings years of experience in exercise, wellness, and physical conditioning. She has worked with leading gyms and fitness centres in Volos and across Thessaly, offering personalised coaching to clients of all ages and levels.',
-    highlights: [
-      'University of Thessaly',
-      'Adapted Physical Education',
-      'Volos & Thessaly',
+    paragraphs: [
+      'Magda Samara is a graduate of the Department of Physical Education and Sport Science (TEFAA) at the University of Thessaly and founder of Moove Fitness Boutique Studio in Volos. She brings years of experience in exercise and wellness, having trained hundreds of clients through personalised and group sessions.',
+      'She specialises in Pilates Mat & Reformer, functional training, exercise for special populations, and competitive preparation and posing for fitness athletes. She is also the creator of Move & Pose – The Posing Academy, the first dedicated posing academy in Greece.',
+      'As an active bodybuilding and fitness athlete, she has represented Greece and Volos at international events, earning significant distinctions.',
+      'Guided by continuous growth and lifelong learning, her goal is to deliver high-level coaching grounded in scientific knowledge, proper technique, and a personalised approach — helping every client progress with safety and confidence.',
     ],
-    specializationsTitle: 'Specializations',
-    specializations: [
-      {
-        title: 'Pilates Mat',
-        body: 'Mat classes focused on technique, movement control, and safe, progressive training.',
-      },
-      {
-        title: 'Pilates Equipment',
-        body: 'Equipment-based Pilates for tailored guidance and targeted strengthening.',
-      },
-      {
-        title: 'Pilates Reformer',
-        body: 'Specialised Reformer instruction in small groups, with close attention to form.',
-      },
-      {
-        title: 'Pre, during & post pregnancy',
-        body: 'Safe, effective exercise at every stage to support lasting improvements in physical condition.',
-      },
+    highlights: [
+      'TEFAA · University of Thessaly',
+      'Pilates Mat & Reformer',
+      'Move & Pose Academy',
+      'Volos',
     ],
     studioTitle: 'The studio',
     studioBody:
@@ -167,34 +153,52 @@ export const en = {
     eyebrow: 'Classes',
     title: 'Schedule & class types',
     description: 'Weekly group schedule. Use the online system to book.',
-    weekTitle: 'Weekly schedule',
+    weekTitle: 'Summer weekly schedule',
     weekRange: 'Monday – Saturday',
     detailsEyebrow: 'Details',
     typesTitle: 'Class types',
     items: [
       {
-        title: 'Reformer',
-        level: 'All levels',
-        duration: '50 min',
-        desc: 'Work on the Reformer machine — core, stability, controlled intensity. Small groups with hands-on corrections.',
-      },
-      {
         title: 'Pilates Mat',
-        level: 'Beginner – intermediate',
-        duration: '45–50 min',
-        desc: 'Classic mat Pilates without equipment. Great for building a base or complementing your Reformer sessions.',
-      },
-      {
-        title: 'TRX & Functional',
-        level: 'Intermediate – advanced',
-        duration: '45–50 min',
-        desc: 'Functional TRX training — strength, endurance, mobility. Always controlled, never blind intensity.',
-      },
-      {
-        title: "Magda's Bootycamp",
         level: 'All levels',
-        duration: '40 min',
-        desc: 'Targeted glute and core work — a signature studio program. Intense, effective, technique-led.',
+        duration: '45–50 min',
+        desc: 'Improve your strength, posture, and flexibility through classic mat Pilates, with exercises suitable for every level.',
+      },
+      {
+        title: 'Pilates Reformer & Equipment',
+        level: 'All levels',
+        duration: '45–50 min',
+        desc: 'Discover the benefits of Pilates with specialised equipment, building strength, stability, alignment, and body control.',
+      },
+      {
+        title: 'Indoor Fitness Programs',
+        level: 'All levels',
+        duration: '45–50 min',
+        desc: 'Choose dynamic programmes that combine strength, endurance, and wellness, tailored to your needs and goals.',
+      },
+      {
+        title: 'Private Dance & Competition Prep',
+        level: 'All levels',
+        duration: 'Private session',
+        desc: 'Personalised coaching to improve technique, expression, movement, and overall presence — whether your goal is personal growth or competition prep.',
+      },
+      {
+        title: 'Exercise During Pregnancy & Postpartum',
+        level: 'Special population',
+        duration: '45–50 min',
+        desc: 'Safe, specialised programmes that support the body during pregnancy and help with a smooth recovery after childbirth.',
+      },
+      {
+        title: 'Exercise for Older Adults',
+        level: 'Special population',
+        duration: '45 min',
+        desc: 'Programmes designed to maintain strength, balance, mobility, and independence — supporting a better quality of life.',
+      },
+      {
+        title: 'Glutes & Abs',
+        level: 'All levels',
+        duration: '45–50 min',
+        desc: 'Targeted glute and core training — strength, stability, and technique control in dynamic sessions.',
       },
     ],
   },
@@ -255,7 +259,7 @@ export const en = {
       viewPackages: 'View packages',
       openCal: 'Open Cal.com',
       byCoach: 'by {{coach}}',
-      chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Stripe payments'],
+      chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Email confirmation'],
     },
     about: {
       eyebrow: 'About us',
@@ -305,10 +309,10 @@ export const en = {
     how: {
       title: 'How it works',
       steps: [
-        { title: 'Booking', body: 'Pick a time and pay online through Cal.com and Stripe.' },
+        { title: 'Booking', body: 'Choose a package and reserve an available slot in the calendar.' },
         {
-          title: 'Preparation',
-          body: 'You receive guidance on camera setup, lighting, and what to have ready.',
+          title: 'Email & payment',
+          body: 'You receive an email with preparation instructions and a Stripe payment link.',
         },
         {
           title: 'Session',
@@ -319,7 +323,7 @@ export const en = {
     pricing: {
       eyebrow: 'Packages & pricing',
       title: 'Choose the package that fits your prep',
-      body: 'All packages are for online posing coaching and are prepaid during booking.',
+      body: 'All packages are for online posing coaching. Book your slot first, then complete payment from the email you receive.',
       choose: 'Choose {{package}}',
       includedTitle: 'Every session includes',
       included: ['Personalised walks', 'T-walks by federation', 'Comparison rounds'],
@@ -370,10 +374,9 @@ export const en = {
     booking: {
       eyebrow: 'Booking & payment',
       title: 'Book your session',
-      body: 'Choose an available slot and complete payment online through Stripe. This calendar is separate from studio class bookings.',
+      body: 'Choose an available slot in the calendar. After booking you will receive an email with preparation instructions and a Stripe payment link.',
       selectedLabel: 'Selected package',
-      paymentNote:
-        'Bookings are handled through Cal.com and online payments are securely processed by Stripe. Card details are not stored on our website.',
+      paymentSuccess: 'Payment completed. Thank you — you will receive confirmation from Stripe.',
     },
     faq: {
       title: 'FAQ',
@@ -396,7 +399,7 @@ export const en = {
         },
         {
           q: 'How is payment handled?',
-          a: 'Payment is completed online during booking through Stripe. This website does not store card details.',
+          a: 'Book a slot in the calendar and you will receive an email with a Stripe payment link. Your session is confirmed after payment — ideally within 24 hours before the session.',
         },
       ],
     },

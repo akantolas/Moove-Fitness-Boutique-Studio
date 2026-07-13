@@ -5,8 +5,6 @@ import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
 
-const classTitles = ['Reformer', 'Pilates Mat', 'TRX & Functional', "Magda's Bootycamp"] as const
-
 export function HomePage() {
   const { t, dictionary } = useTranslation()
 
@@ -156,13 +154,13 @@ export function HomePage() {
             </h2>
             <p className="mt-4 leading-relaxed text-moove-muted">{t('home.classes.body')}</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {classTitles.map((title) => (
+              {dictionary.classes.items.map((item) => (
                 <li
-                  key={title}
+                  key={item.title}
                   className="flex items-center gap-3 rounded-xl border border-moove-border/70 bg-moove-surface/80 px-4 py-3.5 text-sm font-medium text-moove-silver shadow-sm"
                 >
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-moove-lime" />
-                  {title}
+                  {item.title}
                 </li>
               ))}
             </ul>

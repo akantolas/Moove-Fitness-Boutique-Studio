@@ -37,5 +37,9 @@ export const site = {
     /** Cal.com inline embed path — username ή username/event-slug */
     calLink: 'μαγδα-σαμαρα-awut2i/online-posing-session',
     coachName: 'Μαγδα Σαμαρά',
+    /** Stable keys for Cal metadata + webhook → Stripe Payment Link mapping */
+    packageKeys: ['single', 'sapphire', 'ruby', 'diamond'] as const,
   },
 } as const
+
+export type PosingPackageKey = (typeof site.posing.packageKeys)[number]

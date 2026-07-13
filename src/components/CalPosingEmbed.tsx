@@ -1,8 +1,10 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { site } from '../site'
+import type { PosingPackageKey } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
+import type { Locale } from '../i18n/types'
 
 declare global {
   interface Window {
@@ -25,6 +27,9 @@ type CalApi = ((...args: unknown[]) => void) & {
 
 type CalPosingEmbedProps = {
   calLink: string
+  selectedPackageKey: PosingPackageKey
+  selectedPackageName: string
+  locale: Locale
   className?: string
 }
 
@@ -69,12 +74,37 @@ function loadCalEmbed() {
   return cal
 }
 
-export function CalPosingEmbed({ calLink, className = '' }: CalPosingEmbedProps) {
+function buildCalLinkWithMetadata(
+  calLink: string,
+  selectedPackageKey: PosingPackageKey,
+  selectedPackageName: string,
+  locale: Locale,
+) {
+  const [path, existingQuery = ''] = calLink.split('?')
+  const params = new URLSearchParams(existingQuery)
+  params.set('metadata[packageKey]', selectedPackageKey)
+  params.set('metadata[packageName]', selectedPackageName)
+  params.set('metadata[locale]', locale)
+  return `${path}?${params.toString()}`
+}
+
+export function CalPosingEmbed({
+  calLink,
+  selectedPackageKey,
+  selectedPackageName,
+  locale,
+  className = '',
+}: CalPosingEmbedProps) {
   const reactId = useId()
   const containerId = `cal-posing-${reactId.replace(/:/g, '')}`
   const { t } = useTranslation()
   const [sent, setSent] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
+
+  const calLinkWithMetadata = useMemo(
+    () => buildCalLinkWithMetadata(calLink, selectedPackageKey, selectedPackageName, locale),
+    [calLink, locale, selectedPackageKey, selectedPackageName],
+  )
 
   useEffect(() => {
     if (!calLink) return
@@ -87,11 +117,14 @@ export function CalPosingEmbed({ calLink, className = '' }: CalPosingEmbedProps)
     const calNamespace = cal.ns?.[CAL_NAMESPACE]
     calNamespace?.('inline', {
       elementOrSelector: `#${containerId}`,
-      config: { layout: 'month_view', useSlotsViewOnSmallScreen: 'true' },
-      calLink,
+      config: {
+        layout: 'month_view',
+        useSlotsViewOnSmallScreen: 'true',
+      },
+      calLink: calLinkWithMetadata,
     })
     calNamespace?.('ui', { hideEventTypeDetails: false, layout: 'month_view' })
-  }, [calLink, containerId])
+  }, [calLink, calLinkWithMetadata, containerId])
 
   function handleFallbackSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -102,6 +135,7 @@ export function CalPosingEmbed({ calLink, className = '' }: CalPosingEmbedProps)
     const lines = [
       t('posing.cal.emailIntro'),
       '',
+      `${t('posing.booking.selectedLabel')}: ${selectedPackageName} (${selectedPackageKey})`,
       `${t('posing.cal.name')}: ${form.get('name') ?? ''}`,
       `${t('common.email')}: ${form.get('email') ?? ''}`,
       `${t('posing.cal.phone')}: ${form.get('phone') ?? ''}`,
