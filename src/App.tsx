@@ -14,6 +14,7 @@ import { PosingPage } from './pages/Posing'
 import { PosingAboutPage } from './pages/PosingAbout'
 import { PosingLoginPage, PosingSignupPage } from './pages/PosingAuth'
 import { PosingAccountPage } from './pages/PosingAccount'
+import { PosingAccountSettingsPage } from './pages/PosingAccountSettings'
 import { PosingAdminPage } from './pages/PosingAdmin'
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/posing/login" element={<PosingLoginPage />} />
             <Route path="/posing/signup" element={<PosingSignupPage />} />
             <Route path="/posing/account" element={<PosingAccountPage />} />
+            <Route path="/posing/account/settings" element={<PosingAccountSettingsPage />} />
             <Route path="/posing/admin" element={<PosingAdminPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

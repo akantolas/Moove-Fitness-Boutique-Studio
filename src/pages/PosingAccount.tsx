@@ -11,10 +11,12 @@ import {
   type PosingProfile,
 } from '../lib/posingAccount'
 import type { PosingBooking, UserPackage } from '../lib/posingApi'
+import { cancelPosingBooking } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { AccountProfileHero } from '../components/AccountProfileHero'
 import { AccountQuickStats } from '../components/AccountQuickStats'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PasswordInput } from '../components/PasswordInput'
 import {
   bookingStatusChipClass,
@@ -89,7 +91,23 @@ export function PosingAccountPage() {
   const [passwordSaving, setPasswordSaving] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [cancelTarget, setCancelTarget] = useState<{
+    id: string
+    type: 'order' | 'booking'
+  } | null>(null)
+  const [cancelBusy, setCancelBusy] = useState(false)
+  const [cancelError, setCancelError] = useState('')
   const lastFetchedUserId = useRef<string | null>(null)
+
+  async function reloadAccountData() {
+    const userId = user?.id
+    if (!userId) return
+    const data = await fetchPosingAccountData(userId)
+    setProfile(data.profile)
+    setPackages(data.packages)
+    setBookings(data.bookings)
+    setIsAdmin(data.isAdmin)
+  }
 
   useEffect(() => {
     if (!loading && !user) {
@@ -141,6 +159,12 @@ export function PosingAccountPage() {
     }
   }, [user?.id])
 
+  useEffect(() => {
+    if (isAdmin && !dataLoading && lastFetchedUserId.current === user?.id) {
+      navigate('/posing/admin', { replace: true })
+    }
+  }, [isAdmin, dataLoading, navigate, user?.id])
+
   const activePackages = useMemo(
     () => packages.filter((p) => p.status === 'active'),
     [packages],
@@ -156,6 +180,43 @@ export function PosingAccountPage() {
       bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending_payment'),
     [bookings],
   )
+
+  const pendingOrders = useMemo(
+    () => bookings.filter((b) => b.status === 'pending_payment'),
+    [bookings],
+  )
+
+  const confirmedUpcoming = useMemo(() => {
+    const now = Date.now()
+    return bookings.filter(
+      (b) =>
+        b.status === 'confirmed' &&
+        b.slot?.start_at &&
+        new Date(b.slot.start_at).getTime() > now,
+    )
+  }, [bookings])
+
+  function canCancelBooking(booking: PosingBooking) {
+    if (booking.status === 'pending_payment') return true
+    if (booking.status !== 'confirmed' || !booking.slot?.start_at) return false
+    return new Date(booking.slot.start_at).getTime() > Date.now()
+  }
+
+  async function handleCancelBooking() {
+    if (!accessToken || !cancelTarget) return
+    setCancelBusy(true)
+    setCancelError('')
+    try {
+      await cancelPosingBooking(accessToken, cancelTarget.id)
+      setCancelTarget(null)
+      await reloadAccountData()
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'cancel_failed'
+      setCancelError(translateAccountError(code, t))
+    } finally {
+      setCancelBusy(false)
+    }
+  }
 
   const pastBookings = useMemo(
     () => bookings.filter((b) => b.status === 'completed' || b.status === 'cancelled'),
@@ -289,7 +350,7 @@ export function PosingAccountPage() {
 
       <AccountQuickStats
         sessionsRemaining={sessionsRemaining}
-        upcomingBookings={upcomingBookings.length}
+        upcomingBookings={confirmedUpcoming.length + pendingOrders.length}
         division={division}
       />
 
@@ -303,6 +364,44 @@ export function PosingAccountPage() {
         <p className="mt-6 rounded-xl border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
           {profileWarning}
         </p>
+      ) : null}
+
+      {cancelError ? (
+        <p className="mt-6 rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+          {cancelError}
+        </p>
+      ) : null}
+
+      {pendingOrders.length > 0 ? (
+        <section className="mt-8 rounded-2xl border border-amber-300/25 bg-amber-500/[0.06] p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-amber-100">{t('posing.account.pendingOrders')}</h2>
+          <p className="mt-1 text-sm text-white/55">{t('posing.account.pendingOrdersBody')}</p>
+          <ul className="mt-4 space-y-3">
+            {pendingOrders.map((booking) => (
+              <li
+                key={booking.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/20 bg-black/20 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm text-white">
+                    {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
+                  </p>
+                  <p className="mt-1 text-xs text-white/50">
+                    {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={cancelBusy}
+                  onClick={() => setCancelTarget({ id: booking.id, type: 'order' })}
+                  className="rounded-full border border-rose-300/35 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/15 disabled:opacity-50"
+                >
+                  {t('posing.account.cancelOrder')}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -466,6 +565,16 @@ export function PosingAccountPage() {
                     <p className="mt-1 text-xs text-white/50">
                       {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
                     </p>
+                    {canCancelBooking(booking) && booking.status === 'confirmed' ? (
+                      <button
+                        type="button"
+                        disabled={cancelBusy}
+                        onClick={() => setCancelTarget({ id: booking.id, type: 'booking' })}
+                        className="mt-3 rounded-full border border-rose-300/30 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50"
+                      >
+                        {t('posing.account.cancelBooking')}
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -501,6 +610,30 @@ export function PosingAccountPage() {
           </ul>
         </section>
       ) : null}
+
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        title={
+          cancelTarget?.type === 'order'
+            ? t('posing.account.cancelOrderTitle')
+            : t('posing.account.cancelBookingTitle')
+        }
+        body={
+          cancelTarget?.type === 'order'
+            ? t('posing.account.cancelOrderBody')
+            : t('posing.account.cancelBookingBody')
+        }
+        confirmLabel={
+          cancelTarget?.type === 'order'
+            ? t('posing.account.cancelOrder')
+            : t('posing.account.cancelBooking')
+        }
+        cancelLabel={t('posing.admin.cancelDeleteMember')}
+        busy={cancelBusy}
+        destructive
+        onConfirm={() => void handleCancelBooking()}
+        onCancel={() => setCancelTarget(null)}
+      />
 
       <section className={`mt-6 ${cardClass}`}>
         <h2 className="text-lg font-semibold text-white">{t('posing.account.securityTitle')}</h2>

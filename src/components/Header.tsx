@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { site } from '../site'
 import { ButtonLink } from './Links'
 import {
@@ -11,6 +11,7 @@ import { PosePromoBubble } from './PosePromoBubble'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useTranslation } from '../i18n/useTranslation'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
+import { fetchPosingIsAdmin } from '../lib/posingAccount'
 
 const studioNav = [
   { to: '/', labelKey: 'nav.home', end: true },
@@ -34,7 +35,22 @@ export function Header() {
   const { posing: posingBrand } = site
   const { t } = useTranslation()
   const { user } = usePosingAuth()
+  const [isAdmin, setIsAdmin] = useState(false)
   const navItems = posing ? posingNav : studioNav
+
+  useEffect(() => {
+    const userId = user?.id
+    if (!userId || !posing) {
+      setIsAdmin(false)
+      return
+    }
+    fetchPosingIsAdmin(userId)
+      .then(setIsAdmin)
+      .catch(() => setIsAdmin(false))
+  }, [user?.id, posing])
+
+  const accountHref = isAdmin ? '/posing/admin' : '/posing/account'
+  const accountLabel = isAdmin ? t('posing.admin.title') : t('posing.auth.myAccount')
 
   function navClass(isActive: boolean) {
     if (posing) {
@@ -150,10 +166,10 @@ export function Header() {
           {posing ? (
             user ? (
               <NavLink
-                to="/posing/account"
+                to={accountHref}
                 className="rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/5"
               >
-                {t('posing.auth.myAccount')}
+                {accountLabel}
               </NavLink>
             ) : (
               <NavLink

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { getSupabaseAdmin, json, readRawBody } from './_lib.js'
+import { activatePackagePayment, getSupabaseAdmin, json, readRawBody } from './_lib.js'
 
 export const config = {
   api: {
@@ -60,30 +60,16 @@ export default async function handler(req, res) {
   }
 
   const supabase = getSupabaseAdmin()
-  const now = new Date().toISOString()
+  const result = await activatePackagePayment(supabase, {
+    bookingId,
+    userPackageId,
+    paymentRef: session.id,
+    paymentMethod: 'stripe',
+  })
 
-  await supabase
-    .from('user_packages')
-    .update({
-      status: 'active',
-      stripe_payment_id: session.id,
-      updated_at: now,
-    })
-    .eq('id', userPackageId)
+  if (!result.ok) {
+    return json(res, 500, { ok: false, error: result.error })
+  }
 
-  await supabase
-    .from('posing_bookings')
-    .update({
-      status: 'confirmed',
-      stripe_session_id: session.id,
-      updated_at: now,
-    })
-    .eq('id', bookingId)
-
-  await supabase
-    .from('user_packages')
-    .update({ sessions_used: 1, updated_at: now })
-    .eq('id', userPackageId)
-
-  return json(res, 200, { ok: true })
+  return json(res, 200, { ok: true, already: result.already ?? false })
 }

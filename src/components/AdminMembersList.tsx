@@ -3,6 +3,7 @@ import { ProfileAvatar } from './ProfileAvatar'
 import type { AdminMember } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
+import { bookingStatusLabel, planKeyLabel } from '../lib/posingLabels'
 
 type AdminMembersListProps = {
   members: AdminMember[]
@@ -21,10 +22,26 @@ function formatMemberDate(iso: string, locale: Locale) {
   }).format(new Date(iso))
 }
 
+function formatSlot(iso: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Athens',
+  }).format(new Date(iso))
+}
+
 function translateMemberError(code: string, t: (key: string) => string) {
   const key = `posing.admin.memberErrors.${code}`
   const translated = t(key)
   return translated === key ? code : translated
+}
+
+function packageStatusLabel(status: string, t: (key: string) => string) {
+  const key = `posing.admin.packageStatus.${status}`
+  const translated = t(key)
+  return translated === key ? status : translated
 }
 
 export function AdminMembersList({
@@ -34,8 +51,9 @@ export function AdminMembersList({
   busy,
   onDeleteMember,
 }: AdminMembersListProps) {
-  const { t } = useTranslation()
+  const { t, dictionary } = useTranslation()
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -54,7 +72,7 @@ export function AdminMembersList({
   }
 
   return (
-    <section className="mt-10">
+    <section>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-white">{t('posing.admin.membersTitle')}</h2>
@@ -74,100 +92,175 @@ export function AdminMembersList({
       {members.length === 0 ? (
         <p className="mt-4 text-sm text-white/50">{t('posing.admin.noMembers')}</p>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/10 bg-black/20 text-xs uppercase tracking-[0.14em] text-white/45">
-                  <th className="px-4 py-3 font-semibold">{t('posing.account.fullName')}</th>
-                  <th className="px-4 py-3 font-semibold">Email</th>
-                  <th className="px-4 py-3 font-semibold">{t('posing.account.phone')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('posing.account.division')}</th>
-                  <th className="px-4 py-3 font-semibold">{t('posing.admin.memberSince')}</th>
-                  <th className="px-4 py-3 font-semibold" />
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => {
-                  const isSelf = member.id === currentUserId
-                  const isAdmin = member.role === 'admin'
-                  const canDelete = !isSelf && !isAdmin
-                  const isConfirming = confirmId === member.id
-                  const isDeleting = deletingId === member.id
+        <div className="mt-4 space-y-3">
+          {members.map((member) => {
+            const isSelf = member.id === currentUserId
+            const isAdmin = member.role === 'admin'
+            const canDelete = !isSelf && !isAdmin
+            const isConfirming = confirmId === member.id
+            const isDeleting = deletingId === member.id
+            const isExpanded = expandedId === member.id
+            const activePackages = (member.user_packages ?? []).filter((p) => p.status === 'active')
+            const pendingPackages = (member.user_packages ?? []).filter(
+              (p) => p.status === 'pending_payment',
+            )
 
-                  return (
-                    <tr key={member.id} className="border-b border-white/5 last:border-0">
-                      <td className="px-4 py-3 text-white">
-                        <div className="flex items-center gap-3">
-                          <ProfileAvatar
-                            fullName={member.full_name}
-                            email={member.email}
-                            avatarUrl={member.avatar_url}
-                            size="sm"
-                          />
-                          <div>
-                            {member.full_name ?? '—'}
-                            {isSelf ? (
-                              <span className="ml-2 text-[10px] uppercase text-fuchsia-200/70">
-                                ({t('posing.admin.you')})
-                              </span>
-                            ) : null}
-                            {isAdmin ? (
-                              <span className="ml-2 rounded-full border border-fuchsia-300/30 px-1.5 py-0.5 text-[10px] uppercase text-fuchsia-200/80">
-                                Admin
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-white/75">{member.email}</td>
-                      <td className="px-4 py-3 text-white/60">{member.phone ?? '—'}</td>
-                      <td className="px-4 py-3 text-white/60">{member.division ?? '—'}</td>
-                      <td className="px-4 py-3 text-white/50">
-                        {formatMemberDate(member.created_at, locale)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {!canDelete ? null : isConfirming ? (
-                          <div className="flex flex-wrap justify-end gap-2">
-                            <button
-                              type="button"
-                              disabled={busy || isDeleting}
-                              onClick={() => void handleDelete(member.id)}
-                              className="rounded-full border border-rose-300/40 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-500/25 disabled:opacity-50"
-                            >
-                              {isDeleting
-                                ? t('posing.admin.deletingMember')
-                                : t('posing.admin.confirmDeleteMember')}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={isDeleting}
-                              onClick={() => setConfirmId(null)}
-                              className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70 hover:bg-white/5"
-                            >
-                              {t('posing.admin.cancelDeleteMember')}
-                            </button>
-                          </div>
+            return (
+              <div
+                key={member.id}
+                className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]"
+              >
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                  >
+                    <ProfileAvatar
+                      fullName={member.full_name}
+                      email={member.email}
+                      avatarUrl={member.avatar_url}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-white">
+                        {member.full_name ?? member.email}
+                        {isSelf ? (
+                          <span className="ml-2 text-[10px] uppercase text-fuchsia-200/70">
+                            ({t('posing.admin.you')})
+                          </span>
+                        ) : null}
+                        {isAdmin ? (
+                          <span className="ml-2 rounded-full border border-fuchsia-300/30 px-1.5 py-0.5 text-[10px] uppercase text-fuchsia-200/80">
+                            Admin
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="truncate text-sm text-white/55">{member.email}</p>
+                      <p className="mt-1 text-xs text-white/40">
+                        {activePackages.length > 0
+                          ? t('posing.admin.memberActivePackages', { count: activePackages.length })
+                          : pendingPackages.length > 0
+                            ? t('posing.admin.memberPendingPackages', { count: pendingPackages.length })
+                            : t('posing.admin.memberNoPackages')}
+                      </p>
+                    </div>
+                  </button>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    {!canDelete ? null : isConfirming ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busy || isDeleting}
+                          onClick={() => void handleDelete(member.id)}
+                          className="rounded-full border border-rose-300/40 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-500/25 disabled:opacity-50"
+                        >
+                          {isDeleting
+                            ? t('posing.admin.deletingMember')
+                            : t('posing.admin.confirmDeleteMember')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isDeleting}
+                          onClick={() => setConfirmId(null)}
+                          className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70 hover:bg-white/5"
+                        >
+                          {t('posing.admin.cancelDeleteMember')}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busy || isDeleting}
+                        onClick={() => {
+                          setDeleteError('')
+                          setConfirmId(member.id)
+                        }}
+                        className="rounded-full border border-rose-300/30 px-3 py-1 text-xs text-rose-200 hover:bg-rose-400/10 disabled:opacity-50"
+                      >
+                        {t('posing.admin.deleteMember')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                      className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/60 hover:bg-white/5"
+                    >
+                      {isExpanded ? '−' : '+'}
+                    </button>
+                  </div>
+                </div>
+
+                {isExpanded ? (
+                  <div className="border-t border-white/10 bg-black/20 px-4 py-4 sm:px-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                          {t('posing.account.phone')}
+                        </p>
+                        <p className="mt-1 text-sm text-white/70">{member.phone ?? '—'}</p>
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                          {t('posing.account.division')}
+                        </p>
+                        <p className="mt-1 text-sm text-white/70">{member.division ?? '—'}</p>
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                          {t('posing.admin.memberSince')}
+                        </p>
+                        <p className="mt-1 text-sm text-white/70">
+                          {formatMemberDate(member.created_at, locale)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                          {t('posing.account.activePackages')}
+                        </p>
+                        {(member.user_packages ?? []).length === 0 ? (
+                          <p className="mt-2 text-sm text-white/50">{t('posing.admin.memberNoPackages')}</p>
                         ) : (
-                          <button
-                            type="button"
-                            disabled={busy || isDeleting}
-                            onClick={() => {
-                              setDeleteError('')
-                              setConfirmId(member.id)
-                            }}
-                            className="rounded-full border border-rose-300/30 px-3 py-1 text-xs text-rose-200 hover:bg-rose-400/10 disabled:opacity-50"
-                          >
-                            {t('posing.admin.deleteMember')}
-                          </button>
+                          <ul className="mt-2 space-y-2">
+                            {(member.user_packages ?? []).map((pkg) => (
+                              <li
+                                key={pkg.id}
+                                className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+                              >
+                                <p className="text-white">
+                                  {planKeyLabel(pkg.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                                </p>
+                                <p className="mt-0.5 text-xs text-white/50">
+                                  {packageStatusLabel(pkg.status, t)} ·{' '}
+                                  {t('posing.account.remaining', {
+                                    remaining: Math.max(0, pkg.sessions_total - pkg.sessions_used),
+                                    total: pkg.sessions_total,
+                                  })}
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
                         )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        {(member.recent_bookings ?? []).length > 0 ? (
+                          <>
+                            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
+                              {t('posing.admin.recentBookings')}
+                            </p>
+                            <ul className="mt-2 space-y-2">
+                              {(member.recent_bookings ?? []).map((booking) => (
+                                <li key={booking.id} className="text-sm text-white/70">
+                                  {booking.slot?.start_at
+                                    ? formatSlot(booking.slot.start_at, locale)
+                                    : '—'}{' '}
+                                  · {bookingStatusLabel(booking.status, t)}
+                                </li>
+                              ))}
+                            </ul>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
         </div>
       )}
     </section>

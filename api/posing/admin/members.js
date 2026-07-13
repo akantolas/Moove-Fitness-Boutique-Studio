@@ -19,7 +19,53 @@ export default async function handler(req, res) {
       .order('created_at', { ascending: false })
 
     if (error) return json(res, 500, { ok: false, error: error.message })
-    return json(res, 200, { ok: true, members: members ?? [] })
+
+    const memberList = members ?? []
+    const memberIds = memberList.map((m) => m.id)
+
+    let packagesByUser = new Map()
+    let bookingsByUser = new Map()
+
+    if (memberIds.length > 0) {
+      const [{ data: packages }, { data: bookings }] = await Promise.all([
+        supabase
+          .from('user_packages')
+          .select('id, user_id, plan_key, status, sessions_total, sessions_used, created_at')
+          .in('user_id', memberIds)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('posing_bookings')
+          .select('id, user_id, status, plan_key, created_at, slot:availability_slots(start_at)')
+          .in('user_id', memberIds)
+          .order('created_at', { ascending: false })
+          .limit(200),
+      ])
+
+      for (const pkg of packages ?? []) {
+        const list = packagesByUser.get(pkg.user_id) ?? []
+        list.push(pkg)
+        packagesByUser.set(pkg.user_id, list)
+      }
+
+      for (const booking of bookings ?? []) {
+        const list = bookingsByUser.get(booking.user_id) ?? []
+        if (list.length < 3) {
+          list.push({
+            ...booking,
+            slot: Array.isArray(booking.slot) ? booking.slot[0] ?? null : booking.slot,
+          })
+          bookingsByUser.set(booking.user_id, list)
+        }
+      }
+    }
+
+    const enriched = memberList.map((member) => ({
+      ...member,
+      user_packages: packagesByUser.get(member.id) ?? [],
+      recent_bookings: bookingsByUser.get(member.id) ?? [],
+    }))
+
+    return json(res, 200, { ok: true, members: enriched })
   }
 
   if (req.method === 'DELETE') {

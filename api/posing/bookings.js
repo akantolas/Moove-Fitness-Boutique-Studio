@@ -1,6 +1,7 @@
 import {
   buildConfirmationEmail,
   buildPaymentEmail,
+  cancelPosingBooking,
   cors,
   createStripeCheckoutUrl,
   findBookablePackage,
@@ -28,6 +29,42 @@ async function sendBookingNotify({ from, profileName, userEmail, packageName, se
 export default async function handler(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
+
+  if (req.method === 'DELETE') {
+    const user = await getUserFromRequest(req)
+    if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
+
+    const bookingId = req.query?.id
+    if (!bookingId || typeof bookingId !== 'string') {
+      return json(res, 400, { ok: false, error: 'missing_id' })
+    }
+
+    try {
+      const supabase = getSupabaseAdmin()
+      const result = await cancelPosingBooking(supabase, {
+        bookingId,
+        userId: user.id,
+      })
+
+      if (!result.ok) {
+        const status =
+          result.error === 'forbidden'
+            ? 403
+            : result.error === 'booking_not_found'
+              ? 404
+              : result.error === 'cannot_cancel'
+                ? 409
+                : 500
+        return json(res, status, { ok: false, error: result.error })
+      }
+
+      return json(res, 200, { ok: true, already: result.already ?? false })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'server_error'
+      return json(res, 500, { ok: false, error: message })
+    }
+  }
+
   if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
   const user = await getUserFromRequest(req)

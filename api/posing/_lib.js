@@ -258,3 +258,126 @@ export async function findBookablePackage(supabase, userId, planKey) {
 
   return { mode: 'new_purchase' }
 }
+
+export async function activatePackagePayment(
+  supabase,
+  { bookingId, userPackageId, paymentRef, paymentMethod = 'stripe', confirmedBy = null },
+) {
+  const now = new Date().toISOString()
+
+  const { data: booking } = await supabase
+    .from('posing_bookings')
+    .select('id, status, user_package_id')
+    .eq('id', bookingId)
+    .maybeSingle()
+
+  if (!booking) return { ok: false, error: 'booking_not_found' }
+  if (booking.status === 'confirmed') return { ok: true, already: true }
+  if (booking.status !== 'pending_payment') {
+    return { ok: false, error: 'invalid_booking_status' }
+  }
+
+  const packageId = userPackageId ?? booking.user_package_id
+  if (!packageId) return { ok: false, error: 'missing_package' }
+
+  const { data: userPackage } = await supabase
+    .from('user_packages')
+    .select('id, status')
+    .eq('id', packageId)
+    .maybeSingle()
+
+  if (!userPackage) return { ok: false, error: 'package_not_found' }
+  if (userPackage.status !== 'pending_payment' && userPackage.status !== 'active') {
+    return { ok: false, error: 'invalid_package_status' }
+  }
+
+  const pkgUpdate = {
+    status: 'active',
+    stripe_payment_id: paymentRef,
+    sessions_used: 1,
+    updated_at: now,
+  }
+  if (paymentMethod) pkgUpdate.payment_method = paymentMethod
+  if (confirmedBy) pkgUpdate.confirmed_by = confirmedBy
+
+  const { error: pkgError } = await supabase
+    .from('user_packages')
+    .update(pkgUpdate)
+    .eq('id', packageId)
+
+  if (pkgError) return { ok: false, error: pkgError.message }
+
+  const { error: bookError } = await supabase
+    .from('posing_bookings')
+    .update({
+      status: 'confirmed',
+      stripe_session_id: paymentRef,
+      updated_at: now,
+    })
+    .eq('id', bookingId)
+
+  if (bookError) return { ok: false, error: bookError.message }
+
+  return { ok: true }
+}
+
+export async function cancelPosingBooking(supabase, { bookingId, userId, allowAdmin = false }) {
+  const { data: booking, error } = await supabase
+    .from('posing_bookings')
+    .select('id, user_id, status, user_package_id, slot:availability_slots(start_at)')
+    .eq('id', bookingId)
+    .maybeSingle()
+
+  if (error || !booking) return { ok: false, error: 'booking_not_found' }
+  if (!allowAdmin && booking.user_id !== userId) return { ok: false, error: 'forbidden' }
+  if (booking.status === 'cancelled') return { ok: true, already: true }
+  if (booking.status === 'completed' || booking.status === 'cancelled') {
+    return { ok: false, error: 'cannot_cancel' }
+  }
+
+  const now = new Date()
+  const nowIso = now.toISOString()
+  const slot = Array.isArray(booking.slot) ? booking.slot[0] : booking.slot
+  const slotStart = slot?.start_at ? new Date(slot.start_at) : null
+
+  if (booking.status === 'confirmed') {
+    if (!slotStart || slotStart <= now) {
+      return { ok: false, error: 'cannot_cancel' }
+    }
+
+    if (booking.user_package_id) {
+      const { data: userPackage } = await supabase
+        .from('user_packages')
+        .select('sessions_used')
+        .eq('id', booking.user_package_id)
+        .maybeSingle()
+
+      if (userPackage) {
+        await supabase
+          .from('user_packages')
+          .update({
+            sessions_used: Math.max(0, userPackage.sessions_used - 1),
+            updated_at: nowIso,
+          })
+          .eq('id', booking.user_package_id)
+      }
+    }
+  }
+
+  if (booking.status === 'pending_payment' && booking.user_package_id) {
+    await supabase
+      .from('user_packages')
+      .update({ status: 'cancelled', updated_at: nowIso })
+      .eq('id', booking.user_package_id)
+      .eq('status', 'pending_payment')
+  }
+
+  const { error: cancelError } = await supabase
+    .from('posing_bookings')
+    .update({ status: 'cancelled', updated_at: nowIso })
+    .eq('id', bookingId)
+
+  if (cancelError) return { ok: false, error: cancelError.message }
+
+  return { ok: true }
+}

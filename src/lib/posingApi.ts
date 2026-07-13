@@ -37,6 +37,54 @@ export type AdminMember = {
   role: string
   created_at: string
   updated_at: string
+  user_packages?: AdminMemberPackage[]
+  recent_bookings?: AdminMemberBooking[]
+}
+
+export type AdminMemberPackage = {
+  id: string
+  plan_key: string
+  status: string
+  sessions_total: number
+  sessions_used: number
+  created_at: string
+}
+
+export type AdminMemberBooking = {
+  id: string
+  status: string
+  plan_key: string
+  created_at: string
+  slot: { start_at: string } | null
+}
+
+export type AdminPayment = {
+  id: string
+  plan_key: string
+  status: string
+  created_at: string
+  user_id: string
+  user_package_id: string | null
+  profiles: { full_name: string | null; email: string; phone: string | null } | null
+  slot: { start_at: string; end_at: string } | null
+  user_package: { id: string; status: string; sessions_total: number } | null
+}
+
+export type AdminOverviewStats = {
+  members: number
+  pendingPayments: number
+  activePackages: number
+  weekBookings: number
+}
+
+export type AdminBookingRow = {
+  id: string
+  plan_key: string
+  status: string
+  created_at: string
+  user_id: string
+  profiles?: { full_name: string | null; email: string } | null
+  slot?: { start_at: string; end_at: string } | null
 }
 
 async function parseApiJson(res: Response) {
@@ -132,6 +180,63 @@ export async function adminDeleteMember(accessToken: string, memberId: string) {
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'delete_member_failed'))
+}
+
+export async function cancelPosingBooking(accessToken: string, bookingId: string) {
+  const res = await fetch(`/api/posing/bookings?id=${encodeURIComponent(bookingId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'cancel_failed'))
+  return data as { ok: boolean; already?: boolean }
+}
+
+export async function fetchAdminOverview(accessToken: string): Promise<AdminOverviewStats> {
+  const res = await fetch('/api/posing/admin/overview', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'overview_fetch_failed'))
+  return data.stats as AdminOverviewStats
+}
+
+export async function fetchAdminPayments(accessToken: string): Promise<AdminPayment[]> {
+  const res = await fetch('/api/posing/admin/payments', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'payments_fetch_failed'))
+  return data.payments as AdminPayment[]
+}
+
+export async function adminConfirmPayment(accessToken: string, bookingId: string) {
+  const res = await fetch('/api/posing/admin/confirm-payment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ booking_id: bookingId }),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'payment_confirm_failed'))
+  return data as { ok: boolean; already?: boolean }
+}
+
+export async function fetchAdminBookings(
+  accessToken: string,
+  status?: string,
+): Promise<AdminBookingRow[]> {
+  const url = status
+    ? `/api/posing/admin/bookings?status=${encodeURIComponent(status)}`
+    : '/api/posing/admin/bookings'
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'bookings_fetch_failed'))
+  return data.bookings as AdminBookingRow[]
 }
 
 export const posingPackageKeys = site.posing.packageKeys
