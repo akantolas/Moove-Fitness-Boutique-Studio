@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
-import {
-  adminCreateSlot,
-  adminDeleteSlot,
-  fetchPosingMe,
-} from '../lib/posingApi'
+import { fetchPosingIsAdmin } from '../lib/posingAccount'
+import { adminCreateSlot, adminDeleteSlot } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 
@@ -83,17 +80,12 @@ export function PosingAdminPage() {
   }, [loading, navigate, user])
 
   useEffect(() => {
-    if (!accessToken) return
-    fetchPosingMe(accessToken)
-      .then((data) => {
-        if (!data.isAdmin) {
-          setAuthorized(false)
-          return
-        }
-        setAuthorized(true)
-      })
+    const userId = user?.id
+    if (!userId) return
+    fetchPosingIsAdmin(userId)
+      .then((isAdmin) => setAuthorized(isAdmin))
       .catch(() => setAuthorized(false))
-  }, [accessToken])
+  }, [user?.id])
 
   async function loadData() {
     if (!accessToken) return

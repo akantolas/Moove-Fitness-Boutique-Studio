@@ -19,6 +19,18 @@ export type PosingProfileInput = {
 
 const profileSelect = 'full_name, email, phone, division, notes, role'
 
+export async function fetchPosingIsAdmin(userId: string): Promise<boolean> {
+  const supabase = createSupabaseClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return data?.role === 'admin'
+}
+
 export async function fetchPosingAccountData(userId: string) {
   const supabase = createSupabaseClient()
 
