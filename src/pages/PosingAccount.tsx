@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
-import { fetchPosingMe, type PosingBooking, type UserPackage } from '../lib/posingApi'
+import { fetchPosingAccountData } from '../lib/posingAccount'
+import type { PosingBooking, UserPackage } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 
@@ -25,7 +26,7 @@ function statusLabel(status: string, t: (key: string) => string) {
 export function PosingAccountPage() {
   const { t, locale } = useTranslation()
   const navigate = useNavigate()
-  const { configured, loading, user, accessToken, signOut } = usePosingAuth()
+  const { configured, loading, user, signOut } = usePosingAuth()
   const [packages, setPackages] = useState<UserPackage[]>([])
   const [bookings, setBookings] = useState<PosingBooking[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
@@ -39,10 +40,10 @@ export function PosingAccountPage() {
   }, [loading, navigate, user])
 
   useEffect(() => {
-    if (!accessToken) return
+    if (!user) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- async account fetch
     setDataLoading(true)
-    fetchPosingMe(accessToken)
+    fetchPosingAccountData(user.id)
       .then((data) => {
         setPackages(data.packages)
         setBookings(data.bookings)
@@ -50,12 +51,10 @@ export function PosingAccountPage() {
         setFetchError('')
       })
       .catch((err) => {
-        const code = err instanceof Error ? err.message : 'fetch_failed'
-        const translated = t(`posing.account.errors.${code}` as 'posing.account.errors.server_config_error')
-        setFetchError(translated.startsWith('posing.account.errors.') ? code : translated)
+        setFetchError(err instanceof Error ? err.message : 'fetch_failed')
       })
       .finally(() => setDataLoading(false))
-  }, [accessToken])
+  }, [user])
 
   const activePackages = useMemo(
     () => packages.filter((p) => p.status === 'active'),

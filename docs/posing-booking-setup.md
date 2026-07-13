@@ -63,6 +63,23 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 Αντέγραψε από `.env.example` και συμπλήρωσε όλα τα Move & Pose vars.
 
+**Κρίσιμο για τα serverless API (`/api/posing/*`):**
+
+| Variable | Υποχρεωτικό για API |
+|----------|---------------------|
+| `SUPABASE_URL` | Ναι — **ξεχωριστά** από `VITE_SUPABASE_URL` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Ναι — legacy `service_role` JWT |
+| `VITE_SUPABASE_URL` | Frontend build μόνο |
+| `VITE_SUPABASE_ANON_KEY` | Frontend build μόνο |
+
+Μετά από αλλαγή env: **Redeploy** (όχι μόνο Save).
+
+**Έλεγχος API:**
+- `GET https://moovefitness.gr/api/posing/health` → `{ ok: true, hasUrl: true, hasServiceKey: true }`
+- `GET https://moovefitness.gr/api/posing/me` (χωρίς login) → `{ ok: false, error: "unauthorized" }`
+
+Το `/posing/account` διαβάζει δεδομένα απευθείας από Supabase (RLS) — δεν χρειάζεται service role για το dashboard.
+
 ## 5. Site routes
 
 | Route | Ρόλος |
@@ -78,7 +95,8 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 |----------|-------|
 | `GET /api/posing/slots` | Διαθέσιμα slots |
 | `POST /api/posing/bookings` | Κράτηση + email |
-| `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη |
+| `GET /api/posing/health` | Έλεγχος Vercel env (hasUrl, hasServiceKey) |
+| `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη (legacy API) |
 | `POST /api/posing/admin/slots` | Προσθήκη slot |
 | `DELETE /api/posing/admin/slots?id=` | Διαγραφή ελεύθερου slot |
 | `GET /api/posing/admin/bookings` | Λίστα κρατήσεων |
