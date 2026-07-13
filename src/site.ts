@@ -25,7 +25,7 @@ export const site = {
 
   /**
    * Move & Pose — online bodybuilding posing coaching (ξεχωριστό από το studio).
-   * Cal.com: βάλε το calLink όταν είναι έτοιμο (π.χ. "magda-samara/posing-60min").
+   * Booking: Supabase auth + custom calendar (VITE_SUPABASE_* env).
    */
   posing: {
     brandName: 'Move & Pose',
@@ -34,10 +34,8 @@ export const site = {
     /** Hero image (αριστερά) στη σελίδα posing — ξεχωριστό από το logo mark. */
     heroImage: '/pose2.png',
     instagram: 'https://www.instagram.com/theposingacademygr/',
-    /** Cal.com inline embed path — username ή username/event-slug */
-    calLink: 'μαγδα-σαμαρα-awut2i/online-posing-session',
     coachName: 'Μαγδα Σαμαρά',
-    /** Stable keys for Cal metadata + webhook → Stripe Payment Link mapping */
+    /** Stable keys for package → Stripe price mapping */
     packageKeys: ['single', 'sapphire', 'ruby', 'diamond'] as const,
   },
 } as const

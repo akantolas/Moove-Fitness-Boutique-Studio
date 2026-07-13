@@ -10,6 +10,7 @@ import {
 import { PosePromoBubble } from './PosePromoBubble'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useTranslation } from '../i18n/useTranslation'
+import { usePosingAuth } from '../contexts/PosingAuthContext'
 
 const studioNav = [
   { to: '/', labelKey: 'nav.home', end: true },
@@ -32,6 +33,7 @@ export function Header() {
   const posing = useIsPosingRoute()
   const { posing: posingBrand } = site
   const { t } = useTranslation()
+  const { user } = usePosingAuth()
   const navItems = posing ? posingNav : studioNav
 
   function navClass(isActive: boolean) {
@@ -145,6 +147,23 @@ export function Header() {
 
         <div className="hidden items-center justify-end gap-2 lg:flex">
           <LanguageSwitcher compact />
+          {posing ? (
+            user ? (
+              <NavLink
+                to="/posing/account"
+                className="rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/5"
+              >
+                {t('posing.auth.myAccount')}
+              </NavLink>
+            ) : (
+              <NavLink
+                to="/posing/login"
+                className="rounded-full border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/5"
+              >
+                {t('posing.auth.login')}
+              </NavLink>
+            )
+          ) : null}
           {posing ? (
             <PosePromoBubble variant="studio-back" />
           ) : (

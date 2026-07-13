@@ -1,83 +1,98 @@
-# Move & Pose — Cal.com, Stripe & email setup
+# Move & Pose — Supabase booking, Stripe & email setup
 
-Ροή: **κράτηση slot στο Cal.com (χωρίς πληρωμή)** → webhook → **email με Stripe Payment Link** + οδηγίες προετοιμασίας.
+Ροή: **λογαριασμός → κράτηση slot → email με Stripe Checkout → webhook επιβεβαιώνει πακέτο & κράτηση**.
 
-## 1. Cal.com event (`online-posing-session`)
+## 1. Supabase project
 
-1. **Pricing:** Απενεργοποίησε πληρωμή στο checkout (free booking).
-2. **Custom booking question** (backup αν χαθεί το metadata από το site):
-   - Label: `Πακέτο` / `Package`
-   - Identifier/slug: `package`
-   - Type: dropdown
-   - Options: `1 Posing Session`, `Sapphire`, `Ruby`, `Diamond`
-3. **Booking fields (όνομα & email):** Συμπληρώνονται **μέσα στο Cal.com** — το site δεν έχει δικά του πεδία. Για πραγματικούς πελάτες τα πεδία είναι κενά (με placeholder). Αν δοκιμάζεις ενώ είσαι logged in στο Cal.com, θα δεις τα δικά σου στοιχεία — χρησιμοποίησε **incognito**.
-4. **Additional notes:** Άλλαξε label/description στο Cal event σε κάτι όπως «Division, επίπεδο, ημερομηνία αγώνα…» — **μην** αφήνεις τεχνικό κείμενο. Το πακέτο περνάει αυτόματα από το site (metadata), όχι από τις σημειώσεις του πελάτη.
-5. **Confirmation email:** Κράτα ενεργό το built-in Cal email (meeting link / Zoom).
-6. **Webhook** (Settings → Developer → Webhooks → Add):
-   - **Subscriber URL:** `https://moovefitness.gr/api/posing-cal-webhook`
-   - **Event:** `BOOKING_CREATED`
-   - **Secret:** δημιούργησε strong secret → αντιγράφεις στο Vercel ως `CAL_WEBHOOK_SECRET`
-   - **Payload template:** default JSON
+1. Δημιούργησε project στο [supabase.com](https://supabase.com)
+2. **Authentication → Providers:** ενεργοποίησε Email (password)
+3. **SQL Editor:** τρέξε το `supabase/migrations/001_posing_booking.sql`
+4. Αντέγραψε:
+   - Project URL → `VITE_SUPABASE_URL` + `SUPABASE_URL`
+   - anon public key → `VITE_SUPABASE_ANON_KEY`
+   - service_role key → `SUPABASE_SERVICE_ROLE_KEY` (μόνο Vercel, ποτέ στο frontend)
 
-## 2. Stripe Payment Links
+### Admin (Μαγδα)
 
-Δημιούργησε **4 Payment Links** (Dashboard → Payment Links):
+Ορίζεις στο Vercel:
+
+```
+POSE_ADMIN_EMAILS=info@moovefitness.gr
+```
+
+Το πρώτο login με αυτό το email παίρνει αυτόματα `role=admin` και πρόσβαση στο `/posing/admin`.
+
+## 2. Stripe
+
+### Προτιμώμενο: Checkout Sessions (auto-confirm)
+
+1. Δημιούργησε **Products + Prices** για κάθε πακέτο
+2. **Developers → Webhooks → Add endpoint:**
+   - URL: `https://moovefitness.gr/api/posing/stripe-webhook`
+   - Event: `checkout.session.completed`
+   - Secret → `STRIPE_WEBHOOK_SECRET`
+3. Vercel env:
 
 | Πακέτο | Env var |
 |--------|---------|
-| 1 Posing Session | `STRIPE_LINK_SINGLE` |
-| Sapphire | `STRIPE_LINK_SAPPHIRE` |
-| Ruby | `STRIPE_LINK_RUBY` |
-| Diamond | `STRIPE_LINK_DIAMOND` |
+| 1 Posing Session | `STRIPE_PRICE_SINGLE` |
+| Sapphire | `STRIPE_PRICE_SAPPHIRE` |
+| Ruby | `STRIPE_PRICE_RUBY` |
+| Diamond | `STRIPE_PRICE_DIAMOND` |
 
-Για κάθε link:
-- Όρισε τιμή ανά πακέτο
-- **Success URL:** `https://moovefitness.gr/posing?payment=success`
-- Μην περιορίζεις payment methods στο API — ρύθμισε από Dashboard
++ `STRIPE_SECRET_KEY` (secret key από Dashboard)
 
-## 3. Resend (αποστολή email)
+Το API δημιουργεί Checkout Session ανά κράτηση με metadata `booking_id` + `user_package_id`.
 
-1. Δημιούργησε λογαριασμό στο [resend.com](https://resend.com)
-2. **Verify domain** `moovefitness.gr` (SPF + DKIM DNS records στο Vercel DNS)
-3. Απόστολτης: π.χ. `Move & Pose <bookings@moovefitness.gr>`
-4. API key → Vercel `RESEND_API_KEY`
+### Fallback: static Payment Links
 
-> Το ImprovMX (`info@moovefitness.gr`) είναι για **λήψη**. Η αποστολή transactional emails χρειάζεται ξεχωριστό provider (Resend).
+Αν δεν ορίσεις `STRIPE_SECRET_KEY` / price IDs, το email στέλνει static Payment Link (`STRIPE_LINK_*`). Σε αυτή την περίπτωση **δεν** ενεργοποιείται αυτόματα το πακέτο — χειροκίνητη επιβεβαίωση.
+
+## 3. Resend
+
+1. Verify domain `moovefitness.gr`
+2. Αποστολέας: `Move & Pose <bookings@moovefitness.gr>`
+3. API key → `RESEND_API_KEY`
 
 ## 4. Vercel environment variables
 
-Αντέγραψε από `.env.example` και συμπλήρωσε:
+Αντέγραψε από `.env.example` και συμπλήρωσε όλα τα Move & Pose vars.
 
-```
-CAL_WEBHOOK_SECRET=
-RESEND_API_KEY=
-POSE_FROM_EMAIL=Move & Pose <bookings@moovefitness.gr>
-POSE_NOTIFY_EMAIL=info@moovefitness.gr
-STRIPE_LINK_SINGLE=
-STRIPE_LINK_SAPPHIRE=
-STRIPE_LINK_RUBY=
-STRIPE_LINK_DIAMOND=
-```
+## 5. Site routes
 
-## 5. Site integration
+| Route | Ρόλος |
+|-------|-------|
+| `/posing` | Landing + ημερολόγιο κρατήσεων |
+| `/posing/login`, `/posing/signup` | Auth |
+| `/posing/account` | Dashboard πελάτη |
+| `/posing/admin` | Διαθέσιμες ώρες + κρατήσεις (admin) |
 
-Το site στέλνει στο Cal embed metadata:
-- `packageKey` — `single` | `sapphire` | `ruby` | `diamond`
-- `packageName` — εμφανιζόμενο όνομα πακέτου
-- `locale` — `el` | `en`
+## 6. API endpoints
 
-Το webhook διαβάζει πρώτα το `payload.metadata.packageKey`, μετά την απάντηση στο custom question `package`.
+| Endpoint | Ρόλος |
+|----------|-------|
+| `GET /api/posing/slots` | Διαθέσιμα slots |
+| `POST /api/posing/bookings` | Κράτηση + email |
+| `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη |
+| `POST /api/posing/admin/slots` | Προσθήκη slot |
+| `DELETE /api/posing/admin/slots?id=` | Διαγραφή ελεύθερου slot |
+| `GET /api/posing/admin/bookings` | Λίστα κρατήσεων |
+| `POST /api/posing/stripe-webhook` | Επιβεβαίωση πληρωμής |
 
-## 6. Test checklist
+## 7. Test checklist
 
-1. Επίλεξε πακέτο στο `/posing#booking`
-2. **Δοκίμασε σε incognito** ή logout από Cal.com — αν είσαι συνδεδεμένος ως organizer, θα δεις τα δικά σου στοιχεία pre-filled (αυτό δεν συμβαίνει σε πραγματικούς πελάτες)
-3. Κλείσε test slot στο Cal
-4. Έλεγξε Vercel function logs → `200`
-5. Email στον πελάτη + αντίγραφο στη Μαγδα
-6. Stripe link ανοίγει και οδηγεί στο success URL
+1. Τρέξε migration στο Supabase
+2. `vercel dev` με env vars
+3. Signup → login → `/posing/account` (κενό dashboard)
+4. Admin login → `/posing/admin` → πρόσθεσε slot
+5. Client κλείνει slot → `pending_payment` + email
+6. Stripe test payment → webhook → `confirmed` + active package
 7. `npm run build` περνάει
 
-## 7. Πολιτική πληρωμής
+## 8. Timezone
 
-Προτείνεται deadline **24 ώρες πριν τη συνεδρία**. Αν δεν πληρωθεί, η Μαγδα ακυρώνει χειροκίνητα από Cal.com.
+Όλα τα slots είναι `timestamptz` — UI/API χρησιμοποιούν `Europe/Athens`.
+
+## 9. Πολιτική πληρωμής
+
+Προτείνεται deadline **24 ώρες πριν τη συνεδρία**. Αν δεν πληρωθεί, ακύρωση χειροκίνητα από admin.

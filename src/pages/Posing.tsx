@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { CalPosingEmbed } from '../components/CalPosingEmbed'
+import { Link, useSearchParams } from 'react-router-dom'
+import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
 import { ZoomableImage } from '../components/ZoomableImage'
+import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { site } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
@@ -11,7 +12,7 @@ export function PosingPage() {
   const vars = useSiteVars()
   const [searchParams] = useSearchParams()
   const paymentSuccess = searchParams.get('payment') === 'success'
-  const calUrl = posing.calLink ? `https://cal.com/${posing.calLink}` : null
+  const { user } = usePosingAuth()
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(0)
   const selectedPackage = dictionary.posing.pricing.packages[selectedPackageIndex]?.name ?? ''
   const selectedPackageKey = useMemo(
@@ -80,16 +81,21 @@ export function PosingPage() {
               >
                 {t('common.instagram')}
               </a>
-              {calUrl ? (
-                <a
-                  href={calUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
+              {user ? (
+                <Link
+                  to="/posing/account"
                   className="ml-5 text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-100/55 transition hover:text-fuchsia-100"
                 >
-                  {t('posing.hero.openCal')}
-                </a>
-              ) : null}
+                  {t('posing.auth.myAccount')}
+                </Link>
+              ) : (
+                <Link
+                  to="/posing/login"
+                  className="ml-5 text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-100/55 transition hover:text-fuchsia-100"
+                >
+                  {t('posing.auth.login')}
+                </Link>
+              )}
             </div>
           </div>
 
@@ -268,8 +274,7 @@ export function PosingPage() {
               </p>
               <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackage}</p>
             </div>
-            <CalPosingEmbed
-              calLink={posing.calLink}
+            <PoseBookingCalendar
               selectedPackageKey={selectedPackageKey}
               selectedPackageName={selectedPackage}
               locale={locale}
