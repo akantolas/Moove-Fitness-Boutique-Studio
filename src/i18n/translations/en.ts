@@ -414,6 +414,9 @@ export const en = {
         cancelled: 'Cancelled',
         completed: 'Completed',
       },
+      errors: {
+        server_config_error: 'Server configuration issue (check SUPABASE_SERVICE_ROLE_KEY on Vercel).',
+      },
     },
     calendar: {
       title: 'Available times',

@@ -123,7 +123,7 @@ export function PoseBookingCalendar({
         plan_key: selectedPackageKey,
         locale,
       })
-      setSuccess(result.message ?? t('posing.calendar.success'))
+      setSuccess(typeof result.message === 'string' ? result.message : t('posing.calendar.success'))
       setSelectedSlotId(null)
       await loadSlots()
     } catch (err) {

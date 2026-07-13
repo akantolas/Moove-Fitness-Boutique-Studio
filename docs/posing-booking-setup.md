@@ -6,11 +6,16 @@
 
 1. Δημιούργησε project στο [supabase.com](https://supabase.com)
 2. **Authentication → Providers:** ενεργοποίησε Email (password)
-3. **SQL Editor:** τρέξε το `supabase/migrations/001_posing_booking.sql`
-4. Αντέγραψε:
+3. **Authentication → URL Configuration:**
+   - **Site URL:** `https://moovefitness.gr`
+   - **Redirect URLs:** πρόσθεσε `https://moovefitness.gr/**` και `https://moovefitness.gr/posing/account`
+   - (Μην αφήνεις `http://localhost:3000` — τα email links θα σε πετάνε εκεί)
+4. **SQL Editor:** τρέξε το `supabase/migrations/001_posing_booking.sql`
+5. Αντέγραψε:
    - Project URL → `VITE_SUPABASE_URL` + `SUPABASE_URL`
    - anon public key → `VITE_SUPABASE_ANON_KEY`
    - service_role key → `SUPABASE_SERVICE_ROLE_KEY` (μόνο Vercel, ποτέ στο frontend)
+   - Αν τα νέα `sb_secret_` keys δεν δουλεύουν στο API, χρησιμοποίησε tab **Legacy anon, service_role API keys** → `service_role`
 
 ### Admin (Μαγδα)
 

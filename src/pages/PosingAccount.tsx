@@ -50,7 +50,9 @@ export function PosingAccountPage() {
         setFetchError('')
       })
       .catch((err) => {
-        setFetchError(err instanceof Error ? err.message : 'fetch_failed')
+        const code = err instanceof Error ? err.message : 'fetch_failed'
+        const translated = t(`posing.account.errors.${code}` as 'posing.account.errors.server_config_error')
+        setFetchError(translated.startsWith('posing.account.errors.') ? code : translated)
       })
       .finally(() => setDataLoading(false))
   }, [accessToken])

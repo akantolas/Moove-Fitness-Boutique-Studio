@@ -27,10 +27,19 @@ export type PosingBooking = {
   slot: { start_at: string; end_at: string } | null
 }
 
+async function parseApiJson(res: Response) {
+  const text = await res.text()
+  try {
+    return JSON.parse(text) as Record<string, unknown>
+  } catch {
+    throw new Error(text.startsWith('A server error') ? 'server_config_error' : 'invalid_api_response')
+  }
+}
+
 export async function fetchPosingSlots(from: string, to: string): Promise<PosingSlot[]> {
   const res = await fetch(`/api/posing/slots?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
-  const data = await res.json()
-  if (!res.ok || !data.ok) throw new Error(data.error ?? 'slots_fetch_failed')
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'slots_fetch_failed'))
   return data.slots as PosingSlot[]
 }
 
@@ -46,8 +55,8 @@ export async function createPosingBooking(
     },
     body: JSON.stringify(payload),
   })
-  const data = await res.json()
-  if (!res.ok || !data.ok) throw new Error(data.error ?? 'booking_failed')
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'booking_failed'))
   return data
 }
 
@@ -55,8 +64,8 @@ export async function fetchPosingMe(accessToken: string) {
   const res = await fetch('/api/posing/me', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  const data = await res.json()
-  if (!res.ok || !data.ok) throw new Error(data.error ?? 'me_fetch_failed')
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'me_fetch_failed'))
   return data as {
     profile: { full_name: string | null; email: string; role: string }
     isAdmin: boolean
@@ -74,8 +83,8 @@ export async function adminCreateSlot(accessToken: string, start_at: string, end
     },
     body: JSON.stringify({ start_at, end_at }),
   })
-  const data = await res.json()
-  if (!res.ok || !data.ok) throw new Error(data.error ?? 'admin_slot_create_failed')
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_create_failed'))
   return data.slot
 }
 
@@ -84,8 +93,8 @@ export async function adminDeleteSlot(accessToken: string, id: string) {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  const data = await res.json()
-  if (!res.ok || !data.ok) throw new Error(data.error ?? 'admin_slot_delete_failed')
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_delete_failed'))
 }
 
 export const posingPackageKeys = site.posing.packageKeys

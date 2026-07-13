@@ -413,6 +413,9 @@ export const el = {
         cancelled: 'Ακυρωμένη',
         completed: 'Ολοκληρωμένη',
       },
+      errors: {
+        server_config_error: 'Πρόβλημα ρύθμισης server (έλεγξε SUPABASE_SERVICE_ROLE_KEY στο Vercel).',
+      },
     },
     calendar: {
       title: 'Διαθέσιμες ώρες',

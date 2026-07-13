@@ -9,5 +9,11 @@ export function createSupabaseClient() {
   if (!isSupabaseConfigured) {
     throw new Error('Supabase is not configured')
   }
-  return createClient(supabaseUrl, supabaseAnonKey)
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  })
 }
