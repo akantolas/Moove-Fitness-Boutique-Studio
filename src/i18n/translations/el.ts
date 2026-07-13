@@ -470,6 +470,13 @@ export const el = {
       free: 'Ελεύθερη',
       delete: 'Διαγραφή',
       bookings: 'Κρατήσεις',
+      legendEmpty: 'Κενό',
+      legendOpen: 'Διαθέσιμο',
+      legendBooked: 'Κρατημένο',
+      openDay: 'Άνοιγμα',
+      clearDay: 'Καθάρισμα',
+      opening: 'Ενημέρωση…',
+      slotBooked: 'Κράτηση',
     },
     faq: {
       title: 'Συχνές ερωτήσεις',

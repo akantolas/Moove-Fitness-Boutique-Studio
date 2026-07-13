@@ -471,6 +471,13 @@ export const en = {
       free: 'Free',
       delete: 'Delete',
       bookings: 'Bookings',
+      legendEmpty: 'Empty',
+      legendOpen: 'Available',
+      legendBooked: 'Booked',
+      openDay: 'Open day',
+      clearDay: 'Clear',
+      opening: 'Updating…',
+      slotBooked: 'Booked',
     },
     faq: {
       title: 'FAQ',
