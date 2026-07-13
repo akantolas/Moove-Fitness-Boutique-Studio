@@ -10,7 +10,9 @@
    - **Site URL:** `https://moovefitness.gr`
    - **Redirect URLs:** πρόσθεσε `https://moovefitness.gr/**` και `https://moovefitness.gr/posing/account`
    - (Μην αφήνεις `http://localhost:3000` — τα email links θα σε πετάνε εκεί)
-4. **SQL Editor:** τρέξε το `supabase/migrations/001_posing_booking.sql`
+4. **SQL Editor:** τρέξε τα migrations:
+   - `supabase/migrations/001_posing_booking.sql`
+   - `supabase/migrations/002_profile_fields.sql` (phone, division, notes στο προφίλ)
 5. Αντέγραψε:
    - Project URL → `VITE_SUPABASE_URL` + `SUPABASE_URL`
    - anon public key → `VITE_SUPABASE_ANON_KEY`
@@ -96,6 +98,7 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 | `GET /api/posing/slots` | Διαθέσιμα slots |
 | `POST /api/posing/bookings` | Κράτηση + email |
 | `GET /api/posing/health` | Έλεγχος Vercel env (hasUrl, hasServiceKey) |
+| `POST /api/posing/account/delete` | Διαγραφή λογαριασμού (password + Bearer JWT) |
 | `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη (legacy API) |
 | `POST /api/posing/admin/slots` | Προσθήκη slot |
 | `DELETE /api/posing/admin/slots?id=` | Διαγραφή ελεύθερου slot |

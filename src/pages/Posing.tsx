@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
@@ -11,7 +11,11 @@ export function PosingPage() {
   const { t, dictionary, locale } = useTranslation()
   const vars = useSiteVars()
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const paymentSuccess = searchParams.get('payment') === 'success'
+  const accountDeleted = Boolean(
+    (location.state as { accountDeleted?: boolean } | null)?.accountDeleted,
+  )
   const { user } = usePosingAuth()
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(0)
   const selectedPackage = dictionary.posing.pricing.packages[selectedPackageIndex]?.name ?? ''
@@ -22,6 +26,11 @@ export function PosingPage() {
 
   return (
     <div className="pose-page bg-[#08080c] text-white">
+      {accountDeleted ? (
+        <div className="border-b border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-center text-sm text-emerald-100">
+          {t('posing.account.deleteSuccess')}
+        </div>
+      ) : null}
       <section className="relative overflow-hidden border-b border-white/10">
         <div
           className="pointer-events-none absolute inset-0 opacity-80"

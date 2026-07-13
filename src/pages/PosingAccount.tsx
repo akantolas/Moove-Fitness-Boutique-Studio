@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
-import { fetchPosingAccountData } from '../lib/posingAccount'
+import {
+  deletePosingAccount,
+  fetchPosingAccountData,
+  updatePosingProfile,
+  type PosingProfile,
+} from '../lib/posingAccount'
 import type { PosingBooking, UserPackage } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
+
+const inputClass =
+  'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
 
 function formatSlotTime(startAt: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
@@ -23,15 +31,40 @@ function statusLabel(status: string, t: (key: string) => string) {
   return translated === key ? status : translated
 }
 
+function profileToForm(profile: PosingProfile | null) {
+  return {
+    fullName: profile?.full_name ?? '',
+    phone: profile?.phone ?? '',
+    division: profile?.division ?? '',
+    notes: profile?.notes ?? '',
+  }
+}
+
+function translateAccountError(code: string, t: (key: string) => string) {
+  const key = `posing.account.errors.${code}`
+  const translated = t(key)
+  return translated === key ? code : translated
+}
+
 export function PosingAccountPage() {
   const { t, locale } = useTranslation()
   const navigate = useNavigate()
-  const { configured, loading, user, signOut } = usePosingAuth()
+  const { configured, loading, user, accessToken, signOut } = usePosingAuth()
   const [packages, setPackages] = useState<UserPackage[]>([])
   const [bookings, setBookings] = useState<PosingBooking[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
   const [fetchError, setFetchError] = useState('')
   const [dataLoading, setDataLoading] = useState(false)
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [division, setDivision] = useState('')
+  const [notes, setNotes] = useState('')
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMessage, setProfileMessage] = useState('')
+  const [profileError, setProfileError] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const lastFetchedUserId = useRef<string | null>(null)
 
   useEffect(() => {
@@ -58,6 +91,11 @@ export function PosingAccountPage() {
         setPackages(data.packages)
         setBookings(data.bookings)
         setIsAdmin(data.isAdmin)
+        const form = profileToForm(data.profile)
+        setFullName(form.fullName)
+        setPhone(form.phone)
+        setDivision(form.division)
+        setNotes(form.notes)
         setFetchError('')
       })
       .catch((err) => {
@@ -93,6 +131,44 @@ export function PosingAccountPage() {
 
   const awaitingData = Boolean(user?.id) && lastFetchedUserId.current !== user?.id
   const pageReady = !loading && Boolean(user) && !awaitingData && !dataLoading
+
+  async function handleSaveProfile(event: React.FormEvent) {
+    event.preventDefault()
+    if (!user?.id || !user.email) return
+    setProfileSaving(true)
+    setProfileError('')
+    setProfileMessage('')
+    try {
+      await updatePosingProfile(user.id, user.email, {
+        full_name: fullName,
+        phone,
+        division,
+        notes,
+      })
+      setProfileMessage(t('posing.account.profileSaved'))
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'profile_save_failed')
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
+  async function handleDeleteAccount(event: React.FormEvent) {
+    event.preventDefault()
+    if (!accessToken) return
+    setDeleteBusy(true)
+    setDeleteError('')
+    try {
+      await deletePosingAccount(accessToken, deletePassword)
+      await signOut()
+      navigate('/posing', { replace: true, state: { accountDeleted: true } })
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'delete_failed'
+      setDeleteError(translateAccountError(code, t))
+    } finally {
+      setDeleteBusy(false)
+    }
+  }
 
   if (!configured) {
     return (
@@ -146,6 +222,83 @@ export function PosingAccountPage() {
           {fetchError}
         </p>
       ) : null}
+
+      <section className="mt-10 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+        <h2 className="text-lg font-semibold text-white">{t('posing.account.profileTitle')}</h2>
+        <p className="mt-2 text-sm text-white/55">{t('posing.account.profileBody')}</p>
+        <form className="mt-6 space-y-4" onSubmit={handleSaveProfile}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.fullName')}
+              </label>
+              <input
+                id="profile-name"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className={inputClass}
+                autoComplete="name"
+              />
+            </div>
+            <div>
+              <label htmlFor="profile-phone" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.phone')}
+              </label>
+              <input
+                id="profile-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className={inputClass}
+                autoComplete="tel"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="profile-division" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+              {t('posing.account.division')}
+            </label>
+            <input
+              id="profile-division"
+              value={division}
+              onChange={(e) => setDivision(e.target.value)}
+              placeholder={t('posing.account.divisionPlaceholder')}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="profile-notes" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+              {t('posing.account.notes')}
+            </label>
+            <textarea
+              id="profile-notes"
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={t('posing.account.notesPlaceholder')}
+              className={`${inputClass} resize-y`}
+            />
+          </div>
+          {profileError ? (
+            <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              {profileError}
+            </p>
+          ) : null}
+          {profileMessage ? (
+            <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+              {profileMessage}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={profileSaving}
+            className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
+          >
+            {profileSaving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
+          </button>
+        </form>
+      </section>
 
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-white">{t('posing.account.activePackages')}</h2>
@@ -224,6 +377,41 @@ export function PosingAccountPage() {
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {!isAdmin ? (
+        <section className="mt-12 rounded-2xl border border-rose-300/20 bg-rose-400/5 p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-rose-100">{t('posing.account.deleteTitle')}</h2>
+          <p className="mt-2 text-sm text-white/55">{t('posing.account.deleteBody')}</p>
+          <form className="mt-5 space-y-4" onSubmit={handleDeleteAccount}>
+            <div>
+              <label htmlFor="delete-password" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+                {t('posing.account.deletePassword')}
+              </label>
+              <input
+                id="delete-password"
+                type="password"
+                required
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className={inputClass}
+                autoComplete="current-password"
+              />
+            </div>
+            {deleteError ? (
+              <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+                {deleteError}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={deleteBusy}
+              className="rounded-full border border-rose-300/40 bg-rose-500/15 px-6 py-2.5 text-sm font-semibold text-rose-100 transition hover:bg-rose-500/25 disabled:opacity-50"
+            >
+              {deleteBusy ? t('posing.account.deleting') : t('posing.account.deleteConfirm')}
+            </button>
+          </form>
         </section>
       ) : null}
     </div>
