@@ -188,10 +188,12 @@ export async function fetchPosingAccountData(userId: string) {
     supabase
       .from('user_packages')
       .select('id, plan_key, sessions_total, sessions_used, status, period_start, period_end, created_at')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false }),
     supabase
       .from('posing_bookings')
       .select('id, plan_key, status, created_at, slot:availability_slots(start_at, end_at)')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false }),
     fetchProfileRow(userId),
     fetchPosingIsAdmin(userId).catch(() => false),

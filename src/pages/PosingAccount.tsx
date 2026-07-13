@@ -16,6 +16,11 @@ import type { Locale } from '../i18n/types'
 import { AccountProfileHero } from '../components/AccountProfileHero'
 import { AccountQuickStats } from '../components/AccountQuickStats'
 import { PasswordInput } from '../components/PasswordInput'
+import {
+  bookingStatusChipClass,
+  bookingStatusLabel,
+  planKeyLabel,
+} from '../lib/posingLabels'
 
 const inputClass =
   'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
@@ -31,27 +36,6 @@ function formatSlotTime(startAt: string, locale: Locale) {
     minute: '2-digit',
     timeZone: 'Europe/Athens',
   }).format(new Date(startAt))
-}
-
-function statusLabel(status: string, t: (key: string) => string) {
-  const key = `posing.account.status.${status}` as const
-  const translated = t(key)
-  return translated === key ? status : translated
-}
-
-function statusChipClass(status: string) {
-  switch (status) {
-    case 'confirmed':
-      return 'border-emerald-300/35 bg-emerald-400/15 text-emerald-100'
-    case 'pending_payment':
-      return 'border-amber-300/35 bg-amber-400/15 text-amber-100'
-    case 'cancelled':
-      return 'border-white/20 bg-white/5 text-white/50'
-    case 'completed':
-      return 'border-cyan-300/35 bg-cyan-400/10 text-cyan-100'
-    default:
-      return 'border-white/20 bg-white/5 text-white/60'
-  }
 }
 
 function profileToForm(profile: PosingProfile | null) {
@@ -75,7 +59,7 @@ function avatarWithCache(url: string | null, cacheBust: number) {
 }
 
 export function PosingAccountPage() {
-  const { t, locale } = useTranslation()
+  const { t, locale, dictionary } = useTranslation()
   const navigate = useNavigate()
   const { configured, loading, user, accessToken, signOut } = usePosingAuth()
   const [profile, setProfile] = useState<PosingProfile | null>(null)
@@ -413,7 +397,9 @@ export function PosingAccountPage() {
                     key={pkg.id}
                     className="rounded-xl border border-fuchsia-200/20 bg-white/[0.04] px-4 py-3"
                   >
-                    <p className="font-medium text-white">{pkg.plan_key}</p>
+                    <p className="font-medium text-white">
+                      {planKeyLabel(pkg.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                    </p>
                     <p className="mt-1 text-sm text-fuchsia-200/80">
                       {t('posing.account.remaining', {
                         remaining: pkg.sessions_remaining,
@@ -458,12 +444,14 @@ export function PosingAccountPage() {
                         {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
                       </p>
                       <span
-                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${statusChipClass(booking.status)}`}
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(booking.status)}`}
                       >
-                        {statusLabel(booking.status, t)}
+                        {bookingStatusLabel(booking.status, t)}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-white/50">{booking.plan_key}</p>
+                    <p className="mt-1 text-xs text-white/50">
+                      {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -486,12 +474,14 @@ export function PosingAccountPage() {
                     {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
                   </p>
                   <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${statusChipClass(booking.status)}`}
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(booking.status)}`}
                   >
-                    {statusLabel(booking.status, t)}
+                    {bookingStatusLabel(booking.status, t)}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-white/50">{booking.plan_key}</p>
+                <p className="mt-1 text-xs text-white/50">
+                  {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                </p>
               </li>
             ))}
           </ul>

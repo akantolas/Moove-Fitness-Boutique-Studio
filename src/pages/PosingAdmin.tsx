@@ -26,6 +26,11 @@ import {
   startOfWeek,
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
+import {
+  bookingStatusChipClass,
+  bookingStatusLabel,
+  planKeyLabel,
+} from '../lib/posingLabels'
 
 type AdminSlot = {
   id: string
@@ -41,7 +46,7 @@ type AdminSlot = {
 }
 
 export function PosingAdminPage() {
-  const { t, locale } = useTranslation()
+  const { t, locale, dictionary } = useTranslation()
   const navigate = useNavigate()
   const { loading, user, accessToken } = usePosingAuth()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
@@ -280,15 +285,24 @@ export function PosingAdminPage() {
             {weekBookings.map((booking) => (
               <li
                 key={booking.id}
-                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm text-white/80"
+                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm"
               >
-                <span className="text-white">
-                  {booking.profiles?.full_name ?? booking.profiles?.email ?? '—'}
-                </span>
-                {' · '}
-                {booking.slot ? formatSlot(booking.slot.start_at, locale) : '—'}
-                {' · '}
-                {booking.plan_key} · {booking.status}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-white/85">
+                    <span className="font-medium text-white">
+                      {booking.profiles?.full_name ?? booking.profiles?.email ?? '—'}
+                    </span>
+                    {' · '}
+                    {booking.slot ? formatSlot(booking.slot.start_at, locale) : '—'}
+                    {' · '}
+                    {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                  </p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(booking.status)}`}
+                  >
+                    {bookingStatusLabel(booking.status, t)}
+                  </span>
+                </div>
               </li>
             ))}
           </ul>
