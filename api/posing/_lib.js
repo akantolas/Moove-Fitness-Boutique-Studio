@@ -195,6 +195,46 @@ export async function sendResendEmail({ from, to, subject, html, idempotencyKey 
   return response.json()
 }
 
+function getSmtpConfig() {
+  const user = process.env.SMTP_USER ?? process.env.SMTP_EMAIL
+  const pass = process.env.SMTP_PASS ?? process.env.SMTP_PASSWORD
+  if (!user || !pass) return null
+
+  return {
+    host: process.env.SMTP_HOST ?? 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: process.env.SMTP_SECURE === 'true' || Number(process.env.SMTP_PORT ?? 587) === 465,
+    auth: { user, pass },
+  }
+}
+
+export function hasEmailTransportConfig() {
+  return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY)
+}
+
+export async function sendPosingEmail({ from, to, subject, html, idempotencyKey }) {
+  const smtp = getSmtpConfig()
+  if (smtp) {
+    const nodemailer = await import('nodemailer')
+    const transporter = nodemailer.createTransport(smtp)
+    const recipients = Array.isArray(to) ? to : [to]
+    await transporter.sendMail({
+      from: from ?? process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>',
+      to: recipients.join(', '),
+      subject,
+      html,
+    })
+    return { ok: true, provider: 'smtp' }
+  }
+
+  if (process.env.RESEND_API_KEY) {
+    const result = await sendResendEmail({ from, to, subject, html, idempotencyKey })
+    return { ...result, provider: 'resend' }
+  }
+
+  throw new Error('missing_email_config')
+}
+
 export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stripeLink, locale }) {
   const isEl = locale === 'el'
   const paySection = stripeLink

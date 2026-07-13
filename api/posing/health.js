@@ -1,4 +1,4 @@
-import { cors, getSupabaseAdmin, json } from './_lib.js'
+import { cors, getSupabaseAdmin, hasEmailTransportConfig, json } from './_lib.js'
 
 export default async function handler(req, res) {
   cors(res)
@@ -25,10 +25,18 @@ export default async function handler(req, res) {
     hasUrl,
     hasServiceKey,
     adminClientOk,
+    hasEmail: hasEmailTransportConfig(),
+    emailProvider: process.env.SMTP_USER || process.env.SMTP_EMAIL
+      ? 'smtp'
+      : process.env.RESEND_API_KEY
+        ? 'resend'
+        : null,
     hint: !hasUrl
       ? 'Set SUPABASE_URL on Vercel (not only VITE_SUPABASE_URL)'
       : !hasServiceKey
         ? 'Set SUPABASE_SERVICE_ROLE_KEY (legacy service_role JWT)'
-        : null,
+        : !hasEmailTransportConfig()
+          ? 'Set SMTP_USER + SMTP_PASS (Google Workspace) or RESEND_API_KEY'
+          : null,
   })
 }

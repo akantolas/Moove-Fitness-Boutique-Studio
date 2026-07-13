@@ -11,13 +11,13 @@ import {
   json,
   PACKAGE_KEYS,
   readJsonBody,
-  sendResendEmail,
+  sendPosingEmail,
 } from './_lib.js'
 
 async function sendBookingNotify({ from, profileName, userEmail, packageName, sessionTime, bookingId }) {
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
   if (!notifyEmail) return
-  await sendResendEmail({
+  await sendPosingEmail({
     from,
     to: [notifyEmail],
     subject: `New Move & Pose booking — ${profileName}`,
@@ -117,7 +117,7 @@ export default async function handler(req, res) {
     user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
   const packageName = locale === 'el' ? plan.name_el : plan.name_en
   const sessionTime = formatSessionTime(slot.start_at, locale)
-  const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <onboarding@resend.dev>'
+  const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
 
   const bookable = await findBookablePackage(supabase, user.id, planKey)
 
@@ -157,7 +157,7 @@ export default async function handler(req, res) {
       .eq('id', userPackage.id)
 
     try {
-      await sendResendEmail({
+      await sendPosingEmail({
         from,
         to: [user.email],
         subject:
@@ -256,7 +256,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    await sendResendEmail({
+    await sendPosingEmail({
       from,
       to: [user.email],
       subject:

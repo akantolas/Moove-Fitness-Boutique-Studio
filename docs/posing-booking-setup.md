@@ -56,11 +56,17 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 Αν δεν ορίσεις `STRIPE_SECRET_KEY` / price IDs, το email στέλνει static Payment Link (`STRIPE_LINK_*`). Σε αυτή την περίπτωση **δεν** ενεργοποιείται αυτόματα το πακέτο — χειροκίνητη επιβεβαίωση.
 
-## 3. Resend
+## 3. Email (Google Workspace)
 
-1. Verify domain `moovefitness.gr`
-2. Αποστολέας: `Move & Pose <bookings@moovefitness.gr>`
-3. API key → `RESEND_API_KEY`
+Πλήρης οδηγός: **[docs/email-google-workspace.md](email-google-workspace.md)**
+
+Σύντομα:
+1. Google Workspace για `moovefitness.gr` + χρήστης `info@`
+2. DNS: MX + SPF + DKIM από Google Admin
+3. App Password → Vercel: `SMTP_USER`, `SMTP_PASS`, `POSE_FROM_EMAIL`
+4. Supabase → Authentication → Custom SMTP (ίδια credentials)
+
+Αποστολή κρατήσεων: SMTP μέσω `sendPosingEmail` στο API (προτιμά SMTP έναντι Resend).
 
 ## 4. Vercel environment variables
 
@@ -78,7 +84,7 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 Μετά από αλλαγή env: **Redeploy** (όχι μόνο Save).
 
 **Έλεγχος API:**
-- `GET https://moovefitness.gr/api/posing/health` → `{ ok: true, hasUrl: true, hasServiceKey: true }`
+- `GET https://moovefitness.gr/api/posing/health` → `{ ok: true, hasUrl: true, hasServiceKey: true, hasEmail: true, emailProvider: "smtp" }`
 - `GET https://moovefitness.gr/api/posing/me` (χωρίς login) → `{ ok: false, error: "unauthorized" }`
 
 Το `/posing/account` διαβάζει δεδομένα απευθείας από Supabase (RLS) — δεν χρειάζεται service role για το dashboard.
