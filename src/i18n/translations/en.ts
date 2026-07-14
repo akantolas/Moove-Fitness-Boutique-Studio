@@ -446,6 +446,7 @@ export const en = {
       quickStatsSessionsRemaining: 'Sessions available',
       quickStatsBookings: 'Upcoming bookings',
       securityTitle: 'Security',
+      password: 'Password',
       dangerZoneTitle: 'Advanced',
       dangerZoneExpand: 'Show',
       passwordTitle: 'Change password',

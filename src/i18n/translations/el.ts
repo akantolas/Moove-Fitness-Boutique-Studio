@@ -445,6 +445,7 @@ export const el = {
       quickStatsSessionsRemaining: 'Διαθέσιμες συνεδρίες',
       quickStatsBookings: 'Επερχόμενες κρατήσεις',
       securityTitle: 'Ασφάλεια',
+      password: 'Κωδικός',
       dangerZoneTitle: 'Προχωρημένα',
       dangerZoneExpand: 'Εμφάνιση',
       passwordTitle: 'Αλλαγή κωδικού',
