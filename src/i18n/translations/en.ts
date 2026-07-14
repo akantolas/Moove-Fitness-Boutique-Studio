@@ -439,6 +439,7 @@ export const en = {
       avatarRemove: 'Remove photo',
       avatarUploading: 'Uploading…',
       memberSince: 'Member since {{date}}',
+      backHome: 'Home',
       quickStatsPackages: 'Active packages',
       quickStatsSessionsRemaining: 'Sessions available',
       quickStatsBookings: 'Upcoming bookings',

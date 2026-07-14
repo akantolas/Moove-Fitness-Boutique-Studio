@@ -438,6 +438,7 @@ export const el = {
       avatarRemove: 'Αφαίρεση φωτογραφίας',
       avatarUploading: 'Ανέβασμα…',
       memberSince: 'Μέλος από {{date}}',
+      backHome: 'Αρχική',
       quickStatsPackages: 'Ενεργά πακέτα',
       quickStatsSessionsRemaining: 'Διαθέσιμες συνεδρίες',
       quickStatsBookings: 'Επερχόμενες κρατήσεις',
