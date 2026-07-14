@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
 import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
 import { ZoomableImage } from '../components/ZoomableImage'
-import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPackagePlan } from '../lib/posingPackages'
 import { site, type PosingPackageKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
+
+const posingHeroGhostCtaClass =
+  'inline-flex items-center justify-center rounded-full border border-white/14 bg-white/[0.035] px-7 py-3 text-sm font-semibold text-white/78 shadow-[0_10px_30px_-24px_rgba(244,114,182,0.55)] backdrop-blur-md transition-all duration-200 hover:border-fuchsia-100/28 hover:bg-white/[0.06] hover:text-white'
 
 function packageIndexFromParam(param: string | null, keys: readonly PosingPackageKey[]) {
   if (!param) return 0
@@ -24,7 +26,6 @@ export function PosingPage() {
   const accountDeleted = Boolean(
     (location.state as { accountDeleted?: boolean } | null)?.accountDeleted,
   )
-  const { user } = usePosingAuth()
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(() =>
     packageIndexFromParam(searchParams.get('package'), posing.packageKeys),
   )
@@ -68,7 +69,7 @@ export function PosingPage() {
           aria-hidden
         />
         <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-12 lg:py-10">
-          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <div className="order-2 flex flex-col items-center text-center lg:order-1 lg:items-start lg:text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
               {t('posing.hero.byCoach', vars)}
             </p>
@@ -91,10 +92,7 @@ export function PosingPage() {
               >
                 {t('posing.hero.viewPackages')}
               </a>
-              <a
-                href="#booking"
-                className="inline-flex rounded-full border border-white/20 bg-white/5 px-7 py-3 text-sm font-medium text-white transition hover:bg-white/10"
-              >
+              <a href="#booking" className={posingHeroGhostCtaClass}>
                 {t('posing.hero.book')}
               </a>
             </div>
@@ -108,34 +106,9 @@ export function PosingPage() {
                 </span>
               ))}
             </div>
-            <div className="mt-6">
-              <a
-                href={posing.instagram}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-100/55 transition hover:text-fuchsia-100"
-              >
-                {t('common.instagram')}
-              </a>
-              {user ? (
-                <Link
-                  to="/posing/account"
-                  className="ml-5 text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-100/55 transition hover:text-fuchsia-100"
-                >
-                  {t('posing.auth.myAccount')}
-                </Link>
-              ) : (
-                <Link
-                  to="/posing/login"
-                  className="ml-5 text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-100/55 transition hover:text-fuchsia-100"
-                >
-                  {t('posing.auth.login')}
-                </Link>
-              )}
-            </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+          <div className="relative order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none">
             <div className="absolute -inset-8 rounded-full bg-fuchsia-500/18 blur-3xl" aria-hidden />
             <div className="relative overflow-hidden rounded-[2rem] border border-fuchsia-100/18 bg-white/[0.04] p-2 shadow-[0_32px_90px_-42px_rgba(244,114,182,0.9)]">
               <ZoomableImage

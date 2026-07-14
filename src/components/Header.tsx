@@ -31,18 +31,25 @@ const posingCtaClass =
   'inline-flex items-center justify-center rounded-full border border-fuchsia-200/45 bg-gradient-to-r from-fuchsia-500/88 via-pink-300/88 to-rose-200/88 px-4 py-2 text-xs font-bold text-[#160714] shadow-[0_10px_34px_-12px_rgba(244,114,182,0.9),0_0_0_1px_rgba(255,255,255,0.08)_inset] transition hover:brightness-110 sm:px-5 sm:text-sm'
 
 const posingDesktopNavBase =
-  'relative px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors'
-const posingDesktopNavIdle = 'text-white/45 hover:text-white/75'
+  'relative rounded-full border border-transparent px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition-all duration-200'
+const posingDesktopNavIdle = 'text-white/45 hover:text-white/85'
 const posingDesktopNavActive =
-  'text-white after:absolute after:inset-x-3 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-fuchsia-400/80 after:via-pink-300/50 after:to-transparent'
+  'border-fuchsia-100/12 bg-white/[0.04] text-white after:absolute after:inset-x-3 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-fuchsia-400/80 after:via-pink-300/50 after:to-transparent'
 
-const posingAuthLinkClass =
-  'text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50 transition hover:text-white'
+const posingAuthPillClass =
+  'inline-flex items-center gap-2 rounded-full border border-white/14 bg-white/[0.035] px-3.5 py-2 text-xs font-semibold text-white/78 shadow-[0_10px_30px_-24px_rgba(244,114,182,0.55)] backdrop-blur-md transition-all duration-200 hover:border-fuchsia-100/28 hover:bg-white/[0.06] hover:text-white'
+const posingAuthPillMobileClass = `${posingAuthPillClass} w-full justify-center !py-3.5`
 
+const posingMobileNavBase =
+  'animate-pose-nav-stagger border-b border-white/6 py-4 pl-4 font-display text-2xl font-medium transition-colors duration-200'
 const posingMobileNavIdle =
-  'border-b border-white/6 py-4 font-display text-2xl font-medium text-white/55 transition hover:text-white/90'
+  'border-l-2 border-transparent text-white/55 hover:text-white/90'
 const posingMobileNavActive =
-  'border-b border-white/6 py-4 font-display text-2xl font-medium text-white'
+  'border-l-2 border-fuchsia-300/70 text-white'
+
+const posingHamburgerClass =
+  'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-fuchsia-100/18 bg-white/[0.04] text-white/85 shadow-[0_10px_30px_-24px_rgba(244,114,182,0.85)] backdrop-blur-md transition-all duration-200 hover:bg-white/[0.07]'
+const posingHamburgerOpenClass = 'ring-1 ring-fuchsia-300/25'
 
 function MenuToggleIcon({ open }: { open: boolean }) {
   return (
@@ -84,6 +91,7 @@ function AccountMenuIcon() {
 
 export function Header() {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const posing = useIsPosingRoute()
   const { posing: posingBrand } = site
   const { t } = useTranslation()
@@ -112,6 +120,23 @@ export function Header() {
     }
   }, [open])
 
+  useEffect(() => {
+    if (!posing) return
+    const onScroll = () => setScrolled(window.scrollY > 12)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [posing])
+
+  useEffect(() => {
+    if (!open || !posing) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, posing])
+
   const accountHref = isAdmin ? '/posing/admin' : '/posing/account'
   const accountLabel = isAdmin ? t('posing.admin.title') : t('posing.auth.myAccount')
 
@@ -125,9 +150,14 @@ export function Header() {
   }
 
   function posingMobileNavClass(isActive: boolean) {
-    return isActive ? posingMobileNavActive : posingMobileNavIdle
+    return `${posingMobileNavBase} ${isActive ? posingMobileNavActive : posingMobileNavIdle}`
   }
 
+  function posingMobileNavStyle(index: number) {
+    return { animationDelay: `${0.06 + index * 0.06}s` }
+  }
+
+  const posingHeaderScrolled = scrolled || open
   const logoLink = posing ? '/posing' : '/'
   const logoSrc = posing ? posingBrand.logo : '/logo-header.png'
   const logoAlt = posing
@@ -138,12 +168,32 @@ export function Header() {
     <header
       className={
         posing
-          ? `sticky top-0 border-b border-white/8 bg-[#08080c]/72 backdrop-blur-xl ${open ? 'z-[90]' : 'z-50'}`
+          ? `relative sticky top-0 backdrop-blur-xl transition-[background-color,border-color] duration-300 ${
+              posingHeaderScrolled
+                ? 'border-b border-white/12 bg-[#08080c]/88'
+                : 'border-b border-white/8 bg-[#08080c]/72'
+            } ${open ? 'z-[90]' : 'z-50'}`
           : 'sticky top-0 z-50 border-b border-moove-border/70 bg-moove-surface/75 backdrop-blur-xl backdrop-saturate-150'
       }
     >
+      {posing ? (
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 opacity-40"
+            style={{
+              backgroundImage:
+                'radial-gradient(ellipse 80% 60% at 20% 0%, rgba(192, 38, 211, 0.22) 0%, transparent 55%), radial-gradient(circle at 85% 20%, rgba(34, 211, 238, 0.15) 0%, transparent 45%)',
+            }}
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-fuchsia-400/25 via-pink-300/15 to-transparent"
+            aria-hidden
+          />
+        </>
+      ) : null}
       <div
-        className={`mx-auto flex items-center px-4 sm:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'h-[4.75rem] max-w-7xl lg:h-14 lg:gap-8' : 'h-14 max-w-6xl lg:gap-6'}`}
+        className={`relative mx-auto flex items-center px-4 sm:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'h-[4.75rem] max-w-7xl lg:h-14 lg:gap-8' : 'h-14 max-w-6xl lg:gap-6'}`}
       >
         {posing ? (
           <div className="relative flex min-w-0 flex-1 items-center justify-center lg:hidden">
@@ -155,14 +205,14 @@ export function Header() {
               <img
                 src={logoSrc}
                 alt={logoAlt}
-                className="h-[4.75rem] w-auto shrink-0 drop-shadow-[0_0_18px_rgba(244,114,182,0.35)]"
+                className="h-[4.75rem] w-auto shrink-0 drop-shadow-[0_0_14px_rgba(244,114,182,0.28)]"
                 width={190}
                 height={76}
               />
             </NavLink>
             <button
               type="button"
-              className="absolute right-0 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/12 bg-white/[0.03] text-white/85 transition-colors hover:bg-white/[0.06]"
+              className={`absolute right-0 ${posingHamburgerClass} ${open ? posingHamburgerOpenClass : ''}`}
               aria-expanded={open}
               aria-controls="mobile-nav"
               aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')}
@@ -203,7 +253,9 @@ export function Header() {
           <img
             src={logoSrc}
             alt={logoAlt}
-            className={`w-auto shrink-0 ${posing ? 'h-14' : 'h-12'}`}
+            className={`w-auto shrink-0 transition-all duration-300 ${
+              posing ? (posingHeaderScrolled ? 'h-12' : 'h-14') : 'h-12'
+            }`}
             width={posing ? 200 : 240}
             height={posing ? 56 : 48}
           />
@@ -253,16 +305,21 @@ export function Header() {
           <LanguageSwitcher compact />
           {posing ? (
             user ? (
-              <NavLink to={accountHref} className={posingAuthLinkClass}>
+              <NavLink to={accountHref} className={posingAuthPillClass}>
+                <AccountMenuIcon />
                 {accountLabel}
               </NavLink>
             ) : (
-              <NavLink to="/posing/login" className={posingAuthLinkClass}>
+              <NavLink to="/posing/login" className={posingAuthPillClass}>
+                <AccountMenuIcon />
                 {t('posing.auth.login')}
               </NavLink>
             )
           ) : null}
           {!posing ? <PosePromoBubble variant="header" /> : null}
+          {posing ? (
+            <span className="h-4 w-px bg-white/10" aria-hidden />
+          ) : null}
           {posing ? (
             <a href={posingBookingHref} className={posingCtaClass}>
               {t('header.bookPosingShort')}
@@ -304,12 +361,13 @@ export function Header() {
                 </div>
 
                 <nav className="relative flex flex-col" aria-label={t('nav.mobile')}>
-                  {navItems.map((item) =>
+                  {navItems.map((item, index) =>
                     'href' in item ? (
                       <a
                         key={item.href}
                         href={item.href}
                         className={posingMobileNavClass(false)}
+                        style={posingMobileNavStyle(index)}
                         onClick={() => setOpen(false)}
                       >
                         {t(item.labelKey)}
@@ -320,6 +378,7 @@ export function Header() {
                         to={item.to}
                         end={'end' in item ? item.end : false}
                         className={({ isActive }) => posingMobileNavClass(isActive)}
+                        style={posingMobileNavStyle(index)}
                         onClick={() => setOpen(false)}
                       >
                         {t(item.labelKey)}
@@ -328,11 +387,14 @@ export function Header() {
                   )}
                 </nav>
 
-                <div className="relative mt-6">
+                <div
+                  className="relative mt-6 animate-pose-nav-stagger"
+                  style={posingMobileNavStyle(navItems.length)}
+                >
                   {user ? (
                     <NavLink
                       to={accountHref}
-                      className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-white/55 transition hover:text-white"
+                      className={posingAuthPillMobileClass}
                       onClick={() => setOpen(false)}
                     >
                       <AccountMenuIcon />
@@ -341,7 +403,7 @@ export function Header() {
                   ) : (
                     <NavLink
                       to="/posing/login"
-                      className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em] text-white/55 transition hover:text-white"
+                      className={posingAuthPillMobileClass}
                       onClick={() => setOpen(false)}
                     >
                       <AccountMenuIcon />
@@ -352,7 +414,14 @@ export function Header() {
 
                 <div className="flex-1" aria-hidden />
 
-                <div className="relative space-y-4">
+                <div
+                  className="relative space-y-4 animate-pose-nav-stagger"
+                  style={posingMobileNavStyle(navItems.length + 1)}
+                >
+                  <div
+                    className="h-px bg-gradient-to-r from-transparent via-fuchsia-300/25 to-transparent"
+                    aria-hidden
+                  />
                   <a href={posingBookingHref} className={`w-full ${posingCtaClass} !py-3.5`}>
                     {t('common.bookPosingSession')}
                   </a>
