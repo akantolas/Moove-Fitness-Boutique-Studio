@@ -10,7 +10,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_NAME = 120
 const MAX_EMAIL = 254
 const MAX_MESSAGE = 4000
-const DEFAULT_FROM = 'Moove <noreply@moovefitness.gr>'
+const DEFAULT_FROM = 'noreply@moovefitness.gr'
 const DEFAULT_NOTIFY = 'info@moovefitness.gr'
 
 function escapeHtml(value) {
@@ -87,6 +87,13 @@ export default async function handler(req, res) {
 
     const notifyEmail = getContactNotifyEmail()
     const fromEmail = getContactFromEmail()
+
+    if (!EMAIL_RE.test(notifyEmail)) {
+      console.error('contact email error: invalid notify address', notifyEmail)
+      return json(res, 500, { ok: false, error: 'send_failed' })
+    }
+
+    console.info('contact email send', { from: fromEmail, to: notifyEmail })
 
     const safeName = escapeHtml(name)
     const safeEmail = escapeHtml(email)

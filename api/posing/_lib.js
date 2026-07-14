@@ -175,8 +175,11 @@ export function formatSessionTime(startTime, locale = 'el') {
 }
 
 export async function sendResendEmail({ from, to, subject, html, idempotencyKey, replyTo }) {
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = process.env.RESEND_API_KEY?.trim()
   if (!apiKey) throw new Error('missing_resend_api_key')
+
+  const recipients = (Array.isArray(to) ? to : [to]).map((entry) => String(entry).trim()).filter(Boolean)
+  if (!recipients.length) throw new Error('missing_resend_recipients')
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -186,11 +189,11 @@ export async function sendResendEmail({ from, to, subject, html, idempotencyKey,
       ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
     },
     body: JSON.stringify({
-      from,
-      to,
+      from: String(from).trim(),
+      to: recipients,
       subject,
       html,
-      ...(replyTo ? { reply_to: replyTo } : {}),
+      ...(replyTo ? { reply_to: String(replyTo).trim() } : {}),
     }),
   })
 
