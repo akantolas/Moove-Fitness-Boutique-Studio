@@ -605,6 +605,13 @@ export const en = {
       noTemplateTimes: 'No template times yet.',
       gridStart: 'Grid from',
       gridEnd: 'Grid until',
+      gridEnvelopeStart: 'Grid display from',
+      gridEnvelopeEnd: 'Grid display until',
+      gridEnvelopeHint:
+        'Top row sets which times appear in the calendar grid. Per weekday below sets which cells are clickable.',
+      weekdayActiveFrom: 'Active from',
+      weekdayActiveUntil: 'Active until',
+      activeHoursSummary: '{{weekday}}: active {{from}}–{{until}}',
       gridStep: 'Grid step',
       defaultDuration: 'Default duration',
       saveSettings: 'Save settings',
@@ -652,7 +659,8 @@ export const en = {
         time_exists: 'A slot already exists at this time.',
         invalid_weekday_templates: 'Invalid weekday schedule settings.',
         outside_active_hours: 'This time is outside the active hours for this day.',
-        migration_required: 'Database migration required. Run migration 006 in Supabase.',
+        migration_required:
+          'Database migration required. Run supabase/scripts/apply_posing_calendar_settings.sql in the Supabase SQL Editor.',
       },
     },
     faq: {

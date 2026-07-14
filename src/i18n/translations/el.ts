@@ -604,6 +604,13 @@ export const el = {
       noTemplateTimes: 'Δεν υπάρχουν ώρες στο πρότυπο.',
       gridStart: 'Πλέγμα από',
       gridEnd: 'Πλέγμα έως',
+      gridEnvelopeStart: 'Εμφάνιση πλέγματος από',
+      gridEnvelopeEnd: 'Εμφάνιση πλέγματος έως',
+      gridEnvelopeHint:
+        'Το πάνω τμήμα ορίζει ποιες ώρες εμφανίζονται στο grid. Από κάτω, ανά μέρα, ορίζεις ποιες είναι κλικαρίσιμες.',
+      weekdayActiveFrom: 'Ενεργές από',
+      weekdayActiveUntil: 'Ενεργές έως',
+      activeHoursSummary: '{{weekday}}: ενεργές {{from}}–{{until}}',
       gridStep: 'Βήμα πλέγματος',
       defaultDuration: 'Προεπιλεγμένη διάρκεια',
       saveSettings: 'Αποθήκευση',
@@ -651,7 +658,8 @@ export const el = {
         time_exists: 'Υπάρχει ήδη ώρα σε αυτή την ώρα.',
         invalid_weekday_templates: 'Μη έγκυρες ρυθμίσεις προγράμματος ανά ημέρα.',
         outside_active_hours: 'Η ώρα είναι εκτός των ενεργών ωρών αυτής της ημέρας.',
-        migration_required: 'Απαιτείται migration βάσης. Τρέξε το migration 006 στο Supabase.',
+        migration_required:
+          'Απαιτείται migration βάσης. Τρέξε το supabase/scripts/apply_posing_calendar_settings.sql στο Supabase SQL Editor.',
       },
     },
     faq: {

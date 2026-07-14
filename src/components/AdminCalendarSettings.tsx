@@ -5,6 +5,7 @@ import {
   type CalendarSettings,
   type WeekdayKey,
   type WeekdayTemplate,
+  type WeekdayTemplates,
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 
@@ -28,6 +29,10 @@ const WEEKDAY_I18N: Record<WeekdayKey, string> = {
   '7': 'posing.admin.weekdaySun',
 }
 
+function formatHourLabel(hour: number) {
+  return `${String(hour).padStart(2, '0')}:00`
+}
+
 function cloneSettings(settings: CalendarSettings): CalendarSettings {
   return {
     ...settings,
@@ -41,6 +46,21 @@ function cloneSettings(settings: CalendarSettings): CalendarSettings {
       ]),
     ) as CalendarSettings['weekday_templates'],
   }
+}
+
+function normalizeWeekdayTemplates(
+  templates: WeekdayTemplates,
+  gridStart: number,
+  gridEnd: number,
+): WeekdayTemplates {
+  return Object.fromEntries(
+    WEEKDAY_KEYS.map((key) => {
+      const wd = templates[key]
+      const start_hour = Math.max(gridStart, Math.min(wd.start_hour, wd.end_hour - 1))
+      const end_hour = Math.min(gridEnd, Math.max(wd.end_hour, start_hour + 1))
+      return [key, { ...wd, start_hour, end_hour }]
+    }),
+  ) as WeekdayTemplates
 }
 
 export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarSettingsProps) {
@@ -87,8 +107,13 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
   async function handleSave() {
     setSaving(true)
     try {
+      const weekday_templates = normalizeWeekdayTemplates(
+        draft.weekday_templates,
+        draft.grid_start_hour,
+        draft.grid_end_hour,
+      )
       await onSave({
-        weekday_templates: draft.weekday_templates,
+        weekday_templates,
         default_duration_minutes: draft.default_duration_minutes,
         grid_start_hour: draft.grid_start_hour,
         grid_end_hour: draft.grid_end_hour,
@@ -119,10 +144,12 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
 
       {open ? (
         <div className="space-y-5 border-t border-white/10 px-4 py-4 sm:px-5">
+          <p className="text-xs text-white/45">{t('posing.admin.gridEnvelopeHint')}</p>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="block text-xs text-white/55">
               <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
-                {t('posing.admin.gridStart')}
+                {t('posing.admin.gridEnvelopeStart')}
               </span>
               <select
                 value={draft.grid_start_hour}
@@ -135,12 +162,19 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
                     weekday_templates: Object.fromEntries(
                       WEEKDAY_KEYS.map((key) => {
                         const wd = prev.weekday_templates[key]
+                        const start_hour =
+                          wd.start_hour <= prev.grid_start_hour
+                            ? grid_start_hour
+                            : Math.max(grid_start_hour, wd.start_hour)
                         return [
                           key,
                           {
                             ...wd,
-                            start_hour: Math.max(wd.start_hour, grid_start_hour),
-                            end_hour: Math.min(Math.max(wd.end_hour, grid_start_hour + 1), prev.grid_end_hour),
+                            start_hour,
+                            end_hour: Math.min(
+                              Math.max(wd.end_hour, grid_start_hour + 1),
+                              prev.grid_end_hour,
+                            ),
                           },
                         ]
                       }),
@@ -151,7 +185,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
               >
                 {HOUR_OPTIONS.map((hour) => (
                   <option key={hour} value={hour}>
-                    {String(hour).padStart(2, '0')}:00
+                    {formatHourLabel(hour)}
                   </option>
                 ))}
               </select>
@@ -159,7 +193,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
 
             <label className="block text-xs text-white/55">
               <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
-                {t('posing.admin.gridEnd')}
+                {t('posing.admin.gridEnvelopeEnd')}
               </span>
               <select
                 value={draft.grid_end_hour}
@@ -188,7 +222,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
               >
                 {endHourOptions.map((hour) => (
                   <option key={hour} value={hour}>
-                    {String(hour).padStart(2, '0')}:00
+                    {formatHourLabel(hour)}
                   </option>
                 ))}
               </select>
@@ -262,11 +296,18 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
 
           <div className="rounded-xl border border-white/10 bg-black/20 p-4">
             <p className="text-sm font-medium text-white">{t(WEEKDAY_I18N[activeWeekday])}</p>
+            <p className="mt-1 text-xs text-fuchsia-100/70">
+              {t('posing.admin.activeHoursSummary', {
+                weekday: t(WEEKDAY_I18N[activeWeekday]),
+                from: formatHourLabel(weekdayDraft.start_hour),
+                until: formatHourLabel(weekdayDraft.end_hour),
+              })}
+            </p>
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="block text-xs text-white/55">
                 <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
-                  {t('posing.admin.gridStart')}
+                  {t('posing.admin.weekdayActiveFrom')}
                 </span>
                 <select
                   value={weekdayDraft.start_hour}
@@ -280,7 +321,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
                     (hour) => hour >= draft.grid_start_hour && hour < weekdayDraft.end_hour,
                   ).map((hour) => (
                     <option key={hour} value={hour}>
-                      {String(hour).padStart(2, '0')}:00
+                      {formatHourLabel(hour)}
                     </option>
                   ))}
                 </select>
@@ -288,7 +329,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
 
               <label className="block text-xs text-white/55">
                 <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
-                  {t('posing.admin.gridEnd')}
+                  {t('posing.admin.weekdayActiveUntil')}
                 </span>
                 <select
                   value={weekdayDraft.end_hour}
@@ -300,7 +341,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
                 >
                   {weekdayEndOptions.map((hour) => (
                     <option key={hour} value={hour}>
-                      {String(hour).padStart(2, '0')}:00
+                      {formatHourLabel(hour)}
                     </option>
                   ))}
                 </select>
