@@ -3,13 +3,13 @@ import {
   sortTimeStrings,
   WEEKDAY_KEYS,
   type CalendarSettings,
-  type WeekdayKey,
-  type WeekdayTemplate,
   type WeekdayTemplates,
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 
 type AdminCalendarSettingsProps = {
+  open: boolean
+  onClose: () => void
   settings: CalendarSettings
   busy: boolean
   onSave: (payload: Omit<CalendarSettings, 'updated_at'>) => Promise<CalendarSettings>
@@ -18,16 +18,6 @@ type AdminCalendarSettingsProps = {
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i)
 const DURATION_OPTIONS = [30, 40, 45, 60]
 const STEP_OPTIONS = [15, 30, 60] as const
-
-const WEEKDAY_I18N: Record<WeekdayKey, string> = {
-  '1': 'posing.admin.weekdayMon',
-  '2': 'posing.admin.weekdayTue',
-  '3': 'posing.admin.weekdayWed',
-  '4': 'posing.admin.weekdayThu',
-  '5': 'posing.admin.weekdayFri',
-  '6': 'posing.admin.weekdaySat',
-  '7': 'posing.admin.weekdaySun',
-}
 
 function formatHourLabel(hour: number) {
   return `${String(hour).padStart(2, '0')}:00`
@@ -48,67 +38,54 @@ function cloneSettings(settings: CalendarSettings): CalendarSettings {
   }
 }
 
-function normalizeWeekdayTemplates(
-  templates: WeekdayTemplates,
+function syncWeekdayTemplates(
+  times: string[],
   gridStart: number,
   gridEnd: number,
 ): WeekdayTemplates {
+  const entry = { times: [...times], start_hour: gridStart, end_hour: gridEnd }
   return Object.fromEntries(
-    WEEKDAY_KEYS.map((key) => {
-      const wd = templates[key]
-      const start_hour = Math.max(gridStart, Math.min(wd.start_hour, wd.end_hour - 1))
-      const end_hour = Math.min(gridEnd, Math.max(wd.end_hour, start_hour + 1))
-      return [key, { ...wd, start_hour, end_hour }]
-    }),
+    WEEKDAY_KEYS.map((key) => [key, { ...entry, times: [...entry.times] }]),
   ) as WeekdayTemplates
 }
 
-export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarSettingsProps) {
+export function AdminCalendarSettings({
+  open,
+  onClose,
+  settings,
+  busy,
+  onSave,
+}: AdminCalendarSettingsProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = useState(true)
-  const [activeWeekday, setActiveWeekday] = useState<WeekdayKey>('1')
   const [draft, setDraft] = useState(() => cloneSettings(settings))
+  const [templateTimes, setTemplateTimes] = useState(() => [...settings.weekday_templates['1'].times])
   const [newTime, setNewTime] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    if (!open) return
     setDraft(cloneSettings(settings))
-  }, [settings])
-
-  const weekdayDraft = draft.weekday_templates[activeWeekday]
-
-  function updateWeekday(key: WeekdayKey, patch: Partial<WeekdayTemplate>) {
-    setDraft((prev) => ({
-      ...prev,
-      weekday_templates: {
-        ...prev.weekday_templates,
-        [key]: { ...prev.weekday_templates[key], ...patch },
-      },
-    }))
-  }
+    setTemplateTimes([...settings.weekday_templates['1'].times])
+  }, [open, settings])
 
   function addTemplateTime() {
-    if (!newTime || weekdayDraft.times.includes(newTime)) {
+    if (!newTime || templateTimes.includes(newTime)) {
       setNewTime('')
       return
     }
-    updateWeekday(activeWeekday, {
-      times: sortTimeStrings([...weekdayDraft.times, newTime]),
-    })
+    setTemplateTimes(sortTimeStrings([...templateTimes, newTime]))
     setNewTime('')
   }
 
   function removeTemplateTime(time: string) {
-    updateWeekday(activeWeekday, {
-      times: weekdayDraft.times.filter((item) => item !== time),
-    })
+    setTemplateTimes(templateTimes.filter((item) => item !== time))
   }
 
   async function handleSave() {
     setSaving(true)
     try {
-      const weekday_templates = normalizeWeekdayTemplates(
-        draft.weekday_templates,
+      const weekday_templates = syncWeekdayTemplates(
+        templateTimes,
         draft.grid_start_hour,
         draft.grid_end_hour,
       )
@@ -119,34 +96,45 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
         grid_end_hour: draft.grid_end_hour,
         grid_step_minutes: draft.grid_step_minutes,
       })
+      onClose()
     } finally {
       setSaving(false)
     }
   }
 
+  if (!open) return null
+
   const isDisabled = busy || saving
   const endHourOptions = HOUR_OPTIONS.filter((hour) => hour > draft.grid_start_hour)
-  const weekdayEndOptions = HOUR_OPTIONS.filter(
-    (hour) => hour > weekdayDraft.start_hour && hour <= draft.grid_end_hour,
-  )
 
   return (
-    <div className="mt-6 rounded-2xl border border-white/10 bg-black/20">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-5"
-        aria-expanded={open}
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('posing.admin.calendarSettings')}
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0c0c10] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-sm font-semibold text-white">{t('posing.admin.calendarSettings')}</span>
-        <span className="text-xs text-white/45">{open ? '−' : '+'}</span>
-      </button>
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-5">
+          <h3 className="text-sm font-semibold text-white">{t('posing.admin.calendarSettings')}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-white/10 px-2 py-1 text-xs text-white/55 hover:bg-white/5"
+            aria-label={t('posing.admin.closeSettings')}
+          >
+            ×
+          </button>
+        </div>
 
-      {open ? (
-        <div className="space-y-5 border-t border-white/10 px-4 py-4 sm:px-5">
+        <div className="space-y-5 px-4 py-4 sm:px-5">
           <p className="text-xs text-white/45">{t('posing.admin.gridEnvelopeHint')}</p>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-xs text-white/55">
               <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
                 {t('posing.admin.gridEnvelopeStart')}
@@ -154,33 +142,9 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
               <select
                 value={draft.grid_start_hour}
                 disabled={isDisabled}
-                onChange={(e) => {
-                  const grid_start_hour = Number(e.target.value)
-                  setDraft((prev) => ({
-                    ...prev,
-                    grid_start_hour,
-                    weekday_templates: Object.fromEntries(
-                      WEEKDAY_KEYS.map((key) => {
-                        const wd = prev.weekday_templates[key]
-                        const start_hour =
-                          wd.start_hour <= prev.grid_start_hour
-                            ? grid_start_hour
-                            : Math.max(grid_start_hour, wd.start_hour)
-                        return [
-                          key,
-                          {
-                            ...wd,
-                            start_hour,
-                            end_hour: Math.min(
-                              Math.max(wd.end_hour, grid_start_hour + 1),
-                              prev.grid_end_hour,
-                            ),
-                          },
-                        ]
-                      }),
-                    ) as CalendarSettings['weekday_templates'],
-                  }))
-                }}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, grid_start_hour: Number(e.target.value) }))
+                }
                 className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
               >
                 {HOUR_OPTIONS.map((hour) => (
@@ -198,26 +162,9 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
               <select
                 value={draft.grid_end_hour}
                 disabled={isDisabled}
-                onChange={(e) => {
-                  const grid_end_hour = Number(e.target.value)
-                  setDraft((prev) => ({
-                    ...prev,
-                    grid_end_hour,
-                    weekday_templates: Object.fromEntries(
-                      WEEKDAY_KEYS.map((key) => {
-                        const wd = prev.weekday_templates[key]
-                        return [
-                          key,
-                          {
-                            ...wd,
-                            end_hour: Math.min(wd.end_hour, grid_end_hour),
-                            start_hour: Math.min(wd.start_hour, grid_end_hour - 1),
-                          },
-                        ]
-                      }),
-                    ) as CalendarSettings['weekday_templates'],
-                  }))
-                }}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, grid_end_hour: Number(e.target.value) }))
+                }
                 className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
               >
                 {endHourOptions.map((hour) => (
@@ -272,131 +219,62 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
             </label>
           </div>
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50">
-              {t('posing.admin.weekdayActiveHours')}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-1">
-              {WEEKDAY_KEYS.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setActiveWeekday(key)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    activeWeekday === key
-                      ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black'
-                      : 'border border-white/10 text-white/70 hover:bg-white/5'
-                  }`}
-                >
-                  {t(WEEKDAY_I18N[key])}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-            <p className="text-sm font-medium text-white">{t(WEEKDAY_I18N[activeWeekday])}</p>
-            <p className="mt-1 text-xs text-fuchsia-100/70">
-              {t('posing.admin.activeHoursSummary', {
-                weekday: t(WEEKDAY_I18N[activeWeekday]),
-                from: formatHourLabel(weekdayDraft.start_hour),
-                until: formatHourLabel(weekdayDraft.end_hour),
-              })}
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50">
+              {t('posing.admin.dayTemplate')}
             </p>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <label className="block text-xs text-white/55">
-                <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
-                  {t('posing.admin.weekdayActiveFrom')}
-                </span>
-                <select
-                  value={weekdayDraft.start_hour}
-                  disabled={isDisabled}
-                  onChange={(e) =>
-                    updateWeekday(activeWeekday, { start_hour: Number(e.target.value) })
-                  }
-                  className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
+            <p className="mt-1 text-xs text-white/45">{t('posing.admin.dayTemplateHint')}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {templateTimes.map((time) => (
+                <span
+                  key={time}
+                  className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs text-white/80"
                 >
-                  {HOUR_OPTIONS.filter(
-                    (hour) => hour >= draft.grid_start_hour && hour < weekdayDraft.end_hour,
-                  ).map((hour) => (
-                    <option key={hour} value={hour}>
-                      {formatHourLabel(hour)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block text-xs text-white/55">
-                <span className="mb-1.5 block font-semibold uppercase tracking-[0.12em] text-white/45">
-                  {t('posing.admin.weekdayActiveUntil')}
-                </span>
-                <select
-                  value={weekdayDraft.end_hour}
-                  disabled={isDisabled}
-                  onChange={(e) =>
-                    updateWeekday(activeWeekday, { end_hour: Number(e.target.value) })
-                  }
-                  className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
-                >
-                  {weekdayEndOptions.map((hour) => (
-                    <option key={hour} value={hour}>
-                      {formatHourLabel(hour)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50">
-                {t('posing.admin.dayTemplate')}
-              </p>
-              <p className="mt-1 text-xs text-white/45">{t('posing.admin.dayTemplateHint')}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {weekdayDraft.times.map((time) => (
-                  <span
-                    key={time}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.04] px-2.5 py-1 text-xs text-white/80"
+                  {time}
+                  <button
+                    type="button"
+                    disabled={isDisabled}
+                    onClick={() => removeTemplateTime(time)}
+                    className="rounded-full px-1 text-white/45 hover:text-rose-200 disabled:opacity-40"
+                    aria-label={`${t('posing.admin.removeTime')} ${time}`}
                   >
-                    {time}
-                    <button
-                      type="button"
-                      disabled={isDisabled}
-                      onClick={() => removeTemplateTime(time)}
-                      className="rounded-full px-1 text-white/45 hover:text-rose-200 disabled:opacity-40"
-                      aria-label={`${t('posing.admin.removeTime')} ${time}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                {weekdayDraft.times.length === 0 ? (
-                  <span className="text-xs text-white/35">{t('posing.admin.noTemplateTimes')}</span>
-                ) : null}
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <input
-                  type="time"
-                  value={newTime}
-                  disabled={isDisabled}
-                  onChange={(e) => setNewTime(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
-                  aria-label={t('posing.admin.addTime')}
-                />
-                <button
-                  type="button"
-                  disabled={isDisabled || !newTime}
-                  onClick={addTemplateTime}
-                  className="rounded-lg border border-emerald-300/25 px-3 py-1.5 text-xs font-medium text-emerald-200/90 hover:bg-emerald-400/10 disabled:opacity-40"
-                >
-                  {t('posing.admin.addTime')}
-                </button>
-              </div>
+                    ×
+                  </button>
+                </span>
+              ))}
+              {templateTimes.length === 0 ? (
+                <span className="text-xs text-white/35">{t('posing.admin.noTemplateTimes')}</span>
+              ) : null}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                type="time"
+                value={newTime}
+                disabled={isDisabled}
+                onChange={(e) => setNewTime(e.target.value)}
+                className="rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
+                aria-label={t('posing.admin.addTime')}
+              />
+              <button
+                type="button"
+                disabled={isDisabled || !newTime}
+                onClick={addTemplateTime}
+                className="rounded-lg border border-emerald-300/25 px-3 py-1.5 text-xs font-medium text-emerald-200/90 hover:bg-emerald-400/10 disabled:opacity-40"
+              >
+                {t('posing.admin.addTime')}
+              </button>
             </div>
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              disabled={isDisabled}
+              onClick={onClose}
+              className="rounded-full border border-white/10 px-5 py-2 text-xs font-semibold text-white/70 hover:bg-white/5 disabled:opacity-40"
+            >
+              {t('posing.admin.cancelSettings')}
+            </button>
             <button
               type="button"
               disabled={isDisabled}
@@ -407,7 +285,7 @@ export function AdminCalendarSettings({ settings, busy, onSave }: AdminCalendarS
             </button>
           </div>
         </div>
-      ) : null}
+      </div>
     </div>
   )
 }

@@ -244,19 +244,10 @@ export function formatActiveHoursRange(startHour: number, endHour: number): stri
 export function buildAdminGridTimes(
   settings: CalendarSettings,
   slots: { start_at: string }[],
-  weekDayKeys?: string[],
 ): string[] {
   const base = generateGridTimes(settings)
   const fromSlots = slots.map((slot) => athensTimeKey(slot.start_at))
-  const merged = mergeGridTimes(base, fromSlots)
-
-  if (!weekDayKeys?.length) return merged
-
-  const slotSet = new Set(fromSlots)
-  return merged.filter(
-    (time) =>
-      weekDayKeys.some((dayKey) => isActiveCell(dayKey, time, settings)) || slotSet.has(time),
-  )
+  return mergeGridTimes(base, fromSlots)
 }
 
 export function startOfWeek(date: Date) {

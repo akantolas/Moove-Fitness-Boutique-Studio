@@ -170,17 +170,40 @@ export async function fetchAdminSlots(
   return (data.slots ?? []) as AdminCalendarSlot[]
 }
 
-export async function adminCreateSlot(accessToken: string, start_at: string, end_at: string) {
+export async function adminCreateSlot(
+  accessToken: string,
+  start_at: string,
+  end_at: string,
+  is_blocked = false,
+) {
   const res = await fetch('/api/posing/admin/slots', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ start_at, end_at }),
+    body: JSON.stringify({ start_at, end_at, is_blocked }),
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_create_failed'))
+  return data.slot
+}
+
+export async function adminUpdateSlot(
+  accessToken: string,
+  id: string,
+  patch: { is_blocked: boolean },
+) {
+  const res = await fetch('/api/posing/admin/slots', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ id, ...patch }),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_update_failed'))
   return data.slot
 }
 

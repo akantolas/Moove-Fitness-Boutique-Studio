@@ -4,6 +4,7 @@ import {
   adminCreateSlot,
   adminDeleteMember,
   adminDeleteSlot,
+  adminUpdateSlot,
   fetchAdminBookings,
   fetchAdminCalendarSettings,
   fetchAdminMembers,
@@ -26,7 +27,6 @@ import {
   cellKey,
   DEFAULT_CALENDAR_SETTINGS,
   getWeekdayTemplateForDay,
-  isActiveCell,
   isPastCell,
   normalizeTimeInput,
 } from '../lib/posingDates'
@@ -64,6 +64,8 @@ type UsePosingAdminPanelOptions = {
   duration: number
   translate: (key: string) => string
 }
+
+export type AdminCellState = 'empty' | 'available' | 'inactive'
 
 export function usePosingAdminPanel({
   activeTab,
@@ -201,24 +203,42 @@ export function usePosingAdminPanel({
     })
   }, [authorized, activeTab, bookingStatusFilter, loadBookings, translate])
 
-  async function toggleSlot(dayKey: string, time: string) {
+  async function setCellState(dayKey: string, time: string, state: AdminCellState) {
     if (!accessToken || isPastCell(dayKey, time)) return
-    if (!isActiveCell(dayKey, time, calendarSettings)) {
-      setError(translateAdminError('outside_active_hours', translate))
-      return
-    }
     const existing = slotByCell.get(cellKey(dayKey, time))
     if (existing?.booking) return
 
     setBusy(true)
     setError('')
     try {
-      if (existing) {
-        await adminDeleteSlot(accessToken, existing.id)
-      } else {
-        const start_at = buildSlotIso(dayKey, time)
-        const end_at = buildSlotEndIso(dayKey, time, duration)
-        await adminCreateSlot(accessToken, start_at, end_at)
+      if (state === 'empty') {
+        if (existing) await adminDeleteSlot(accessToken, existing.id)
+      } else if (state === 'available') {
+        if (existing) {
+          if (existing.is_blocked) {
+            await adminUpdateSlot(accessToken, existing.id, { is_blocked: false })
+          }
+        } else {
+          await adminCreateSlot(
+            accessToken,
+            buildSlotIso(dayKey, time),
+            buildSlotEndIso(dayKey, time, duration),
+            false,
+          )
+        }
+      } else if (state === 'inactive') {
+        if (existing) {
+          if (!existing.is_blocked) {
+            await adminUpdateSlot(accessToken, existing.id, { is_blocked: true })
+          }
+        } else {
+          await adminCreateSlot(
+            accessToken,
+            buildSlotIso(dayKey, time),
+            buildSlotEndIso(dayKey, time, duration),
+            true,
+          )
+        }
       }
       await loadSlots()
     } catch (err) {
@@ -237,10 +257,6 @@ export function usePosingAdminPanel({
       return
     }
     if (isPastCell(dayKey, time)) return
-    if (!isActiveCell(dayKey, time, calendarSettings)) {
-      setError(translateAdminError('outside_active_hours', translate))
-      return
-    }
     if (slotByCell.has(cellKey(dayKey, time))) {
       setError(translateAdminError('time_exists', translate))
       return
@@ -272,7 +288,6 @@ export function usePosingAdminPanel({
       const templateTimes = getWeekdayTemplateForDay(dayKey, calendarSettings).times
       const toCreate = templateTimes.filter((time) => {
         if (isPastCell(dayKey, time)) return false
-        if (!isActiveCell(dayKey, time, calendarSettings)) return false
         return !slotByCell.has(cellKey(dayKey, time))
       })
       await Promise.all(
@@ -387,7 +402,7 @@ export function usePosingAdminPanel({
     loading,
     calendarFeedback,
     refresh,
-    toggleSlot,
+    setCellState,
     addSlotAtTime,
     openDayPreset,
     clearDay,

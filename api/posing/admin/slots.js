@@ -73,19 +73,54 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     try {
       const body = await readJsonBody(req)
-      const { start_at, end_at } = body
+      const { start_at, end_at, is_blocked } = body
       if (!start_at || !end_at) {
         return json(res, 400, { ok: false, error: 'missing_times' })
       }
 
+      const blocked = is_blocked === true
+
       const { data, error } = await supabase
         .from('availability_slots')
-        .insert({ start_at, end_at, is_blocked: false })
+        .insert({ start_at, end_at, is_blocked: blocked })
         .select('id, start_at, end_at, is_blocked')
         .single()
 
       if (error) return json(res, 500, { ok: false, error: error.message })
       return json(res, 201, { ok: true, slot: data })
+    } catch {
+      return json(res, 400, { ok: false, error: 'invalid_json' })
+    }
+  }
+
+  if (req.method === 'PATCH') {
+    try {
+      const body = await readJsonBody(req)
+      const { id, is_blocked } = body
+      if (!id || typeof is_blocked !== 'boolean') {
+        return json(res, 400, { ok: false, error: 'missing_fields' })
+      }
+
+      const { data: booking } = await supabase
+        .from('posing_bookings')
+        .select('id')
+        .eq('slot_id', id)
+        .not('status', 'eq', 'cancelled')
+        .maybeSingle()
+
+      if (booking) {
+        return json(res, 409, { ok: false, error: 'slot_has_booking' })
+      }
+
+      const { data, error } = await supabase
+        .from('availability_slots')
+        .update({ is_blocked })
+        .eq('id', id)
+        .select('id, start_at, end_at, is_blocked')
+        .single()
+
+      if (error) return json(res, 500, { ok: false, error: error.message })
+      return json(res, 200, { ok: true, slot: data })
     } catch {
       return json(res, 400, { ok: false, error: 'invalid_json' })
     }

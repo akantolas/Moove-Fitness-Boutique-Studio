@@ -214,7 +214,7 @@ export function PosingAdminPage() {
           feedback={admin.calendarFeedback}
           onWeekStartChange={setWeekStart}
           onDurationChange={setDuration}
-          onToggleSlot={admin.toggleSlot}
+          onSetCellState={admin.setCellState}
           onAddSlotTime={admin.addSlotAtTime}
           onOpenDayPreset={admin.openDayPreset}
           onClearDay={admin.clearDay}

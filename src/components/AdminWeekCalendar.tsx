@@ -1,16 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   addDays,
   athensDateKey,
   buildAdminGridTimes,
   cellKey,
   athensTimeKey,
-  formatActiveHoursRange,
   formatDayLabel,
   formatWeekRange,
   formatWeekdayShort,
-  getWeekdayTemplateForDay,
-  isActiveCell,
   isPastCell,
   POSE_WEEK_DAYS,
   slotDurationMinutes,
@@ -20,7 +17,7 @@ import {
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
-import type { CalendarFeedback } from '../hooks/usePosingAdminPanel'
+import type { AdminCellState, CalendarFeedback } from '../hooks/usePosingAdminPanel'
 import { AdminCalendarSettings } from './AdminCalendarSettings'
 
 export type AdminCalendarSlot = {
@@ -45,6 +42,15 @@ type CellInfo = {
   isStart: boolean
 }
 
+type CellMenuTarget = {
+  dayKey: string
+  time: string
+  x: number
+  y: number
+}
+
+const LONG_PRESS_MS = 500
+
 type AdminWeekCalendarProps = {
   slots: AdminCalendarSlot[]
   weekStart: Date
@@ -56,7 +62,7 @@ type AdminWeekCalendarProps = {
   feedback?: CalendarFeedback
   onWeekStartChange: (date: Date) => void
   onDurationChange: (minutes: number) => void
-  onToggleSlot: (dayKey: string, time: string) => void
+  onSetCellState: (dayKey: string, time: string, state: AdminCellState) => void
   onAddSlotTime: (dayKey: string, time: string) => void
   onOpenDayPreset: (dayKey: string) => void
   onClearDay: (dayKey: string) => void
@@ -131,184 +137,334 @@ function DayAddTime({
   )
 }
 
+function CellContextMenu({
+  target,
+  busy,
+  onClose,
+  onSelect,
+  t,
+}: {
+  target: CellMenuTarget | null
+  busy: boolean
+  onClose: () => void
+  onSelect: (state: AdminCellState) => void
+  t: (key: string) => string
+}) {
+  useEffect(() => {
+    if (!target) return
+    const close = () => onClose()
+    window.addEventListener('click', close)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [target, onClose])
+
+  if (!target) return null
+
+  const items: { state: AdminCellState; label: string; className: string }[] = [
+    {
+      state: 'inactive',
+      label: t('posing.admin.legendInactive'),
+      className: 'text-white/60 hover:bg-white/5',
+    },
+    {
+      state: 'empty',
+      label: t('posing.admin.legendEmpty'),
+      className: 'text-white/80 hover:bg-white/5',
+    },
+    {
+      state: 'available',
+      label: t('posing.admin.legendOpen'),
+      className: 'text-emerald-200/90 hover:bg-emerald-400/10',
+    },
+  ]
+
+  return (
+    <div
+      className="fixed z-[60] min-w-[9.5rem] overflow-hidden rounded-xl border border-white/15 bg-[#121218] py-1 shadow-2xl"
+      style={{ left: target.x, top: target.y }}
+      onClick={(e) => e.stopPropagation()}
+      onContextMenu={(e) => e.preventDefault()}
+      role="menu"
+    >
+      {items.map((item) => (
+        <button
+          key={item.state}
+          type="button"
+          role="menuitem"
+          disabled={busy}
+          onClick={() => {
+            onSelect(item.state)
+            onClose()
+          }}
+          className={`block w-full px-4 py-2 text-left text-xs font-medium disabled:opacity-40 ${item.className}`}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function TimeGrid({
   days,
   gridTimes,
   cellMap,
   gridStepMinutes,
-  calendarSettings,
-  locale,
   busy,
-  onToggleSlot,
+  onSetCellState,
   onAddSlotTime,
   onOpenDayPreset,
   onClearDay,
+  locale,
   t,
 }: {
   days: Date[]
   gridTimes: string[]
   cellMap: Map<string, CellInfo>
   gridStepMinutes: number
-  calendarSettings: CalendarSettings
-  locale: Locale
   busy: boolean
-  onToggleSlot: (dayKey: string, time: string) => void
+  onSetCellState: (dayKey: string, time: string, state: AdminCellState) => void
   onAddSlotTime: (dayKey: string, time: string) => void
   onOpenDayPreset: (dayKey: string) => void
   onClearDay: (dayKey: string) => void
+  locale: Locale
   t: (key: string) => string
 }) {
   const todayKey = athensDateKey(new Date())
+  const [menuTarget, setMenuTarget] = useState<CellMenuTarget | null>(null)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTriggered = useRef(false)
+
+  const openMenu = useCallback((dayKey: string, time: string, x: number, y: number) => {
+    const padding = 8
+    const menuW = 152
+    const menuH = 120
+    const clampedX = Math.min(x, window.innerWidth - menuW - padding)
+    const clampedY = Math.min(y, window.innerHeight - menuH - padding)
+    setMenuTarget({ dayKey, time, x: clampedX, y: clampedY })
+  }, [])
+
+  const clearLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }, [])
+
+  useEffect(() => () => clearLongPress(), [clearLongPress])
+
+  function canOpenMenu(dayKey: string, time: string, info?: CellInfo) {
+    if (busy) return false
+    if (isPastCell(dayKey, time)) return false
+    if (info?.state === 'booked' || info?.state === 'continuation') return false
+    return true
+  }
+
+  function handleContextMenu(
+    e: React.MouseEvent,
+    dayKey: string,
+    time: string,
+    info?: CellInfo,
+  ) {
+    e.preventDefault()
+    if (!canOpenMenu(dayKey, time, info)) return
+    openMenu(dayKey, time, e.clientX, e.clientY)
+  }
+
+  function handleTouchStart(
+    e: React.TouchEvent,
+    dayKey: string,
+    time: string,
+    info?: CellInfo,
+  ) {
+    if (!canOpenMenu(dayKey, time, info)) return
+    longPressTriggered.current = false
+    const touch = e.touches[0]
+    clearLongPress()
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true
+      openMenu(dayKey, time, touch.clientX, touch.clientY)
+    }, LONG_PRESS_MS)
+  }
+
+  function handleTouchEnd() {
+    clearLongPress()
+  }
 
   return (
-    <div className="overflow-x-auto">
-      <div
-        className="min-w-[640px] grid"
-        style={{
-          gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))`,
-          gridTemplateRows: `auto repeat(${gridTimes.length}, minmax(2.25rem, auto))`,
-        }}
-      >
-        <div className="sticky left-0 z-20 border-b border-white/10 bg-[#0c0c10]" />
-        {days.map((day) => {
-          const dayKey = athensDateKey(day)
-          const isToday = dayKey === todayKey
-          const weekdayTemplate = getWeekdayTemplateForDay(dayKey, calendarSettings)
-          return (
-            <div
-              key={dayKey}
-              className={`border-b border-l border-white/10 px-2 py-3 text-center ${
-                isToday ? 'bg-fuchsia-500/10' : 'bg-[#0c0c10]'
-              }`}
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
-                {formatWeekdayShort(day, locale)}
-              </p>
-              <p className="mt-0.5 text-xs font-medium text-white">{formatDayLabel(day, locale)}</p>
-              <p className="mt-1 text-[10px] font-medium text-cyan-200/70">
-                {formatActiveHoursRange(weekdayTemplate.start_hour, weekdayTemplate.end_hour)}
-              </p>
-              <div className="mt-2 flex flex-wrap justify-center gap-1">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onOpenDayPreset(dayKey)}
-                  className="rounded-md border border-emerald-300/25 px-1.5 py-0.5 text-[10px] text-emerald-200/90 hover:bg-emerald-400/10 disabled:opacity-40"
-                  title={t('posing.admin.openDay')}
-                >
-                  {t('posing.admin.openDay')}
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onClearDay(dayKey)}
-                  className="rounded-md border border-rose-300/25 px-1.5 py-0.5 text-[10px] text-rose-200/90 hover:bg-rose-400/10 disabled:opacity-40"
-                  title={t('posing.admin.clearDay')}
-                >
-                  {t('posing.admin.clearDay')}
-                </button>
-              </div>
-              <DayAddTime dayKey={dayKey} busy={busy} onAddSlotTime={onAddSlotTime} t={t} />
-            </div>
-          )
-        })}
-
-        {gridTimes.map((gridTime, rowIndex) => {
-          const gridRow = rowIndex + 2
-          return (
-            <div key={gridTime} className="contents">
+    <>
+      <div className="overflow-x-auto">
+        <div
+          className="min-w-[640px] grid"
+          style={{
+            gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))`,
+            gridTemplateRows: `auto repeat(${gridTimes.length}, minmax(2.25rem, auto))`,
+          }}
+        >
+          <div className="sticky left-0 z-20 border-b border-white/10 bg-[#0c0c10]" />
+          {days.map((day) => {
+            const dayKey = athensDateKey(day)
+            const isToday = dayKey === todayKey
+            return (
               <div
-                style={{ gridRow, gridColumn: 1 }}
-                className="sticky left-0 z-10 flex items-start border-b border-white/5 bg-[#0c0c10] px-2 py-2 text-[11px] text-white/40"
+                key={dayKey}
+                className={`border-b border-l border-white/10 px-2 py-3 text-center ${
+                  isToday ? 'bg-fuchsia-500/10' : 'bg-[#0c0c10]'
+                }`}
               >
-                {gridTime}
-              </div>
-              {days.map((day, dayIndex) => {
-                const dayKey = athensDateKey(day)
-                const key = cellKey(dayKey, gridTime)
-                const info = cellMap.get(key)
-
-                if (info?.state === 'continuation') return null
-
-                const past = isPastCell(dayKey, gridTime)
-                const slotState = info?.state ?? 'empty'
-                const active = isActiveCell(dayKey, gridTime, calendarSettings)
-
-                let state: CellState
-                if (slotState === 'booked') {
-                  state = 'booked'
-                } else if (slotState === 'open') {
-                  state = 'open'
-                } else if (past) {
-                  state = 'past'
-                } else if (!active) {
-                  state = 'inactive'
-                } else {
-                  state = 'empty'
-                }
-
-                const rowSpan = info?.rowSpan ?? 1
-                const slot = info?.slot
-                const clientName =
-                  slot?.booking?.profiles?.full_name ?? slot?.booking?.profiles?.email
-                const slotMinutes = slot
-                  ? slotDurationMinutes(slot.start_at, slot.end_at)
-                  : null
-
-                let cellClass =
-                  'border-b border-l border-white/5 p-1 transition min-h-[2.25rem] '
-                if (state === 'empty' && !past) {
-                  cellClass += 'bg-white/[0.02] hover:bg-emerald-400/10 cursor-pointer'
-                } else if (state === 'open') {
-                  cellClass +=
-                    'bg-emerald-400/15 border-emerald-300/25 hover:bg-emerald-400/25 cursor-pointer'
-                } else if (state === 'booked') {
-                  cellClass += 'bg-fuchsia-500/20 border-fuchsia-300/30 cursor-not-allowed'
-                } else if (state === 'past') {
-                  cellClass += 'bg-white/[0.01] opacity-40 cursor-not-allowed'
-                } else if (state === 'inactive') {
-                  cellClass +=
-                    'bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,rgba(255,255,255,0.04)_4px,rgba(255,255,255,0.04)_8px)] bg-zinc-900/50 opacity-50 cursor-not-allowed'
-                }
-
-                const canToggle = !busy && active && (state === 'empty' || state === 'open')
-
-                return (
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
+                  {formatWeekdayShort(day, locale)}
+                </p>
+                <p className="mt-0.5 text-xs font-medium text-white">{formatDayLabel(day, locale)}</p>
+                <div className="mt-2 flex flex-wrap justify-center gap-1">
                   <button
-                    key={key}
                     type="button"
-                    disabled={!canToggle}
-                    style={{
-                      gridRow: `${gridRow} / span ${rowSpan}`,
-                      gridColumn: dayIndex + 2,
-                    }}
-                    onClick={() => canToggle && onToggleSlot(dayKey, gridTime)}
-                    className={`${cellClass} text-left`}
-                    title={
-                      state === 'booked' && clientName
-                        ? `${t('posing.admin.slotBooked')}: ${clientName}`
-                        : undefined
-                    }
+                    disabled={busy}
+                    onClick={() => onOpenDayPreset(dayKey)}
+                    className="rounded-md border border-emerald-300/25 px-1.5 py-0.5 text-[10px] text-emerald-200/90 hover:bg-emerald-400/10 disabled:opacity-40"
+                    title={t('posing.admin.openDay')}
                   >
-                    {state === 'open' ? (
-                      <span className="block px-1 text-[10px] font-medium text-emerald-200/90">
-                        {t('posing.admin.legendOpen')}
-                        {slotMinutes && slotMinutes > gridStepMinutes ? ` · ${slotMinutes}'` : ''}
-                      </span>
-                    ) : null}
-                    {state === 'booked' ? (
-                      <span className="block truncate px-1 text-[10px] font-medium text-fuchsia-100/90">
-                        {clientName ?? t('posing.admin.slotBooked')}
-                      </span>
-                    ) : null}
+                    {t('posing.admin.openDay')}
                   </button>
-                )
-              })}
-            </div>
-          )
-        })}
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onClearDay(dayKey)}
+                    className="rounded-md border border-rose-300/25 px-1.5 py-0.5 text-[10px] text-rose-200/90 hover:bg-rose-400/10 disabled:opacity-40"
+                    title={t('posing.admin.clearDay')}
+                  >
+                    {t('posing.admin.clearDay')}
+                  </button>
+                </div>
+                <DayAddTime dayKey={dayKey} busy={busy} onAddSlotTime={onAddSlotTime} t={t} />
+              </div>
+            )
+          })}
+
+          {gridTimes.map((gridTime, rowIndex) => {
+            const gridRow = rowIndex + 2
+            return (
+              <div key={gridTime} className="contents">
+                <div
+                  style={{ gridRow, gridColumn: 1 }}
+                  className="sticky left-0 z-10 flex items-start border-b border-white/5 bg-[#0c0c10] px-2 py-2 text-[11px] text-white/40"
+                >
+                  {gridTime}
+                </div>
+                {days.map((day, dayIndex) => {
+                  const dayKey = athensDateKey(day)
+                  const key = cellKey(dayKey, gridTime)
+                  const info = cellMap.get(key)
+
+                  if (info?.state === 'continuation') return null
+
+                  const past = isPastCell(dayKey, gridTime)
+                  const slotState = info?.state ?? 'empty'
+
+                  let state: CellState
+                  if (slotState === 'booked') {
+                    state = 'booked'
+                  } else if (slotState === 'open') {
+                    state = 'open'
+                  } else if (slotState === 'inactive') {
+                    state = 'inactive'
+                  } else if (past) {
+                    state = 'past'
+                  } else {
+                    state = 'empty'
+                  }
+
+                  const rowSpan = info?.rowSpan ?? 1
+                  const slot = info?.slot
+                  const clientName =
+                    slot?.booking?.profiles?.full_name ?? slot?.booking?.profiles?.email
+                  const slotMinutes = slot
+                    ? slotDurationMinutes(slot.start_at, slot.end_at)
+                    : null
+
+                  let cellClass =
+                    'border-b border-l border-white/5 p-1 transition min-h-[2.25rem] select-none '
+                  if (state === 'empty' && !past) {
+                    cellClass += 'bg-white/[0.02] hover:bg-white/[0.04] cursor-context-menu'
+                  } else if (state === 'open') {
+                    cellClass +=
+                      'bg-emerald-400/15 border-emerald-300/25 hover:bg-emerald-400/20 cursor-context-menu'
+                  } else if (state === 'booked') {
+                    cellClass += 'bg-fuchsia-500/20 border-fuchsia-300/30 cursor-not-allowed'
+                  } else if (state === 'past') {
+                    cellClass += 'bg-white/[0.01] opacity-40 cursor-not-allowed'
+                  } else if (state === 'inactive') {
+                    cellClass +=
+                      'bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,rgba(255,255,255,0.04)_4px,rgba(255,255,255,0.04)_8px)] bg-zinc-900/50 opacity-50 cursor-context-menu'
+                  }
+
+                  return (
+                    <div
+                      key={key}
+                      role="button"
+                      tabIndex={canOpenMenu(dayKey, gridTime, info) ? 0 : -1}
+                      style={{
+                        gridRow: `${gridRow} / span ${rowSpan}`,
+                        gridColumn: dayIndex + 2,
+                      }}
+                      onContextMenu={(e) => handleContextMenu(e, dayKey, gridTime, info)}
+                      onTouchStart={(e) => handleTouchStart(e, dayKey, gridTime, info)}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchMove={handleTouchEnd}
+                      onTouchCancel={handleTouchEnd}
+                      onClick={() => {
+                        if (longPressTriggered.current) {
+                          longPressTriggered.current = false
+                        }
+                      }}
+                      className={`${cellClass} text-left`}
+                      title={
+                        state === 'booked' && clientName
+                          ? `${t('posing.admin.slotBooked')}: ${clientName}`
+                          : t('posing.admin.cellMenuHint')
+                      }
+                    >
+                      {state === 'open' ? (
+                        <span className="block px-1 text-[10px] font-medium text-emerald-200/90">
+                          {t('posing.admin.legendOpen')}
+                          {slotMinutes && slotMinutes > gridStepMinutes ? ` · ${slotMinutes}'` : ''}
+                        </span>
+                      ) : null}
+                      {state === 'booked' ? (
+                        <span className="block truncate px-1 text-[10px] font-medium text-fuchsia-100/90">
+                          {clientName ?? t('posing.admin.slotBooked')}
+                        </span>
+                      ) : null}
+                      {state === 'inactive' ? (
+                        <span className="block px-1 text-[10px] font-medium text-white/35">
+                          {t('posing.admin.legendInactive')}
+                        </span>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
       </div>
-    </div>
+
+      <CellContextMenu
+        target={menuTarget}
+        busy={busy}
+        onClose={() => setMenuTarget(null)}
+        onSelect={(state) => {
+          if (!menuTarget) return
+          onSetCellState(menuTarget.dayKey, menuTarget.time, state)
+        }}
+        t={t}
+      />
+    </>
   )
 }
 
@@ -337,7 +493,10 @@ function buildCellMap(
     if (startIdx === -1) continue
 
     const booked = Boolean(slot.booking)
-    const state: CellState = booked ? 'booked' : 'open'
+    let state: CellState
+    if (booked) state = 'booked'
+    else if (slot.is_blocked) state = 'inactive'
+    else state = 'open'
 
     map.set(cellKey(dayKey, startTime), {
       state,
@@ -372,13 +531,14 @@ export function AdminWeekCalendar({
   feedback,
   onWeekStartChange,
   onDurationChange,
-  onToggleSlot,
+  onSetCellState,
   onAddSlotTime,
   onOpenDayPreset,
   onClearDay,
   onSaveCalendarSettings,
 }: AdminWeekCalendarProps) {
   const { t } = useTranslation()
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [mobileDayIndex, setMobileDayIndex] = useState(() => {
     const today = new Date()
     const weekStartToday = startOfWeek(today)
@@ -388,16 +548,14 @@ export function AdminWeekCalendar({
     return Math.min(Math.max(diff, 0), POSE_WEEK_DAYS - 1)
   })
 
+  const gridTimes = useMemo(
+    () => buildAdminGridTimes(calendarSettings, slots),
+    [calendarSettings, slots],
+  )
+
   const days = useMemo(
     () => Array.from({ length: POSE_WEEK_DAYS }, (_, i) => addDays(weekStart, i)),
     [weekStart],
-  )
-
-  const weekDayKeys = useMemo(() => days.map((day) => athensDateKey(day)), [days])
-
-  const gridTimes = useMemo(
-    () => buildAdminGridTimes(calendarSettings, slots, weekDayKeys),
-    [calendarSettings, slots, weekDayKeys],
   )
 
   const cellMap = useMemo(
@@ -409,18 +567,19 @@ export function AdminWeekCalendar({
 
   return (
     <section className="relative mt-10">
-      <AdminCalendarSettings
-        settings={calendarSettings}
-        busy={busy}
-        onSave={onSaveCalendarSettings}
-      />
-
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-white">{t('posing.admin.weekTitle')}</h2>
           <p className="mt-1 text-sm text-white/55">{formatWeekRange(weekStart, locale)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="rounded-lg border border-fuchsia-300/25 bg-fuchsia-500/10 px-3 py-1.5 text-xs font-medium text-fuchsia-100 hover:bg-fuchsia-500/20"
+          >
+            {t('posing.admin.openSettings')}
+          </button>
           <button
             type="button"
             onClick={() => onWeekStartChange(startOfWeek(new Date()))}
@@ -461,6 +620,7 @@ export function AdminWeekCalendar({
       <p className="mt-2 text-xs text-white/45">
         {t('posing.admin.durationHint', { minutes: duration })}
       </p>
+      <p className="mt-1 text-xs text-white/40">{t('posing.admin.cellMenuHint')}</p>
 
       {feedback ? (
         <p className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-2.5 text-sm text-emerald-100">
@@ -494,13 +654,12 @@ export function AdminWeekCalendar({
             gridTimes={gridTimes}
             cellMap={cellMap}
             gridStepMinutes={calendarSettings.grid_step_minutes}
-            calendarSettings={calendarSettings}
-            locale={locale}
             busy={busy}
-            onToggleSlot={onToggleSlot}
+            onSetCellState={onSetCellState}
             onAddSlotTime={onAddSlotTime}
             onOpenDayPreset={onOpenDayPreset}
             onClearDay={onClearDay}
+            locale={locale}
             t={t}
           />
         </div>
@@ -534,17 +693,24 @@ export function AdminWeekCalendar({
             gridTimes={gridTimes}
             cellMap={cellMap}
             gridStepMinutes={calendarSettings.grid_step_minutes}
-            calendarSettings={calendarSettings}
-            locale={locale}
             busy={busy}
-            onToggleSlot={onToggleSlot}
+            onSetCellState={onSetCellState}
             onAddSlotTime={onAddSlotTime}
             onOpenDayPreset={onOpenDayPreset}
             onClearDay={onClearDay}
+            locale={locale}
             t={t}
           />
         </div>
       </div>
+
+      <AdminCalendarSettings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={calendarSettings}
+        busy={busy}
+        onSave={onSaveCalendarSettings}
+      />
     </section>
   )
 }
