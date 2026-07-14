@@ -21,7 +21,7 @@ export function ContactPage() {
     const name = String(data.get('name') ?? '').trim()
     const email = String(data.get('email') ?? '').trim()
     const message = String(data.get('message') ?? '').trim()
-    const website = String(data.get('website') ?? '').trim()
+    const _gotcha = String(data.get('_gotcha') ?? '').trim()
 
     setSending(true)
     setError('')
@@ -30,7 +30,7 @@ export function ContactPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message, website }),
+        body: JSON.stringify({ name, email, message, _gotcha }),
       })
 
       if (!res.ok) {
@@ -118,9 +118,10 @@ export function ContactPage() {
             <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
               <input
                 type="text"
-                name="website"
+                name="_gotcha"
                 tabIndex={-1}
-                autoComplete="off"
+                autoComplete="one-time-code"
+                defaultValue=""
                 className="hidden"
                 aria-hidden="true"
               />

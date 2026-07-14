@@ -10,6 +10,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_NAME = 120
 const MAX_EMAIL = 254
 const MAX_MESSAGE = 4000
+const DEFAULT_FROM = 'Moove <info@moovefitness.gr>'
+const DEFAULT_NOTIFY = 'info@moovefitness.gr'
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -24,19 +26,19 @@ function trimField(value, maxLen) {
   return String(value ?? '').trim().slice(0, maxLen)
 }
 
+function envOrFallback(key, fallback) {
+  const value = process.env[key]?.trim()
+  return value || fallback
+}
+
 function getContactFromEmail() {
-  return (
-    process.env.CONTACT_FROM_EMAIL ??
-    process.env.POSE_FROM_EMAIL ??
-    'Moove <info@moovefitness.gr>'
-  )
+  return envOrFallback('CONTACT_FROM_EMAIL', DEFAULT_FROM)
 }
 
 function getContactNotifyEmail() {
-  return (
-    process.env.CONTACT_NOTIFY_EMAIL ??
-    process.env.POSE_NOTIFY_EMAIL ??
-    'info@moovefitness.gr'
+  return envOrFallback(
+    'CONTACT_NOTIFY_EMAIL',
+    envOrFallback('POSE_NOTIFY_EMAIL', DEFAULT_NOTIFY),
   )
 }
 
@@ -53,7 +55,7 @@ export default async function handler(req, res) {
     const body = await readJsonBody(req)
 
     // Honeypot — bots fill hidden fields; pretend success.
-    if (trimField(body.website, 200)) {
+    if (trimField(body._gotcha, 200)) {
       return json(res, 200, { ok: true })
     }
 
@@ -68,13 +70,16 @@ export default async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'invalid_email' })
     }
 
+    const notifyEmail = getContactNotifyEmail()
+    const fromEmail = getContactFromEmail()
+
     const safeName = escapeHtml(name)
     const safeEmail = escapeHtml(email)
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>')
 
     await sendPosingEmail({
-      from: getContactFromEmail(),
-      to: [getContactNotifyEmail()],
+      from: fromEmail,
+      to: [notifyEmail],
       replyTo: email,
       subject: `Νέο μήνυμα επικοινωνίας — ${name}`,
       html: `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
@@ -87,7 +92,11 @@ export default async function handler(req, res) {
 
     return json(res, 200, { ok: true })
   } catch (error) {
-    console.error('contact email error:', error)
+    const detail = error instanceof Error ? error.message : String(error)
+    console.error('contact email error:', detail)
+    if (error instanceof Error && error.stack) {
+      console.error(error.stack)
+    }
     return json(res, 500, { ok: false, error: 'send_failed' })
   }
 }
