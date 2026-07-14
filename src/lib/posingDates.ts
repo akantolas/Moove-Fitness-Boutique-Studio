@@ -7,6 +7,52 @@ export const POSE_GRID_END_HOUR = 21
 export const POSE_GRID_STEP_MINUTES = 30
 export const POSE_DAY_PRESET_TIMES = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
 
+export type CalendarGridConfig = {
+  grid_start_hour: number
+  grid_end_hour: number
+  grid_step_minutes: number
+}
+
+export type CalendarSettings = CalendarGridConfig & {
+  day_template_times: string[]
+  default_duration_minutes: number
+  updated_at?: string | null
+}
+
+export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
+  day_template_times: [...POSE_DAY_PRESET_TIMES],
+  default_duration_minutes: 30,
+  grid_start_hour: POSE_GRID_START_HOUR,
+  grid_end_hour: POSE_GRID_END_HOUR,
+  grid_step_minutes: POSE_GRID_STEP_MINUTES,
+}
+
+const TIME_INPUT_RE = /^([01]?\d|2[0-3]):([0-5]\d)$/
+
+export function normalizeTimeInput(value: string): string | null {
+  const trimmed = value.trim()
+  if (!TIME_INPUT_RE.test(trimmed)) return null
+  const [hour, minute] = trimmed.split(':')
+  return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+}
+
+export function sortTimeStrings(times: string[]): string[] {
+  return [...times].sort((a, b) => {
+    const [ah, am] = a.split(':').map(Number)
+    const [bh, bm] = b.split(':').map(Number)
+    return ah * 60 + am - (bh * 60 + bm)
+  })
+}
+
+export function mergeGridTimes(baseTimes: string[], extraTimes: string[]): string[] {
+  const merged = new Set(baseTimes)
+  for (const time of extraTimes) {
+    const normalized = normalizeTimeInput(time)
+    if (normalized) merged.add(normalized)
+  }
+  return sortTimeStrings([...merged])
+}
+
 export function startOfWeek(date: Date) {
   const d = new Date(date)
   const day = d.getDay()
@@ -92,12 +138,18 @@ export function formatSlot(iso: string, locale: Locale) {
   }).format(new Date(iso))
 }
 
-export function generateGridTimes() {
+export function generateGridTimes(config: Partial<CalendarGridConfig> = {}) {
+  const startHour = config.grid_start_hour ?? POSE_GRID_START_HOUR
+  const endHour = config.grid_end_hour ?? POSE_GRID_END_HOUR
+  const stepMinutes = config.grid_step_minutes ?? POSE_GRID_STEP_MINUTES
   const times: string[] = []
-  for (let hour = POSE_GRID_START_HOUR; hour < POSE_GRID_END_HOUR; hour++) {
-    times.push(`${String(hour).padStart(2, '0')}:00`)
-    times.push(`${String(hour).padStart(2, '0')}:30`)
+
+  for (let totalMinutes = startHour * 60; totalMinutes < endHour * 60; totalMinutes += stepMinutes) {
+    const hour = Math.floor(totalMinutes / 60)
+    const minute = totalMinutes % 60
+    times.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`)
   }
+
   return times
 }
 
@@ -162,6 +214,6 @@ export function slotDurationMinutes(startAt: string, endAt: string) {
   return Math.round((new Date(endAt).getTime() - new Date(startAt).getTime()) / 60_000)
 }
 
-export function slotSpansRows(durationMinutes: number) {
-  return Math.max(1, Math.ceil(durationMinutes / POSE_GRID_STEP_MINUTES))
+export function slotSpansRows(durationMinutes: number, stepMinutes = POSE_GRID_STEP_MINUTES) {
+  return Math.max(1, Math.ceil(durationMinutes / stepMinutes))
 }

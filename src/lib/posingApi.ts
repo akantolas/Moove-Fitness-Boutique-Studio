@@ -1,6 +1,8 @@
 import { site } from '../site'
+import type { CalendarSettings } from './posingDates'
 
 export { isSupabaseConfigured } from './supabase'
+export type { CalendarSettings }
 
 export type PosingSlot = {
   id: string
@@ -189,6 +191,32 @@ export async function adminDeleteSlot(accessToken: string, id: string) {
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_delete_failed'))
+}
+
+export async function fetchAdminCalendarSettings(accessToken: string): Promise<CalendarSettings> {
+  const res = await fetch('/api/posing/admin/calendar-settings', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'settings_fetch_failed'))
+  return data.settings as CalendarSettings
+}
+
+export async function saveAdminCalendarSettings(
+  accessToken: string,
+  payload: Omit<CalendarSettings, 'updated_at'>,
+): Promise<CalendarSettings> {
+  const res = await fetch('/api/posing/admin/calendar-settings', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'settings_save_failed'))
+  return data.settings as CalendarSettings
 }
 
 export async function fetchAdminMembers(accessToken: string): Promise<AdminMember[]> {

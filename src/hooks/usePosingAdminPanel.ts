@@ -5,15 +5,18 @@ import {
   adminDeleteMember,
   adminDeleteSlot,
   fetchAdminBookings,
+  fetchAdminCalendarSettings,
   fetchAdminMembers,
   fetchAdminOverview,
   fetchAdminPayments,
   fetchAdminSlots,
+  saveAdminCalendarSettings,
   type AdminBookingRow,
   type AdminCalendarSlot,
   type AdminMember,
   type AdminOverviewStats,
   type AdminPayment,
+  type CalendarSettings,
 } from '../lib/posingApi'
 import {
   athensDateKey,
@@ -21,8 +24,9 @@ import {
   buildSlotEndIso,
   buildSlotIso,
   cellKey,
+  DEFAULT_CALENDAR_SETTINGS,
   isPastCell,
-  POSE_DAY_PRESET_TIMES,
+  normalizeTimeInput,
 } from '../lib/posingDates'
 
 export const ADMIN_TABS = ['overview', 'calendar', 'members', 'payments', 'bookings'] as const
@@ -33,8 +37,8 @@ export function isAdminTab(value: string | null): value is AdminTab {
 }
 
 export type CalendarFeedback = {
-  type: 'slots_created' | 'slots_deleted'
-  count: number
+  type: 'slots_created' | 'slots_deleted' | 'settings_saved'
+  count?: number
 } | null
 
 export function translateAdminError(code: string, t: (key: string) => string): string {
@@ -73,6 +77,8 @@ export function usePosingAdminPanel({
   const [payments, setPayments] = useState<AdminPayment[]>([])
   const [bookings, setBookings] = useState<AdminBookingRow[]>([])
   const [stats, setStats] = useState<AdminOverviewStats | null>(null)
+  const [calendarSettings, setCalendarSettings] = useState<CalendarSettings>(DEFAULT_CALENDAR_SETTINGS)
+  const [calendarSettingsLoaded, setCalendarSettingsLoaded] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -106,6 +112,14 @@ export function usePosingAdminPanel({
     setSlots(await fetchAdminSlots(accessToken, range.from, range.to))
   }, [accessToken, range.from, range.to])
 
+  const loadCalendarSettings = useCallback(async () => {
+    if (!accessToken) return
+    const settings = await fetchAdminCalendarSettings(accessToken)
+    setCalendarSettings(settings)
+    setCalendarSettingsLoaded(true)
+    return settings
+  }, [accessToken])
+
   const loadMembers = useCallback(async () => {
     if (!accessToken) return
     setMembers(await fetchAdminMembers(accessToken))
@@ -138,7 +152,7 @@ export function usePosingAdminPanel({
         if (tab === 'overview') {
           await Promise.all([loadStats(), loadPayments()])
         } else if (tab === 'calendar') {
-          await loadSlots()
+          await Promise.all([loadSlots(), loadCalendarSettings()])
         } else if (tab === 'members') {
           await loadMembers()
         } else if (tab === 'payments') {
@@ -157,6 +171,7 @@ export function usePosingAdminPanel({
       accessToken,
       bookingStatusFilter,
       loadBookings,
+      loadCalendarSettings,
       loadMembers,
       loadPayments,
       loadSlots,
@@ -208,12 +223,44 @@ export function usePosingAdminPanel({
     }
   }
 
+  async function addSlotAtTime(dayKey: string, rawTime: string) {
+    if (!accessToken) return
+    const time = normalizeTimeInput(rawTime)
+    if (!time) {
+      setError(translateAdminError('invalid_time', translate))
+      return
+    }
+    if (isPastCell(dayKey, time)) return
+    if (slotByCell.has(cellKey(dayKey, time))) {
+      setError(translateAdminError('time_exists', translate))
+      return
+    }
+
+    setBusy(true)
+    setError('')
+    try {
+      await adminCreateSlot(
+        accessToken,
+        buildSlotIso(dayKey, time),
+        buildSlotEndIso(dayKey, time, duration),
+      )
+      await loadSlots()
+      showCalendarFeedback({ type: 'slots_created', count: 1 })
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'toggle_failed'
+      setError(translateAdminError(code, translate))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function openDayPreset(dayKey: string) {
     if (!accessToken) return
     setBusy(true)
     setError('')
     try {
-      const toCreate = POSE_DAY_PRESET_TIMES.filter((time) => {
+      const templateTimes = calendarSettings.day_template_times
+      const toCreate = templateTimes.filter((time) => {
         if (isPastCell(dayKey, time)) return false
         return !slotByCell.has(cellKey(dayKey, time))
       })
@@ -260,6 +307,27 @@ export function usePosingAdminPanel({
     }
   }
 
+  async function saveCalendarSettings(
+    payload: Omit<CalendarSettings, 'updated_at'>,
+  ): Promise<CalendarSettings> {
+    if (!accessToken) throw new Error('unauthorized')
+    setBusy(true)
+    setError('')
+    try {
+      const saved = await saveAdminCalendarSettings(accessToken, payload)
+      setCalendarSettings(saved)
+      showCalendarFeedback({ type: 'settings_saved' })
+      return saved
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'settings_save_failed'
+      const message = translateAdminError(code, translate)
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function deleteMember(memberId: string) {
     if (!accessToken) return
     setBusy(true)
@@ -301,14 +369,18 @@ export function usePosingAdminPanel({
     payments,
     bookings,
     stats,
+    calendarSettings,
+    calendarSettingsLoaded,
     error,
     busy,
     loading,
     calendarFeedback,
     refresh,
     toggleSlot,
+    addSlotAtTime,
     openDayPreset,
     clearDay,
+    saveCalendarSettings,
     deleteMember,
     confirmPayment,
   }

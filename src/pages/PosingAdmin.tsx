@@ -47,6 +47,11 @@ export function PosingAdminPage() {
   }, [loading, navigate, user])
 
   useEffect(() => {
+    if (!admin.calendarSettingsLoaded) return
+    setDuration(admin.calendarSettings.default_duration_minutes)
+  }, [admin.calendarSettingsLoaded, admin.calendarSettings.default_duration_minutes])
+
+  useEffect(() => {
     const userId = user?.id
     if (!userId) return
     fetchPosingIsAdmin(userId)
@@ -202,6 +207,7 @@ export function PosingAdminPage() {
           slots={admin.slots}
           weekStart={weekStart}
           duration={duration}
+          calendarSettings={admin.calendarSettings}
           locale={locale}
           busy={isBusy}
           loading={admin.loading}
@@ -209,8 +215,10 @@ export function PosingAdminPage() {
           onWeekStartChange={setWeekStart}
           onDurationChange={setDuration}
           onToggleSlot={admin.toggleSlot}
+          onAddSlotTime={admin.addSlotAtTime}
           onOpenDayPreset={admin.openDayPreset}
           onClearDay={admin.clearDay}
+          onSaveCalendarSettings={admin.saveCalendarSettings}
         />
       ) : null}
 

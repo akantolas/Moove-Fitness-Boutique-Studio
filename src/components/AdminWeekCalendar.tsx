@@ -9,14 +9,17 @@ import {
   formatWeekdayShort,
   generateGridTimes,
   isPastCell,
+  mergeGridTimes,
   POSE_WEEK_DAYS,
   slotDurationMinutes,
   slotSpansRows,
   startOfWeek,
+  type CalendarSettings,
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import type { CalendarFeedback } from '../hooks/usePosingAdminPanel'
+import { AdminCalendarSettings } from './AdminCalendarSettings'
 
 export type AdminCalendarSlot = {
   id: string
@@ -44,6 +47,7 @@ type AdminWeekCalendarProps = {
   slots: AdminCalendarSlot[]
   weekStart: Date
   duration: number
+  calendarSettings: CalendarSettings
   locale: Locale
   busy: boolean
   loading: boolean
@@ -51,17 +55,89 @@ type AdminWeekCalendarProps = {
   onWeekStartChange: (date: Date) => void
   onDurationChange: (minutes: number) => void
   onToggleSlot: (dayKey: string, time: string) => void
+  onAddSlotTime: (dayKey: string, time: string) => void
   onOpenDayPreset: (dayKey: string) => void
   onClearDay: (dayKey: string) => void
+  onSaveCalendarSettings: (payload: Omit<CalendarSettings, 'updated_at'>) => Promise<CalendarSettings>
+}
+
+function DayAddTime({
+  dayKey,
+  busy,
+  onAddSlotTime,
+  t,
+}: {
+  dayKey: string
+  busy: boolean
+  onAddSlotTime: (dayKey: string, time: string) => void
+  t: (key: string) => string
+}) {
+  const [open, setOpen] = useState(false)
+  const [time, setTime] = useState('')
+
+  function handleConfirm() {
+    if (!time) return
+    onAddSlotTime(dayKey, time)
+    setTime('')
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setOpen(true)}
+        className="rounded-md border border-fuchsia-300/25 px-1.5 py-0.5 text-[10px] text-fuchsia-200/90 hover:bg-fuchsia-400/10 disabled:opacity-40"
+        title={t('posing.admin.addTime')}
+      >
+        {t('posing.admin.addTimeShort')}
+      </button>
+    )
+  }
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center justify-center gap-1">
+      <input
+        type="time"
+        value={time}
+        disabled={busy}
+        onChange={(e) => setTime(e.target.value)}
+        className="w-[5.5rem] rounded border border-white/10 bg-black/40 px-1 py-0.5 text-[10px] text-white"
+        aria-label={t('posing.admin.addTime')}
+      />
+      <button
+        type="button"
+        disabled={busy || !time}
+        onClick={handleConfirm}
+        className="rounded-md border border-emerald-300/25 px-1 py-0.5 text-[10px] text-emerald-200/90 disabled:opacity-40"
+      >
+        {t('posing.admin.add')}
+      </button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => {
+          setOpen(false)
+          setTime('')
+        }}
+        className="rounded-md border border-white/10 px-1 py-0.5 text-[10px] text-white/55"
+      >
+        ×
+      </button>
+    </div>
+  )
 }
 
 function TimeGrid({
   days,
   gridTimes,
   cellMap,
+  gridStepMinutes,
   locale,
   busy,
   onToggleSlot,
+  onAddSlotTime,
   onOpenDayPreset,
   onClearDay,
   t,
@@ -69,9 +145,11 @@ function TimeGrid({
   days: Date[]
   gridTimes: string[]
   cellMap: Map<string, CellInfo>
+  gridStepMinutes: number
   locale: Locale
   busy: boolean
   onToggleSlot: (dayKey: string, time: string) => void
+  onAddSlotTime: (dayKey: string, time: string) => void
   onOpenDayPreset: (dayKey: string) => void
   onClearDay: (dayKey: string) => void
   t: (key: string) => string
@@ -102,7 +180,7 @@ function TimeGrid({
                 {formatWeekdayShort(day, locale)}
               </p>
               <p className="mt-0.5 text-xs font-medium text-white">{formatDayLabel(day, locale)}</p>
-              <div className="mt-2 flex justify-center gap-1">
+              <div className="mt-2 flex flex-wrap justify-center gap-1">
                 <button
                   type="button"
                   disabled={busy}
@@ -122,6 +200,7 @@ function TimeGrid({
                   {t('posing.admin.clearDay')}
                 </button>
               </div>
+              <DayAddTime dayKey={dayKey} busy={busy} onAddSlotTime={onAddSlotTime} t={t} />
             </div>
           )
         })}
@@ -154,6 +233,9 @@ function TimeGrid({
                 const slot = info?.slot
                 const clientName =
                   slot?.booking?.profiles?.full_name ?? slot?.booking?.profiles?.email
+                const slotMinutes = slot
+                  ? slotDurationMinutes(slot.start_at, slot.end_at)
+                  : null
 
                 let cellClass =
                   'border-b border-l border-white/5 p-1 transition min-h-[2.25rem] '
@@ -190,7 +272,7 @@ function TimeGrid({
                     {state === 'open' ? (
                       <span className="block px-1 text-[10px] font-medium text-emerald-200/90">
                         {t('posing.admin.legendOpen')}
-                        {rowSpan > 1 ? ` · ${rowSpan * 30}'` : ''}
+                        {slotMinutes && slotMinutes > gridStepMinutes ? ` · ${slotMinutes}'` : ''}
                       </span>
                     ) : null}
                     {state === 'booked' ? (
@@ -218,14 +300,18 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   )
 }
 
-function buildCellMap(slots: AdminCalendarSlot[], gridTimes: string[]) {
+function buildCellMap(
+  slots: AdminCalendarSlot[],
+  gridTimes: string[],
+  gridStepMinutes: number,
+) {
   const map = new Map<string, CellInfo>()
 
   for (const slot of slots) {
     const dayKey = athensDateKey(new Date(slot.start_at))
     const startTime = athensTimeKey(slot.start_at)
     const duration = slotDurationMinutes(slot.start_at, slot.end_at)
-    const rows = slotSpansRows(duration)
+    const rows = slotSpansRows(duration, gridStepMinutes)
     const startIdx = gridTimes.indexOf(startTime)
     if (startIdx === -1) continue
 
@@ -258,6 +344,7 @@ export function AdminWeekCalendar({
   slots,
   weekStart,
   duration,
+  calendarSettings,
   locale,
   busy,
   loading,
@@ -265,8 +352,10 @@ export function AdminWeekCalendar({
   onWeekStartChange,
   onDurationChange,
   onToggleSlot,
+  onAddSlotTime,
   onOpenDayPreset,
   onClearDay,
+  onSaveCalendarSettings,
 }: AdminWeekCalendarProps) {
   const { t } = useTranslation()
   const [mobileDayIndex, setMobileDayIndex] = useState(() => {
@@ -278,20 +367,33 @@ export function AdminWeekCalendar({
     return Math.min(Math.max(diff, 0), POSE_WEEK_DAYS - 1)
   })
 
-  const gridTimes = useMemo(() => generateGridTimes(), [])
+  const gridTimes = useMemo(() => {
+    const base = generateGridTimes(calendarSettings)
+    const fromSlots = slots.map((slot) => athensTimeKey(slot.start_at))
+    return mergeGridTimes(base, [...calendarSettings.day_template_times, ...fromSlots])
+  }, [calendarSettings, slots])
 
   const days = useMemo(
     () => Array.from({ length: POSE_WEEK_DAYS }, (_, i) => addDays(weekStart, i)),
     [weekStart],
   )
 
-  const cellMap = useMemo(() => buildCellMap(slots, gridTimes), [slots, gridTimes])
+  const cellMap = useMemo(
+    () => buildCellMap(slots, gridTimes, calendarSettings.grid_step_minutes),
+    [slots, gridTimes, calendarSettings.grid_step_minutes],
+  )
 
   const mobileDay = days[mobileDayIndex] ?? days[0]
 
   return (
     <section className="relative mt-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <AdminCalendarSettings
+        settings={calendarSettings}
+        busy={busy}
+        onSave={onSaveCalendarSettings}
+      />
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-white">{t('posing.admin.weekTitle')}</h2>
           <p className="mt-1 text-sm text-white/55">{formatWeekRange(weekStart, locale)}</p>
@@ -328,6 +430,8 @@ export function AdminWeekCalendar({
           >
             <option value={30}>30 min</option>
             <option value={40}>40 min</option>
+            <option value={45}>45 min</option>
+            <option value={60}>60 min</option>
           </select>
         </div>
       </div>
@@ -339,8 +443,10 @@ export function AdminWeekCalendar({
       {feedback ? (
         <p className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-2.5 text-sm text-emerald-100">
           {feedback.type === 'slots_created'
-            ? t('posing.admin.slotsCreated', { count: feedback.count })
-            : t('posing.admin.slotsDeleted', { count: feedback.count })}
+            ? t('posing.admin.slotsCreated', { count: feedback.count ?? 0 })
+            : feedback.type === 'slots_deleted'
+              ? t('posing.admin.slotsDeleted', { count: feedback.count ?? 0 })
+              : t('posing.admin.settingsSaved')}
         </p>
       ) : null}
 
@@ -364,9 +470,11 @@ export function AdminWeekCalendar({
             days={days}
             gridTimes={gridTimes}
             cellMap={cellMap}
+            gridStepMinutes={calendarSettings.grid_step_minutes}
             locale={locale}
             busy={busy}
             onToggleSlot={onToggleSlot}
+            onAddSlotTime={onAddSlotTime}
             onOpenDayPreset={onOpenDayPreset}
             onClearDay={onClearDay}
             t={t}
@@ -401,9 +509,11 @@ export function AdminWeekCalendar({
             days={[mobileDay]}
             gridTimes={gridTimes}
             cellMap={cellMap}
+            gridStepMinutes={calendarSettings.grid_step_minutes}
             locale={locale}
             busy={busy}
             onToggleSlot={onToggleSlot}
+            onAddSlotTime={onAddSlotTime}
             onOpenDayPreset={onOpenDayPreset}
             onClearDay={onClearDay}
             t={t}
