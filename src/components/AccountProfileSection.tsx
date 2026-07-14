@@ -6,7 +6,7 @@ const inputClass =
 
 const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
 
-const editPanelClass =
+const profilePanelClass =
   'space-y-4 rounded-xl border border-white/8 bg-black/20 p-4 sm:p-5'
 
 const outlineButtonClass =
@@ -38,10 +38,15 @@ function displayValue(value: string) {
 }
 
 function ViewField({ label, value }: { label: string; value: string }) {
+  const empty = !value.trim()
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">{label}</p>
-      <p className="mt-2 text-sm text-white">{displayValue(value)}</p>
+      <p
+        className={`mt-2 text-sm font-medium ${empty ? 'text-white/35' : 'text-white'}`}
+      >
+        {displayValue(value)}
+      </p>
     </div>
   )
 }
@@ -107,7 +112,7 @@ export function AccountProfileSection({
 
       {editing ? (
         <form className="mt-6 space-y-4" onSubmit={(event) => void handleSubmit(event)}>
-          <div className={editPanelClass}>
+          <div className={profilePanelClass}>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label
@@ -195,16 +200,6 @@ export function AccountProfileSection({
         </form>
       ) : (
         <div className="mt-6 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ViewField label={t('posing.account.fullName')} value={values.fullName} />
-            <ViewField label={t('posing.account.phone')} value={values.phone} />
-          </div>
-          {variant === 'full' ? (
-            <>
-              <ViewField label={t('posing.account.division')} value={values.division} />
-              <ViewField label={t('posing.account.notes')} value={values.notes} />
-            </>
-          ) : null}
           {error ? (
             <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
               {error}
@@ -219,6 +214,18 @@ export function AccountProfileSection({
               {message}
             </p>
           ) : null}
+          <div className={profilePanelClass}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ViewField label={t('posing.account.fullName')} value={values.fullName} />
+              <ViewField label={t('posing.account.phone')} value={values.phone} />
+            </div>
+            {variant === 'full' ? (
+              <>
+                <ViewField label={t('posing.account.division')} value={values.division} />
+                <ViewField label={t('posing.account.notes')} value={values.notes} />
+              </>
+            ) : null}
+          </div>
         </div>
       )}
     </section>
