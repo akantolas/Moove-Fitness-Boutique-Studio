@@ -7,11 +7,11 @@ export type PosingPackage = {
   name: string
   cta: string
   backgroundImage: string
-  features: string[]
+  features: readonly string[]
 }
 
 type PosingPackagesCarouselProps = {
-  packages: PosingPackage[]
+  packages: readonly PosingPackage[]
   packageKeys: readonly PosingPackageKey[]
   activeIndex: number
   onSelect: (index: number) => void
