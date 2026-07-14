@@ -613,6 +613,7 @@ export const en = {
       closeSettings: 'Close',
       cancelSettings: 'Cancel',
       cellMenuHint: 'Right-click or long-press a time slot to change its state.',
+      cellMenuHintMobile: 'Long-press a time slot to change its state.',
       weekdayActiveFrom: 'Active from',
       weekdayActiveUntil: 'Active until',
       activeHoursSummary: '{{weekday}}: active {{from}}–{{until}}',

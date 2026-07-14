@@ -612,6 +612,7 @@ export const el = {
       closeSettings: 'Κλείσιμο',
       cancelSettings: 'Ακύρωση',
       cellMenuHint: 'Δεξί κλικ ή παρατεταμένο πάτημα σε ώρα για αλλαγή κατάστασης.',
+      cellMenuHintMobile: 'Παρατεταμένο πάτημα σε ώρα για αλλαγή κατάστασης.',
       weekdayActiveFrom: 'Ενεργές από',
       weekdayActiveUntil: 'Ενεργές έως',
       activeHoursSummary: '{{weekday}}: ενεργές {{from}}–{{until}}',
