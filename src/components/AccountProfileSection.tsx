@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from '../i18n/useTranslation'
 
 const inputClass =
   'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
 
 const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
+
+const editPanelClass =
+  'space-y-4 rounded-xl border border-white/8 bg-black/20 p-4 sm:p-5'
 
 const outlineButtonClass =
   'rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/5'
@@ -23,6 +26,7 @@ type AccountProfileSectionProps = {
   savedValues: AccountProfileFields
   onChange: (patch: Partial<AccountProfileFields>) => void
   onSave: (event: React.FormEvent) => Promise<boolean>
+  onClearMessage?: () => void
   saving: boolean
   error: string
   message: string
@@ -49,6 +53,7 @@ export function AccountProfileSection({
   savedValues,
   onChange,
   onSave,
+  onClearMessage,
   saving,
   error,
   message,
@@ -56,6 +61,23 @@ export function AccountProfileSection({
 }: AccountProfileSectionProps) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
+  const [messageVisible, setMessageVisible] = useState(false)
+
+  useEffect(() => {
+    if (!message) {
+      setMessageVisible(false)
+      return
+    }
+
+    setMessageVisible(true)
+    const fadeId = window.setTimeout(() => setMessageVisible(false), 3700)
+    const clearId = window.setTimeout(() => onClearMessage?.(), 4000)
+
+    return () => {
+      window.clearTimeout(fadeId)
+      window.clearTimeout(clearId)
+    }
+  }, [message, onClearMessage])
 
   function handleCancel() {
     onChange(savedValues)
@@ -72,17 +94,20 @@ export function AccountProfileSection({
     <section className={`${cardClass} ${className}`.trim()}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h2 className="text-lg font-semibold text-white">{t('posing.account.profileTitle')}</h2>
-        {!editing ? (
+        {editing ? (
+          <button type="button" onClick={handleCancel} disabled={saving} className={outlineButtonClass}>
+            {t('posing.account.cancelEdit')}
+          </button>
+        ) : (
           <button type="button" onClick={() => setEditing(true)} className={outlineButtonClass}>
             {t('posing.account.editProfile')}
           </button>
-        ) : null}
+        )}
       </div>
 
       {editing ? (
-        <>
-          <p className="mt-2 text-sm text-white/55">{t('posing.account.profileBody')}</p>
-          <form className="mt-6 space-y-4" onSubmit={(event) => void handleSubmit(event)}>
+        <form className="mt-6 space-y-4" onSubmit={(event) => void handleSubmit(event)}>
+          <div className={editPanelClass}>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label
@@ -152,30 +177,22 @@ export function AccountProfileSection({
                 </div>
               </>
             ) : null}
-            {error ? (
-              <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-                {error}
-              </p>
-            ) : null}
-            {message ? (
-              <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-                {message}
-              </p>
-            ) : null}
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
-              >
-                {saving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
-              </button>
-              <button type="button" onClick={handleCancel} disabled={saving} className={outlineButtonClass}>
-                {t('posing.account.cancelEdit')}
-              </button>
-            </div>
-          </form>
-        </>
+          </div>
+          {error ? (
+            <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex justify-stretch sm:justify-end">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50 sm:w-auto"
+            >
+              {saving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
+            </button>
+          </div>
+        </form>
       ) : (
         <div className="mt-6 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -194,7 +211,11 @@ export function AccountProfileSection({
             </p>
           ) : null}
           {message ? (
-            <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+            <p
+              className={`rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100 transition-opacity duration-300 ${
+                messageVisible ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
               {message}
             </p>
           ) : null}

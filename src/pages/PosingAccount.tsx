@@ -424,6 +424,7 @@ export function PosingAccountPage() {
             if (patch.notes !== undefined) setNotes(patch.notes)
           }}
           onSave={handleSaveProfile}
+          onClearMessage={() => setProfileMessage('')}
           saving={profileSaving}
           error={profileError}
           message={profileMessage}
