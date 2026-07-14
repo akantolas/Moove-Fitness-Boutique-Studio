@@ -31,8 +31,23 @@ function envOrFallback(key, fallback) {
   return value || fallback
 }
 
+function extractEmailAddress(from) {
+  const match = String(from).match(/<([^>]+)>/)
+  return (match ? match[1] : from).trim().toLowerCase()
+}
+
 function getContactFromEmail() {
-  return envOrFallback('CONTACT_FROM_EMAIL', DEFAULT_FROM)
+  const configured = envOrFallback('CONTACT_FROM_EMAIL', '')
+  const notify = getContactNotifyEmail().toLowerCase()
+
+  if (configured) {
+    const fromAddr = extractEmailAddress(configured)
+    if (fromAddr.includes('@') && fromAddr !== notify && !configured.includes('&')) {
+      return configured
+    }
+  }
+
+  return DEFAULT_FROM
 }
 
 function getContactNotifyEmail() {
