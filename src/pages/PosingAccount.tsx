@@ -18,7 +18,9 @@ import { AccountProfileHero } from '../components/AccountProfileHero'
 import { AccountQuickStats } from '../components/AccountQuickStats'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PasswordInput } from '../components/PasswordInput'
+import { isBookingSlotUpcoming } from '../lib/posingDates'
 import {
+  bookingDisplayStatus,
   bookingStatusChipClass,
   bookingStatusLabel,
   planKeyLabel,
@@ -177,7 +179,11 @@ export function PosingAccountPage() {
 
   const upcomingBookings = useMemo(
     () =>
-      bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending_payment'),
+      bookings.filter(
+        (b) =>
+          b.status === 'pending_payment' ||
+          (b.status === 'confirmed' && isBookingSlotUpcoming(b.slot)),
+      ),
     [bookings],
   )
 
@@ -186,20 +192,15 @@ export function PosingAccountPage() {
     [bookings],
   )
 
-  const confirmedUpcoming = useMemo(() => {
-    const now = Date.now()
-    return bookings.filter(
-      (b) =>
-        b.status === 'confirmed' &&
-        b.slot?.start_at &&
-        new Date(b.slot.start_at).getTime() > now,
-    )
-  }, [bookings])
+  const confirmedUpcoming = useMemo(
+    () => bookings.filter((b) => b.status === 'confirmed' && isBookingSlotUpcoming(b.slot)),
+    [bookings],
+  )
 
   function canCancelBooking(booking: PosingBooking) {
     if (booking.status === 'pending_payment') return true
-    if (booking.status !== 'confirmed' || !booking.slot?.start_at) return false
-    return new Date(booking.slot.start_at).getTime() > Date.now()
+    if (booking.status !== 'confirmed') return false
+    return isBookingSlotUpcoming(booking.slot)
   }
 
   async function handleCancelBooking() {
@@ -219,7 +220,13 @@ export function PosingAccountPage() {
   }
 
   const pastBookings = useMemo(
-    () => bookings.filter((b) => b.status === 'completed' || b.status === 'cancelled'),
+    () =>
+      bookings.filter(
+        (b) =>
+          b.status === 'completed' ||
+          b.status === 'cancelled' ||
+          (b.status === 'confirmed' && !isBookingSlotUpcoming(b.slot)),
+      ),
     [bookings],
   )
 
@@ -587,7 +594,9 @@ export function PosingAccountPage() {
         <section className={`mt-6 ${cardClass}`}>
           <h2 className="text-lg font-semibold text-white">{t('posing.account.history')}</h2>
           <ul className="mt-4 space-y-3">
-            {pastBookings.map((booking) => (
+            {pastBookings.map((booking) => {
+              const displayStatus = bookingDisplayStatus(booking)
+              return (
               <li
                 key={booking.id}
                 className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 opacity-80"
@@ -597,16 +606,17 @@ export function PosingAccountPage() {
                     {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
                   </p>
                   <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(booking.status)}`}
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(displayStatus)}`}
                   >
-                    {bookingStatusLabel(booking.status, t)}
+                    {bookingStatusLabel(displayStatus, t)}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-white/50">
                   {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
                 </p>
               </li>
-            ))}
+              )
+            })}
           </ul>
         </section>
       ) : null}

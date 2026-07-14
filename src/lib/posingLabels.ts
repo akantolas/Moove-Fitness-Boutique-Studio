@@ -1,4 +1,10 @@
 import { site, type PosingPackageKey } from '../site'
+import { isBookingSlotUpcoming } from './posingDates'
+
+type BookingWithSlot = {
+  status: string
+  slot: { start_at: string; end_at?: string } | null
+}
 
 export function planKeyLabel(
   planKey: string,
@@ -7,6 +13,13 @@ export function planKeyLabel(
   const idx = site.posing.packageKeys.indexOf(planKey as PosingPackageKey)
   if (idx >= 0) return getPackageName(idx) ?? planKey
   return planKey
+}
+
+export function bookingDisplayStatus(booking: BookingWithSlot, now = Date.now()) {
+  if (booking.status === 'confirmed' && !isBookingSlotUpcoming(booking.slot, now)) {
+    return 'completed'
+  }
+  return booking.status
 }
 
 export function bookingStatusLabel(status: string, t: (key: string) => string) {

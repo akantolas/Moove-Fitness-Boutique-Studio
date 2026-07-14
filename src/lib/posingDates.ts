@@ -150,6 +150,14 @@ export function isPastCell(dayKey: string, gridTime: string) {
   return athensWallTimeToUtc(dayKey, gridTime).getTime() < Date.now()
 }
 
+export function isBookingSlotUpcoming(
+  slot: { start_at: string; end_at?: string } | null | undefined,
+  now = Date.now(),
+) {
+  if (!slot?.start_at) return false
+  return new Date(slot.start_at).getTime() > now
+}
+
 export function slotDurationMinutes(startAt: string, endAt: string) {
   return Math.round((new Date(endAt).getTime() - new Date(startAt).getTime()) / 60_000)
 }
