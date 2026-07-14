@@ -432,6 +432,8 @@ export const el = {
       notes: 'Σημειώσεις',
       notesPlaceholder: 'Επίπεδο, ημερομηνία αγώνα, ότι χρειάζεται να ξέρουμε.',
       saveProfile: 'Αποθήκευση προφίλ',
+      editProfile: 'Επεξεργασία',
+      cancelEdit: 'Ακύρωση',
       savingProfile: 'Αποθήκευση…',
       profileSaved: 'Το προφίλ ενημερώθηκε.',
       avatarChange: 'Αλλαγή φωτογραφίας',

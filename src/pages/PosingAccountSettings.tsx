@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AccountProfileHero } from '../components/AccountProfileHero'
+import { AccountProfileSection } from '../components/AccountProfileSection'
 import { PasswordInput } from '../components/PasswordInput'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import {
@@ -12,9 +13,6 @@ import {
   type PosingProfile,
 } from '../lib/posingAccount'
 import { useTranslation } from '../i18n/useTranslation'
-
-const inputClass =
-  'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
 
 const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
 
@@ -131,7 +129,7 @@ export function PosingAccountSettingsPage() {
 
   async function handleSaveProfile(event: React.FormEvent) {
     event.preventDefault()
-    if (!user?.id || !user.email) return
+    if (!user?.id || !user.email) return false
     setProfileSaving(true)
     setProfileError('')
     setProfileMessage('')
@@ -144,8 +142,10 @@ export function PosingAccountSettingsPage() {
       })
       setProfile((prev) => (prev ? { ...prev, ...updated } : updated))
       setProfileMessage(t('posing.account.profileSaved'))
+      return true
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'profile_save_failed')
+      return false
     } finally {
       setProfileSaving(false)
     }
@@ -230,56 +230,23 @@ export function PosingAccountSettingsPage() {
         onSignOut={() => signOut()}
       />
 
-      <section className={`mt-6 ${cardClass}`}>
-        <h2 className="text-lg font-semibold text-white">{t('posing.account.profileTitle')}</h2>
-        <form className="mt-6 space-y-4" onSubmit={handleSaveProfile}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="settings-name" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.fullName')}
-              </label>
-              <input
-                id="settings-name"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className={inputClass}
-                autoComplete="name"
-              />
-            </div>
-            <div>
-              <label htmlFor="settings-phone" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.phone')}
-              </label>
-              <input
-                id="settings-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={inputClass}
-                autoComplete="tel"
-              />
-            </div>
-          </div>
-          {profileError ? (
-            <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-              {profileError}
-            </p>
-          ) : null}
-          {profileMessage ? (
-            <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-              {profileMessage}
-            </p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={profileSaving}
-            className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
-          >
-            {profileSaving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
-          </button>
-        </form>
-      </section>
+      <AccountProfileSection
+        idPrefix="settings"
+        variant="basic"
+        values={{ fullName, phone, division, notes }}
+        savedValues={profileToForm(profile)}
+        onChange={(patch) => {
+          if (patch.fullName !== undefined) setFullName(patch.fullName)
+          if (patch.phone !== undefined) setPhone(patch.phone)
+          if (patch.division !== undefined) setDivision(patch.division)
+          if (patch.notes !== undefined) setNotes(patch.notes)
+        }}
+        onSave={handleSaveProfile}
+        saving={profileSaving}
+        error={profileError}
+        message={profileMessage}
+        className="mt-6"
+      />
 
       <section className={`mt-6 ${cardClass}`}>
         <h2 className="text-lg font-semibold text-white">{t('posing.account.securityTitle')}</h2>

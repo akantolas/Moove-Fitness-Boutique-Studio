@@ -15,6 +15,7 @@ import { cancelPosingBooking } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { AccountProfileHero } from '../components/AccountProfileHero'
+import { AccountProfileSection } from '../components/AccountProfileSection'
 import { AccountQuickStats } from '../components/AccountQuickStats'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PasswordInput } from '../components/PasswordInput'
@@ -26,9 +27,6 @@ import {
   planKeyLabel,
 } from '../lib/posingLabels'
 import { sumActiveSessionsRemaining } from '../lib/posingPackages'
-
-const inputClass =
-  'mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:border-fuchsia-300/60 focus:outline-none focus:ring-2 focus:ring-fuchsia-300/20'
 
 const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
 
@@ -260,7 +258,7 @@ export function PosingAccountPage() {
 
   async function handleSaveProfile(event: React.FormEvent) {
     event.preventDefault()
-    if (!user?.id || !user.email) return
+    if (!user?.id || !user.email) return false
     setProfileSaving(true)
     setProfileError('')
     setProfileMessage('')
@@ -273,8 +271,10 @@ export function PosingAccountPage() {
       })
       setProfile((prev) => (prev ? { ...prev, ...updated } : updated))
       setProfileMessage(t('posing.account.profileSaved'))
+      return true
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'profile_save_failed')
+      return false
     } finally {
       setProfileSaving(false)
     }
@@ -412,82 +412,22 @@ export function PosingAccountPage() {
       ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <section className={cardClass}>
-          <h2 className="text-lg font-semibold text-white">{t('posing.account.profileTitle')}</h2>
-          <p className="mt-2 text-sm text-white/55">{t('posing.account.profileBody')}</p>
-          <form className="mt-6 space-y-4" onSubmit={handleSaveProfile}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="profile-name" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                  {t('posing.account.fullName')}
-                </label>
-                <input
-                  id="profile-name"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className={inputClass}
-                  autoComplete="name"
-                />
-              </div>
-              <div>
-                <label htmlFor="profile-phone" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                  {t('posing.account.phone')}
-                </label>
-                <input
-                  id="profile-phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className={inputClass}
-                  autoComplete="tel"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="profile-division" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.division')}
-              </label>
-              <input
-                id="profile-division"
-                value={division}
-                onChange={(e) => setDivision(e.target.value)}
-                placeholder={t('posing.account.divisionPlaceholder')}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="profile-notes" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
-                {t('posing.account.notes')}
-              </label>
-              <textarea
-                id="profile-notes"
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder={t('posing.account.notesPlaceholder')}
-                className={`${inputClass} resize-y`}
-              />
-            </div>
-            {profileError ? (
-              <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-                {profileError}
-              </p>
-            ) : null}
-            {profileMessage ? (
-              <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-                {profileMessage}
-              </p>
-            ) : null}
-            <button
-              type="submit"
-              disabled={profileSaving}
-              className="rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
-            >
-              {profileSaving ? t('posing.account.savingProfile') : t('posing.account.saveProfile')}
-            </button>
-          </form>
-        </section>
+        <AccountProfileSection
+          idPrefix="profile"
+          variant="full"
+          values={{ fullName, phone, division, notes }}
+          savedValues={profileToForm(profile)}
+          onChange={(patch) => {
+            if (patch.fullName !== undefined) setFullName(patch.fullName)
+            if (patch.phone !== undefined) setPhone(patch.phone)
+            if (patch.division !== undefined) setDivision(patch.division)
+            if (patch.notes !== undefined) setNotes(patch.notes)
+          }}
+          onSave={handleSaveProfile}
+          saving={profileSaving}
+          error={profileError}
+          message={profileMessage}
+        />
 
         <div className="space-y-6">
           <section className={cardClass}>

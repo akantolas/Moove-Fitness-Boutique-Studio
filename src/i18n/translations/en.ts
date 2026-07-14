@@ -433,6 +433,8 @@ export const en = {
       notes: 'Notes',
       notesPlaceholder: 'Level, show date, anything we should know.',
       saveProfile: 'Save profile',
+      editProfile: 'Edit',
+      cancelEdit: 'Cancel',
       savingProfile: 'Saving…',
       profileSaved: 'Profile updated.',
       avatarChange: 'Change photo',
