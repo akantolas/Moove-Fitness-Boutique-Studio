@@ -10,11 +10,12 @@ export function useTranslation() {
 }
 
 export function useSiteVars(): TranslationVars {
+  const { locale } = useTranslation()
   return {
     name: site.name,
     tagline: site.tagline,
-    owner: site.ownerName,
-    coach: site.posing.coachName,
+    owner: locale === 'en' ? site.ownerNameEn : site.ownerName,
+    coach: locale === 'en' ? site.posing.coachNameEn : site.posing.coachName,
     brand: site.posing.brandName,
     email: site.email,
     address: site.addressLine,

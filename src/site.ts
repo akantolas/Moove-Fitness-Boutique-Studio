@@ -6,6 +6,7 @@ export const site = {
   logoMark: '/logo-mark.png',
   /** Ιδιοκτήτρια & μοναδική γυμνάστρια */
   ownerName: 'Μαγδα Σαμαρά',
+  ownerNameEn: 'Magda Samara',
   ownerFirstName: 'Μαγδα',
   /**
    * Gym Booking — https://members.moovefitness.gr/
@@ -35,6 +36,7 @@ export const site = {
     heroImage: '/pose2.png',
     instagram: 'https://www.instagram.com/theposingacademygr/',
     coachName: 'Μαγδα Σαμαρά',
+    coachNameEn: 'Magda Samara',
     /** Stable keys for package → Stripe price mapping */
     packageKeys: ['single', 'sapphire', 'ruby', 'diamond'] as const,
   },
