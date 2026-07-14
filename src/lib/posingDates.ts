@@ -13,14 +13,40 @@ export type CalendarGridConfig = {
   grid_step_minutes: number
 }
 
+export type WeekdayKey = '1' | '2' | '3' | '4' | '5' | '6' | '7'
+
+export const WEEKDAY_KEYS: WeekdayKey[] = ['1', '2', '3', '4', '5', '6', '7']
+
+export type WeekdayTemplate = {
+  times: string[]
+  start_hour: number
+  end_hour: number
+}
+
+export type WeekdayTemplates = Record<WeekdayKey, WeekdayTemplate>
+
 export type CalendarSettings = CalendarGridConfig & {
-  day_template_times: string[]
+  weekday_templates: WeekdayTemplates
   default_duration_minutes: number
   updated_at?: string | null
 }
 
+export function createDefaultWeekdayTemplates(
+  gridStart = POSE_GRID_START_HOUR,
+  gridEnd = POSE_GRID_END_HOUR,
+): WeekdayTemplates {
+  const entry: WeekdayTemplate = {
+    times: [...POSE_DAY_PRESET_TIMES],
+    start_hour: gridStart,
+    end_hour: gridEnd,
+  }
+  return Object.fromEntries(
+    WEEKDAY_KEYS.map((key) => [key, { ...entry, times: [...entry.times] }]),
+  ) as WeekdayTemplates
+}
+
 export const DEFAULT_CALENDAR_SETTINGS: CalendarSettings = {
-  day_template_times: [...POSE_DAY_PRESET_TIMES],
+  weekday_templates: createDefaultWeekdayTemplates(),
   default_duration_minutes: 30,
   grid_start_hour: POSE_GRID_START_HOUR,
   grid_end_hour: POSE_GRID_END_HOUR,
@@ -51,6 +77,54 @@ export function mergeGridTimes(baseTimes: string[], extraTimes: string[]): strin
     if (normalized) merged.add(normalized)
   }
   return sortTimeStrings([...merged])
+}
+
+export function timeToMinutes(time: string): number {
+  const [hour, minute] = time.split(':').map(Number)
+  return hour * 60 + minute
+}
+
+const ATHENS_WEEKDAY_MAP: Record<string, WeekdayKey> = {
+  Mon: '1',
+  Tue: '2',
+  Wed: '3',
+  Thu: '4',
+  Fri: '5',
+  Sat: '6',
+  Sun: '7',
+}
+
+export function getAthensWeekday(dayKey: string): WeekdayKey {
+  const utc = athensWallTimeToUtc(dayKey, '12:00')
+  const short = new Intl.DateTimeFormat('en-US', {
+    timeZone: POSE_TIMEZONE,
+    weekday: 'short',
+  }).format(utc)
+  return ATHENS_WEEKDAY_MAP[short] ?? '1'
+}
+
+export function getWeekdayTemplate(settings: CalendarSettings, weekday: WeekdayKey): WeekdayTemplate {
+  const fallback = createDefaultWeekdayTemplates(settings.grid_start_hour, settings.grid_end_hour)[weekday]
+  return settings.weekday_templates[weekday] ?? fallback
+}
+
+export function getWeekdayTemplateForDay(dayKey: string, settings: CalendarSettings): WeekdayTemplate {
+  return getWeekdayTemplate(settings, getAthensWeekday(dayKey))
+}
+
+export function isActiveCell(dayKey: string, time: string, settings: CalendarSettings): boolean {
+  const { start_hour, end_hour } = getWeekdayTemplateForDay(dayKey, settings)
+  const minutes = timeToMinutes(time)
+  return minutes >= start_hour * 60 && minutes < end_hour * 60
+}
+
+export function buildAdminGridTimes(
+  settings: CalendarSettings,
+  slots: { start_at: string }[],
+): string[] {
+  const base = generateGridTimes(settings)
+  const fromSlots = slots.map((slot) => athensTimeKey(slot.start_at))
+  return mergeGridTimes(base, fromSlots)
 }
 
 export function startOfWeek(date: Date) {

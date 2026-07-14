@@ -9,14 +9,30 @@ import {
 
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
 const GRID_STEPS = new Set([15, 30, 60])
+const WEEKDAY_KEYS = ['1', '2', '3', '4', '5', '6', '7']
+
+const DEFAULT_TEMPLATE_TIMES = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
 
 const DEFAULTS = {
-  day_template_times: ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'],
   default_duration_minutes: 30,
   grid_start_hour: 9,
   grid_end_hour: 21,
   grid_step_minutes: 30,
 }
+
+function buildDefaultWeekdayTemplates(gridStart, gridEnd) {
+  const entry = {
+    times: [...DEFAULT_TEMPLATE_TIMES],
+    start_hour: gridStart,
+    end_hour: gridEnd,
+  }
+  return Object.fromEntries(WEEKDAY_KEYS.map((key) => [key, { ...entry, times: [...entry.times] }]))
+}
+
+const DEFAULT_WEEKDAY_TEMPLATES = buildDefaultWeekdayTemplates(
+  DEFAULTS.grid_start_hour,
+  DEFAULTS.grid_end_hour,
+)
 
 function normalizeTime(value) {
   if (typeof value !== 'string') return null
@@ -34,24 +50,63 @@ function sortTimes(times) {
   })
 }
 
+function validateWeekdayTemplates(raw, gridStart, gridEnd) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, error: 'invalid_weekday_templates' }
+  }
+
+  const templates = {}
+  for (const key of WEEKDAY_KEYS) {
+    const entry = raw[key]
+    if (!entry || typeof entry !== 'object') {
+      return { ok: false, error: 'invalid_weekday_templates' }
+    }
+
+    if (!Array.isArray(entry.times)) {
+      return { ok: false, error: 'invalid_weekday_templates' }
+    }
+
+    const normalized = []
+    const seen = new Set()
+    for (const rawTime of entry.times) {
+      const time = normalizeTime(rawTime)
+      if (!time) return { ok: false, error: 'invalid_time_format' }
+      if (seen.has(time)) continue
+      seen.add(time)
+      normalized.push(time)
+    }
+
+    const startHour = Number(entry.start_hour)
+    const endHour = Number(entry.end_hour)
+    if (
+      !Number.isInteger(startHour) ||
+      !Number.isInteger(endHour) ||
+      startHour < 0 ||
+      startHour > 23 ||
+      endHour < 1 ||
+      endHour > 24 ||
+      endHour <= startHour
+    ) {
+      return { ok: false, error: 'invalid_weekday_templates' }
+    }
+
+    if (startHour < gridStart || endHour > gridEnd) {
+      return { ok: false, error: 'invalid_weekday_templates' }
+    }
+
+    templates[key] = {
+      times: sortTimes(normalized),
+      start_hour: startHour,
+      end_hour: endHour,
+    }
+  }
+
+  return { ok: true, templates }
+}
+
 function validateSettings(body) {
   if (!body || typeof body !== 'object') {
     return { ok: false, error: 'invalid_body' }
-  }
-
-  const rawTimes = body.day_template_times
-  if (!Array.isArray(rawTimes)) {
-    return { ok: false, error: 'invalid_template_times' }
-  }
-
-  const normalized = []
-  const seen = new Set()
-  for (const raw of rawTimes) {
-    const time = normalizeTime(raw)
-    if (!time) return { ok: false, error: 'invalid_time_format' }
-    if (seen.has(time)) continue
-    seen.add(time)
-    normalized.push(time)
   }
 
   const defaultDuration = Number(body.default_duration_minutes)
@@ -78,10 +133,13 @@ function validateSettings(body) {
     return { ok: false, error: 'invalid_grid_step' }
   }
 
+  const weekdayResult = validateWeekdayTemplates(body.weekday_templates, gridStart, gridEnd)
+  if (!weekdayResult.ok) return weekdayResult
+
   return {
     ok: true,
     settings: {
-      day_template_times: sortTimes(normalized),
+      weekday_templates: weekdayResult.templates,
       default_duration_minutes: defaultDuration,
       grid_start_hour: gridStart,
       grid_end_hour: gridEnd,
@@ -90,12 +148,20 @@ function validateSettings(body) {
   }
 }
 
+function normalizeWeekdayTemplates(raw, gridStart, gridEnd) {
+  const validated = validateWeekdayTemplates(raw, gridStart, gridEnd)
+  if (validated.ok) return validated.templates
+  return buildDefaultWeekdayTemplates(gridStart, gridEnd)
+}
+
 function toResponse(row) {
+  const gridStart = row.grid_start_hour ?? DEFAULTS.grid_start_hour
+  const gridEnd = row.grid_end_hour ?? DEFAULTS.grid_end_hour
   return {
-    day_template_times: row.day_template_times ?? DEFAULTS.day_template_times,
+    weekday_templates: normalizeWeekdayTemplates(row.weekday_templates, gridStart, gridEnd),
     default_duration_minutes: row.default_duration_minutes ?? DEFAULTS.default_duration_minutes,
-    grid_start_hour: row.grid_start_hour ?? DEFAULTS.grid_start_hour,
-    grid_end_hour: row.grid_end_hour ?? DEFAULTS.grid_end_hour,
+    grid_start_hour: gridStart,
+    grid_end_hour: gridEnd,
     grid_step_minutes: row.grid_step_minutes ?? DEFAULTS.grid_step_minutes,
     updated_at: row.updated_at ?? null,
   }
@@ -115,13 +181,23 @@ export default async function handler(req, res) {
     const { data, error } = await supabase
       .from('posing_calendar_settings')
       .select(
-        'day_template_times, default_duration_minutes, grid_start_hour, grid_end_hour, grid_step_minutes, updated_at',
+        'weekday_templates, default_duration_minutes, grid_start_hour, grid_end_hour, grid_step_minutes, updated_at',
       )
       .eq('id', 1)
       .maybeSingle()
 
-    if (error) return json(res, 500, { ok: false, error: error.message })
-    return json(res, 200, { ok: true, settings: toResponse(data ?? DEFAULTS) })
+    if (error) {
+      if (error.message?.includes('weekday_templates')) {
+        return json(res, 500, { ok: false, error: 'migration_required' })
+      }
+      return json(res, 500, { ok: false, error: error.message })
+    }
+
+    const fallback = {
+      ...DEFAULTS,
+      weekday_templates: DEFAULT_WEEKDAY_TEMPLATES,
+    }
+    return json(res, 200, { ok: true, settings: toResponse(data ?? fallback) })
   }
 
   if (req.method === 'PUT') {
@@ -136,11 +212,16 @@ export default async function handler(req, res) {
         .from('posing_calendar_settings')
         .upsert({ id: 1, ...validated.settings, updated_at: new Date().toISOString() })
         .select(
-          'day_template_times, default_duration_minutes, grid_start_hour, grid_end_hour, grid_step_minutes, updated_at',
+          'weekday_templates, default_duration_minutes, grid_start_hour, grid_end_hour, grid_step_minutes, updated_at',
         )
         .single()
 
-      if (error) return json(res, 500, { ok: false, error: error.message })
+      if (error) {
+        if (error.message?.includes('weekday_templates')) {
+          return json(res, 500, { ok: false, error: 'migration_required' })
+        }
+        return json(res, 500, { ok: false, error: error.message })
+      }
       return json(res, 200, { ok: true, settings: toResponse(data) })
     } catch {
       return json(res, 400, { ok: false, error: 'invalid_json' })

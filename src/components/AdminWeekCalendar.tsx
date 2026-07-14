@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react'
 import {
   addDays,
   athensDateKey,
+  buildAdminGridTimes,
   cellKey,
   athensTimeKey,
   formatDayLabel,
   formatWeekRange,
   formatWeekdayShort,
-  generateGridTimes,
+  isActiveCell,
   isPastCell,
-  mergeGridTimes,
   POSE_WEEK_DAYS,
   slotDurationMinutes,
   slotSpansRows,
@@ -34,7 +34,7 @@ export type AdminCalendarSlot = {
   } | null
 }
 
-type CellState = 'empty' | 'open' | 'booked' | 'past' | 'continuation'
+type CellState = 'empty' | 'open' | 'booked' | 'past' | 'continuation' | 'inactive'
 
 type CellInfo = {
   state: CellState
@@ -134,6 +134,7 @@ function TimeGrid({
   gridTimes,
   cellMap,
   gridStepMinutes,
+  calendarSettings,
   locale,
   busy,
   onToggleSlot,
@@ -146,6 +147,7 @@ function TimeGrid({
   gridTimes: string[]
   cellMap: Map<string, CellInfo>
   gridStepMinutes: number
+  calendarSettings: CalendarSettings
   locale: Locale
   busy: boolean
   onToggleSlot: (dayKey: string, time: string) => void
@@ -223,11 +225,21 @@ function TimeGrid({
                 if (info?.state === 'continuation') return null
 
                 const past = isPastCell(dayKey, gridTime)
-                const state: CellState = past
-                  ? info?.state === 'booked'
-                    ? 'booked'
-                    : 'past'
-                  : (info?.state ?? 'empty')
+                const slotState = info?.state ?? 'empty'
+                const active = isActiveCell(dayKey, gridTime, calendarSettings)
+
+                let state: CellState
+                if (slotState === 'booked') {
+                  state = 'booked'
+                } else if (slotState === 'open') {
+                  state = 'open'
+                } else if (past) {
+                  state = 'past'
+                } else if (!active) {
+                  state = 'inactive'
+                } else {
+                  state = 'empty'
+                }
 
                 const rowSpan = info?.rowSpan ?? 1
                 const slot = info?.slot
@@ -248,9 +260,11 @@ function TimeGrid({
                   cellClass += 'bg-fuchsia-500/20 border-fuchsia-300/30 cursor-not-allowed'
                 } else if (state === 'past') {
                   cellClass += 'bg-white/[0.01] opacity-40 cursor-not-allowed'
+                } else if (state === 'inactive') {
+                  cellClass += 'bg-white/[0.01] opacity-25 cursor-not-allowed'
                 }
 
-                const canToggle = !busy && (state === 'empty' || state === 'open')
+                const canToggle = !busy && active && (state === 'empty' || state === 'open')
 
                 return (
                   <button
@@ -367,11 +381,10 @@ export function AdminWeekCalendar({
     return Math.min(Math.max(diff, 0), POSE_WEEK_DAYS - 1)
   })
 
-  const gridTimes = useMemo(() => {
-    const base = generateGridTimes(calendarSettings)
-    const fromSlots = slots.map((slot) => athensTimeKey(slot.start_at))
-    return mergeGridTimes(base, [...calendarSettings.day_template_times, ...fromSlots])
-  }, [calendarSettings, slots])
+  const gridTimes = useMemo(
+    () => buildAdminGridTimes(calendarSettings, slots),
+    [calendarSettings, slots],
+  )
 
   const days = useMemo(
     () => Array.from({ length: POSE_WEEK_DAYS }, (_, i) => addDays(weekStart, i)),
@@ -454,6 +467,7 @@ export function AdminWeekCalendar({
         <LegendItem color="bg-white/10" label={t('posing.admin.legendEmpty')} />
         <LegendItem color="bg-emerald-400/40" label={t('posing.admin.legendOpen')} />
         <LegendItem color="bg-fuchsia-400/50" label={t('posing.admin.legendBooked')} />
+        <LegendItem color="bg-white/[0.04]" label={t('posing.admin.legendInactive')} />
       </div>
 
       <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black/25">
@@ -471,6 +485,7 @@ export function AdminWeekCalendar({
             gridTimes={gridTimes}
             cellMap={cellMap}
             gridStepMinutes={calendarSettings.grid_step_minutes}
+            calendarSettings={calendarSettings}
             locale={locale}
             busy={busy}
             onToggleSlot={onToggleSlot}
@@ -510,6 +525,7 @@ export function AdminWeekCalendar({
             gridTimes={gridTimes}
             cellMap={cellMap}
             gridStepMinutes={calendarSettings.grid_step_minutes}
+            calendarSettings={calendarSettings}
             locale={locale}
             busy={busy}
             onToggleSlot={onToggleSlot}

@@ -25,6 +25,8 @@ import {
   buildSlotIso,
   cellKey,
   DEFAULT_CALENDAR_SETTINGS,
+  getWeekdayTemplateForDay,
+  isActiveCell,
   isPastCell,
   normalizeTimeInput,
 } from '../lib/posingDates'
@@ -201,6 +203,10 @@ export function usePosingAdminPanel({
 
   async function toggleSlot(dayKey: string, time: string) {
     if (!accessToken || isPastCell(dayKey, time)) return
+    if (!isActiveCell(dayKey, time, calendarSettings)) {
+      setError(translateAdminError('outside_active_hours', translate))
+      return
+    }
     const existing = slotByCell.get(cellKey(dayKey, time))
     if (existing?.booking) return
 
@@ -231,6 +237,10 @@ export function usePosingAdminPanel({
       return
     }
     if (isPastCell(dayKey, time)) return
+    if (!isActiveCell(dayKey, time, calendarSettings)) {
+      setError(translateAdminError('outside_active_hours', translate))
+      return
+    }
     if (slotByCell.has(cellKey(dayKey, time))) {
       setError(translateAdminError('time_exists', translate))
       return
@@ -259,9 +269,10 @@ export function usePosingAdminPanel({
     setBusy(true)
     setError('')
     try {
-      const templateTimes = calendarSettings.day_template_times
+      const templateTimes = getWeekdayTemplateForDay(dayKey, calendarSettings).times
       const toCreate = templateTimes.filter((time) => {
         if (isPastCell(dayKey, time)) return false
+        if (!isActiveCell(dayKey, time, calendarSettings)) return false
         return !slotByCell.has(cellKey(dayKey, time))
       })
       await Promise.all(
