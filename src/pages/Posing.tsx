@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
+import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPackagePlan } from '../lib/posingPackages'
@@ -66,7 +67,7 @@ export function PosingPage() {
           }}
           aria-hidden
         />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-16 lg:py-16">
+        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-12 lg:py-10">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
               {t('posing.hero.byCoach', vars)}
@@ -173,57 +174,12 @@ export function PosingPage() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 lg:grid-cols-4">
-            {dictionary.posing.pricing.packages.map((pack, index) => (
-              <article
-                key={pack.name}
-                className={`relative flex min-h-[28rem] overflow-hidden rounded-2xl border bg-black shadow-[0_24px_70px_-34px_rgba(217,70,239,0.85)] ${
-                  selectedPackageIndex === index
-                    ? 'border-fuchsia-300/60 ring-2 ring-fuchsia-300/35'
-                    : 'border-fuchsia-200/25'
-                }`}
-              >
-                <div
-                  className="absolute inset-0 bg-cover bg-center opacity-85"
-                  style={{
-                    backgroundImage: `url('${pack.backgroundImage}')`,
-                  }}
-                  aria-hidden
-                />
-                <div
-                  className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,6,12,0.38),rgba(6,6,12,0.58)_48%,rgba(6,6,12,0.82)),radial-gradient(circle_at_28%_16%,rgba(244,114,182,0.18),transparent_36%)]"
-                  aria-hidden
-                />
-                <div className="relative flex min-h-full w-full flex-col p-6 [text-shadow:0_2px_10px_rgba(0,0,0,0.85)]">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-100">
-                      {pack.label}
-                    </p>
-                    <h3 className="font-display mt-3 text-2xl font-semibold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
-                      {pack.name}
-                    </h3>
-                  </div>
-                  <ul className="mt-6 flex-1 space-y-3 text-sm leading-relaxed text-white/76">
-                    {pack.features.map((feature) => (
-                      <li key={feature} className="flex gap-3">
-                        <span className="mt-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-fuchsia-200/55 bg-black/35 text-[0.7rem] text-fuchsia-100">
-                          ✓
-                        </span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href="#booking"
-                    onClick={() => setSelectedPackageIndex(index)}
-                    className="mt-7 inline-flex justify-center rounded-full border border-fuchsia-100/35 bg-black/35 px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_36px_-22px_rgba(244,114,182,0.9)] backdrop-blur-sm transition hover:border-fuchsia-100/55 hover:bg-fuchsia-400/18"
-                  >
-                    {pack.cta}
-                  </a>
-                </div>
-              </article>
-            ))}
-          </div>
+          <PosingPackagesCarousel
+            packages={dictionary.posing.pricing.packages}
+            packageKeys={posing.packageKeys}
+            activeIndex={selectedPackageIndex}
+            onSelect={setSelectedPackageIndex}
+          />
 
           <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-fuchsia-100/15 bg-white/[0.035] p-4 shadow-[0_24px_70px_-48px_rgba(244,114,182,0.85)] sm:p-5">
             <p className="text-center text-xs font-semibold uppercase tracking-[0.24em] text-fuchsia-200/75">

@@ -175,6 +175,50 @@
     animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
+  @keyframes pose-glow-breathe {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.04);
+    }
+  }
+
+  .animate-pose-glow-breathe {
+    animation: pose-glow-breathe 5s ease-in-out infinite;
+  }
+
+  @keyframes pose-menu-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(-0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-pose-menu-reveal {
+    animation: pose-menu-reveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes pose-overlay-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-pose-overlay-fade {
+    animation: pose-overlay-fade 0.28s ease-out both;
+  }
+
   .text-gradient-lime {
     background: linear-gradient(
       135deg,

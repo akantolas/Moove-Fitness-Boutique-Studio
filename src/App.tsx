@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ConditionalAnalytics } from './components/ConditionalAnalytics'
 import { Layout } from './components/Layout'
+import { ScrollToTop } from './components/ScrollToTop'
 import { PosingAuthProvider } from './contexts/PosingAuthContext'
 import { HomePage } from './pages/Home'
 import { ClassesPage } from './pages/Classes'
@@ -20,6 +21,7 @@ import { PosingAdminPage } from './pages/PosingAdmin'
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <PosingAuthProvider>
         <ConditionalAnalytics />
         <Routes>

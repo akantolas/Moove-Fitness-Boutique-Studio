@@ -324,6 +324,11 @@ export const el = {
       title: 'Διάλεξε το πρόγραμμα που σου ταιριάζει',
       body: 'Όλα τα πακέτα είναι για online posing coaching. Κλείνετε ώρα πρώτα και ολοκληρώνετε την πληρωμή από το email που θα λάβετε.',
       choose: 'Επιλογή {{package}}',
+      prevPackage: 'Προηγούμενο πακέτο',
+      nextPackage: 'Επόμενο πακέτο',
+      packagesAria: 'Πακέτα posing',
+      swipeHint: 'Σύρε για άλλο πακέτο · ',
+      counter: '{{current}} από {{total}}',
       includedTitle: 'Όλα τα sessions περιλαμβάνουν',
       included: ['Personalised walks', 'T-walks ανά federation', 'Comparison rounds'],
       packages: [

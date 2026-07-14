@@ -325,6 +325,11 @@ export const en = {
       title: 'Choose the package that fits your prep',
       body: 'All packages are for online posing coaching. Book your slot first, then complete payment from the email you receive.',
       choose: 'Choose {{package}}',
+      prevPackage: 'Previous package',
+      nextPackage: 'Next package',
+      packagesAria: 'Posing packages',
+      swipeHint: 'Swipe for another package · ',
+      counter: '{{current}} of {{total}}',
       includedTitle: 'Every session includes',
       included: ['Personalised walks', 'T-walks by federation', 'Comparison rounds'],
       packages: [
