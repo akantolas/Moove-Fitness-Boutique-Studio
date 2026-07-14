@@ -10,7 +10,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_NAME = 120
 const MAX_EMAIL = 254
 const MAX_MESSAGE = 4000
-const DEFAULT_FROM = 'Moove <info@moovefitness.gr>'
+const DEFAULT_FROM = 'Moove <noreply@moovefitness.gr>'
 const DEFAULT_NOTIFY = 'info@moovefitness.gr'
 
 function escapeHtml(value) {
