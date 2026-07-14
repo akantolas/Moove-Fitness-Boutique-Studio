@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AccountProfileHero } from '../components/AccountProfileHero'
 import { AccountProfileSection } from '../components/AccountProfileSection'
-import { PasswordInput } from '../components/PasswordInput'
+import { AccountSecuritySection } from '../components/AccountSecuritySection'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import {
   changePosingPassword,
@@ -13,8 +13,6 @@ import {
   type PosingProfile,
 } from '../lib/posingAccount'
 import { useTranslation } from '../i18n/useTranslation'
-
-const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
 
 function profileToForm(profile: PosingProfile | null) {
   return {
@@ -153,7 +151,7 @@ export function PosingAccountSettingsPage() {
 
   async function handleChangePassword(event: React.FormEvent) {
     event.preventDefault()
-    if (!user?.email) return
+    if (!user?.email) return false
     setPasswordSaving(true)
     setPasswordError('')
     setPasswordMessage('')
@@ -161,7 +159,7 @@ export function PosingAccountSettingsPage() {
     if (newPassword !== confirmPassword) {
       setPasswordError(t('posing.account.passwordMismatch'))
       setPasswordSaving(false)
-      return
+      return false
     }
 
     try {
@@ -170,9 +168,11 @@ export function PosingAccountSettingsPage() {
       setNewPassword('')
       setConfirmPassword('')
       setPasswordMessage(t('posing.account.passwordChanged'))
+      return true
     } catch (err) {
       const code = err instanceof Error ? err.message : 'password_change_failed'
       setPasswordError(translateAccountError(code, t))
+      return false
     } finally {
       setPasswordSaving(false)
     }
@@ -249,56 +249,21 @@ export function PosingAccountSettingsPage() {
         className="mt-6"
       />
 
-      <section className={`mt-6 ${cardClass}`}>
-        <h2 className="text-lg font-semibold text-white">{t('posing.account.securityTitle')}</h2>
-        <form className="mt-6 space-y-4" onSubmit={handleChangePassword}>
-          <PasswordInput
-            id="settings-current-password"
-            label={t('posing.account.currentPassword')}
-            value={currentPassword}
-            onChange={setCurrentPassword}
-            autoComplete="current-password"
-            required
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <PasswordInput
-              id="settings-new-password"
-              label={t('posing.account.newPassword')}
-              value={newPassword}
-              onChange={setNewPassword}
-              autoComplete="new-password"
-              minLength={8}
-              required
-            />
-            <PasswordInput
-              id="settings-confirm-password"
-              label={t('posing.account.confirmPassword')}
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              autoComplete="new-password"
-              minLength={8}
-              required
-            />
-          </div>
-          {passwordError ? (
-            <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-              {passwordError}
-            </p>
-          ) : null}
-          {passwordMessage ? (
-            <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-              {passwordMessage}
-            </p>
-          ) : null}
-          <button
-            type="submit"
-            disabled={passwordSaving}
-            className="rounded-full border border-fuchsia-200/35 bg-fuchsia-500/10 px-6 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/20 disabled:opacity-50"
-          >
-            {passwordSaving ? t('posing.account.changingPassword') : t('posing.account.changePassword')}
-          </button>
-        </form>
-      </section>
+      <AccountSecuritySection
+        idPrefix="settings-security"
+        currentPassword={currentPassword}
+        newPassword={newPassword}
+        confirmPassword={confirmPassword}
+        onCurrentPasswordChange={setCurrentPassword}
+        onNewPasswordChange={setNewPassword}
+        onConfirmPasswordChange={setConfirmPassword}
+        onSave={handleChangePassword}
+        onClearMessage={() => setPasswordMessage('')}
+        saving={passwordSaving}
+        error={passwordError}
+        message={passwordMessage}
+        className="mt-6"
+      />
     </div>
   )
 }
