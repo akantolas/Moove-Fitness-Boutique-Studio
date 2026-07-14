@@ -1,5 +1,8 @@
 # Email — Google Workspace για info@moovefitness.gr
 
+> **Τρέχουσα ρύθμιση:** ImprovMX (λήψη) + Resend (αποστολή) — δες [email-improvmx-resend.md](email-improvmx-resend.md).
+> Αυτός ο οδηγός ισχύει μόνο αν θέλεις πλήρες Google inbox αντί για forwarding.
+
 Χρησιμοποιούμε **Google Workspace** για:
 - **Inbox** στο `info@moovefitness.gr`
 - **Αποστολή** κρατήσεων Move & Pose (Vercel API μέσω SMTP)

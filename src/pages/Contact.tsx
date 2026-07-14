@@ -7,13 +7,50 @@ import { useTranslation } from '../i18n/useTranslation'
 
 export function ContactPage() {
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const { t } = useTranslation()
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!privacyAccepted) return
-    setSent(true)
+    if (!privacyAccepted || sending) return
+
+    const form = e.currentTarget
+    const data = new FormData(form)
+    const name = String(data.get('name') ?? '').trim()
+    const email = String(data.get('email') ?? '').trim()
+    const message = String(data.get('message') ?? '').trim()
+    const website = String(data.get('website') ?? '').trim()
+
+    setSending(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message, website }),
+      })
+
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => null)) as { error?: string } | null
+        if (payload?.error === 'missing_email_config') {
+          setError(t('contact.sendUnavailable'))
+        } else {
+          setError(t('contact.sendError'))
+        }
+        return
+      }
+
+      setSent(true)
+      form.reset()
+      setPrivacyAccepted(false)
+    } catch {
+      setError(t('contact.sendError'))
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -79,6 +116,14 @@ export function ContactPage() {
             </p>
           ) : (
             <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
+              <input
+                type="text"
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                className="hidden"
+                aria-hidden="true"
+              />
               <div>
                 <label htmlFor="name" className="moove-eyebrow !text-[0.6rem]">
                   {t('contact.name')}
@@ -88,7 +133,8 @@ export function ContactPage() {
                   name="name"
                   required
                   autoComplete="name"
-                  className="mt-2 w-full rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20"
+                  disabled={sending}
+                  className="mt-2 w-full rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20 disabled:opacity-60"
                   placeholder={t('contact.namePlaceholder')}
                 />
               </div>
@@ -102,7 +148,8 @@ export function ContactPage() {
                   type="email"
                   required
                   autoComplete="email"
-                  className="mt-2 w-full rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20"
+                  disabled={sending}
+                  className="mt-2 w-full rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20 disabled:opacity-60"
                   placeholder={t('contact.emailPlaceholder')}
                 />
               </div>
@@ -115,7 +162,8 @@ export function ContactPage() {
                   name="message"
                   required
                   rows={4}
-                  className="mt-2 w-full resize-y rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20"
+                  disabled={sending}
+                  className="mt-2 w-full resize-y rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20 disabled:opacity-60"
                   placeholder={t('contact.messagePlaceholder')}
                 />
               </div>
@@ -125,6 +173,7 @@ export function ContactPage() {
                   name="privacyConsent"
                   required
                   checked={privacyAccepted}
+                  disabled={sending}
                   onChange={(event) => setPrivacyAccepted(event.target.checked)}
                   className="mt-0.5 h-4 w-4 shrink-0 rounded border-moove-border accent-moove-lime-deep"
                 />
@@ -139,12 +188,17 @@ export function ContactPage() {
                   {t('contact.consentAfter')}
                 </span>
               </label>
+              {error ? (
+                <p className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+                  {error}
+                </p>
+              ) : null}
               <button
                 type="submit"
-                disabled={!privacyAccepted}
+                disabled={!privacyAccepted || sending}
                 className="w-full rounded-full bg-gradient-to-b from-moove-lime to-moove-lime-deep py-3.5 text-sm font-semibold text-moove-ink shadow-moove-glow transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-10"
               >
-                {t('common.send')}
+                {sending ? t('contact.sending') : t('common.send')}
               </button>
             </form>
           )}

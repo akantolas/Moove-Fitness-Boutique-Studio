@@ -174,7 +174,7 @@ export function formatSessionTime(startTime, locale = 'el') {
   }).format(date)
 }
 
-export async function sendResendEmail({ from, to, subject, html, idempotencyKey }) {
+export async function sendResendEmail({ from, to, subject, html, idempotencyKey, replyTo }) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) throw new Error('missing_resend_api_key')
 
@@ -185,7 +185,13 @@ export async function sendResendEmail({ from, to, subject, html, idempotencyKey 
       'Content-Type': 'application/json',
       ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({
+      from,
+      to,
+      subject,
+      html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   })
 
   if (!response.ok) {
@@ -212,7 +218,7 @@ export function hasEmailTransportConfig() {
   return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY)
 }
 
-export async function sendPosingEmail({ from, to, subject, html, idempotencyKey }) {
+export async function sendPosingEmail({ from, to, subject, html, idempotencyKey, replyTo }) {
   const smtp = getSmtpConfig()
   if (smtp) {
     const nodemailer = await import('nodemailer')
@@ -223,12 +229,13 @@ export async function sendPosingEmail({ from, to, subject, html, idempotencyKey 
       to: recipients.join(', '),
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     })
     return { ok: true, provider: 'smtp' }
   }
 
   if (process.env.RESEND_API_KEY) {
-    const result = await sendResendEmail({ from, to, subject, html, idempotencyKey })
+    const result = await sendResendEmail({ from, to, subject, html, idempotencyKey, replyTo })
     return { ...result, provider: 'resend' }
   }
 

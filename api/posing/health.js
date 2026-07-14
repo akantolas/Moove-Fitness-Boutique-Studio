@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       : !hasServiceKey
         ? 'Set SUPABASE_SERVICE_ROLE_KEY (legacy service_role JWT)'
         : !hasEmailTransportConfig()
-          ? 'Set SMTP_USER + SMTP_PASS (Google Workspace) or RESEND_API_KEY'
+          ? 'Set RESEND_API_KEY (ImprovMX + Resend) or SMTP_USER + SMTP_PASS'
           : null,
   })
 }

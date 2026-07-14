@@ -56,17 +56,18 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 Αν δεν ορίσεις `STRIPE_SECRET_KEY` / price IDs, το email στέλνει static Payment Link (`STRIPE_LINK_*`). Σε αυτή την περίπτωση **δεν** ενεργοποιείται αυτόματα το πακέτο — χειροκίνητη επιβεβαίωση.
 
-## 3. Email (Google Workspace)
+## 3. Email (ImprovMX + Resend)
 
-Πλήρης οδηγός: **[docs/email-google-workspace.md](email-google-workspace.md)**
+Πλήρης οδηγός: **[docs/email-improvmx-resend.md](email-improvmx-resend.md)**
 
 Σύντομα:
-1. Google Workspace για `moovefitness.gr` + χρήστης `info@`
-2. DNS: MX + SPF + DKIM από Google Admin
-3. App Password → Vercel: `SMTP_USER`, `SMTP_PASS`, `POSE_FROM_EMAIL`
-4. Supabase → Authentication → Custom SMTP (ίδια credentials)
+1. ImprovMX: `info@moovefitness.gr` → forward σε Gmail (MX + SPF DNS)
+2. Resend: verify domain + `RESEND_API_KEY` στο Vercel
+3. Supabase → Authentication → Custom SMTP (`smtp.resend.com`)
 
-Αποστολή κρατήσεων: SMTP μέσω `sendPosingEmail` στο API (προτιμά SMTP έναντι Resend).
+Εναλλακτικό με πλήρες inbox: [email-google-workspace.md](email-google-workspace.md)
+
+Αποστολή κρατήσεων και φόρμας επικοινωνίας: Resend API μέσω `sendPosingEmail` (ή SMTP αν οριστεί).
 
 ## 4. Vercel environment variables
 
