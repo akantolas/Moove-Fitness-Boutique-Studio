@@ -61,7 +61,7 @@ export const en = {
       body2:
         'All classes are held in small groups and taught with emphasis on proper technique, personalised guidance, and a unique training experience.',
       heroImageAlt: 'Pilates class at Moove',
-      location: 'Korai 106G · Volos',
+      location: 'Korai 137 - D. Georgiadou 106G · Volos',
       viewClasses: 'View classes',
     },
     stats: {
@@ -70,7 +70,7 @@ export const en = {
       groups: 'Small groups',
       groupsLabel: 'Personal guidance',
       volos: 'Volos',
-      volosLabel: 'Korai 106G',
+      volosLabel: 'Korai 137 - D. Georgiadou 106G',
     },
     approach: {
       eyebrow: 'Our approach',
@@ -122,7 +122,7 @@ export const en = {
     ],
     studioTitle: 'The studio',
     studioBody:
-      'Natural light, clean lines, and modern equipment — on Korai street, minutes from downtown Volos.',
+      'Natural light, clean lines, and modern equipment — on Korai 137, minutes from downtown Volos.',
     gallery: {
       pilates: 'Pilates class',
       reformer: 'Reformer',

@@ -12,7 +12,7 @@
  * @see https://developers.google.com/maps/documentation/places/web-service/op-overview
  */
 
-const DEFAULT_QUERY = 'Moove Fitness Boutique Studio Κοραή Βόλος'
+const DEFAULT_QUERY = 'Moove Fitness Boutique Studio Κοραή 137 Βόλος'
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
