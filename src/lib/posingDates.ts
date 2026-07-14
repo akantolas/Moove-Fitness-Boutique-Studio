@@ -2,10 +2,22 @@ import type { Locale } from '../i18n/types'
 
 export const POSE_TIMEZONE = 'Europe/Athens'
 export const POSE_WEEK_DAYS = 7
-export const POSE_GRID_START_HOUR = 9
-export const POSE_GRID_END_HOUR = 21
+export const POSE_GRID_START_HOUR = 11
+export const POSE_GRID_END_HOUR = 24
 export const POSE_GRID_STEP_MINUTES = 30
-export const POSE_DAY_PRESET_TIMES = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
+export const POSE_DAY_PRESET_TIMES = [
+  '11:00',
+  '12:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '20:00',
+  '21:00',
+  '22:00',
+]
 
 export type CalendarGridConfig = {
   grid_start_hour: number

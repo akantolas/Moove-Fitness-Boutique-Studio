@@ -11,12 +11,24 @@ const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
 const GRID_STEPS = new Set([15, 30, 60])
 const WEEKDAY_KEYS = ['1', '2', '3', '4', '5', '6', '7']
 
-const DEFAULT_TEMPLATE_TIMES = ['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
+const DEFAULT_TEMPLATE_TIMES = [
+  '11:00',
+  '12:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '20:00',
+  '21:00',
+  '22:00',
+]
 
 const DEFAULTS = {
   default_duration_minutes: 30,
-  grid_start_hour: 9,
-  grid_end_hour: 21,
+  grid_start_hour: 11,
+  grid_end_hour: 24,
   grid_step_minutes: 30,
 }
 

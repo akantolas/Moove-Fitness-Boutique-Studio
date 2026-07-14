@@ -6,9 +6,9 @@ create table if not exists public.posing_calendar_settings (
   weekday_templates jsonb not null default '{}',
   default_duration_minutes integer not null default 30
     check (default_duration_minutes >= 15 and default_duration_minutes <= 120),
-  grid_start_hour integer not null default 9
+  grid_start_hour integer not null default 11
     check (grid_start_hour >= 0 and grid_start_hour <= 23),
-  grid_end_hour integer not null default 21
+  grid_end_hour integer not null default 24
     check (grid_end_hour >= 1 and grid_end_hour <= 24),
   grid_step_minutes integer not null default 30
     check (grid_step_minutes in (15, 30, 60)),
@@ -23,10 +23,10 @@ alter table public.posing_calendar_settings
   add column if not exists default_duration_minutes integer not null default 30;
 
 alter table public.posing_calendar_settings
-  add column if not exists grid_start_hour integer not null default 9;
+  add column if not exists grid_start_hour integer not null default 11;
 
 alter table public.posing_calendar_settings
-  add column if not exists grid_end_hour integer not null default 21;
+  add column if not exists grid_end_hour integer not null default 24;
 
 alter table public.posing_calendar_settings
   add column if not exists grid_step_minutes integer not null default 30;
@@ -72,10 +72,13 @@ with default_templates as (
     wd::text,
     jsonb_build_object(
       'times', to_jsonb(
-        array['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']::text[]
+        array[
+          '11:00', '12:00', '14:00', '15:00', '16:00', '17:00',
+          '18:00', '19:00', '20:00', '21:00', '22:00'
+        ]::text[]
       ),
-      'start_hour', 9,
-      'end_hour', 21
+      'start_hour', 11,
+      'end_hour', 24
     )
   ) as templates
   from generate_series(1, 7) as wd
@@ -92,8 +95,8 @@ select
   1,
   templates,
   30,
-  9,
-  21,
+  11,
+  24,
   30
 from default_templates
 on conflict (id) do nothing;
@@ -103,10 +106,13 @@ with default_templates as (
     wd::text,
     jsonb_build_object(
       'times', to_jsonb(
-        array['10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']::text[]
+        array[
+          '11:00', '12:00', '14:00', '15:00', '16:00', '17:00',
+          '18:00', '19:00', '20:00', '21:00', '22:00'
+        ]::text[]
       ),
-      'start_hour', 9,
-      'end_hour', 21
+      'start_hour', 11,
+      'end_hour', 24
     )
   ) as templates
   from generate_series(1, 7) as wd
@@ -133,3 +139,35 @@ begin
   end if;
 end
 $policy$;
+
+-- 007: default grid hours 11:00 – 24:00 (safe to re-run)
+alter table public.posing_calendar_settings
+  alter column grid_start_hour set default 11;
+
+alter table public.posing_calendar_settings
+  alter column grid_end_hour set default 24;
+
+with new_templates as (
+  select jsonb_object_agg(
+    wd::text,
+    jsonb_build_object(
+      'times', to_jsonb(
+        array[
+          '11:00', '12:00', '14:00', '15:00', '16:00', '17:00',
+          '18:00', '19:00', '20:00', '21:00', '22:00'
+        ]::text[]
+      ),
+      'start_hour', 11,
+      'end_hour', 24
+    )
+  ) as templates
+  from generate_series(1, 7) as wd
+)
+update public.posing_calendar_settings
+set
+  grid_start_hour = 11,
+  grid_end_hour = 24,
+  weekday_templates = new_templates.templates,
+  updated_at = now()
+from new_templates
+where posing_calendar_settings.id = 1;
