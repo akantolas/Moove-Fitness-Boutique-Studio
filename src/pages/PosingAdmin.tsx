@@ -3,57 +3,13 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminBookingsPanel } from '../components/AdminBookingsPanel'
 import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminPaymentsQueue } from '../components/AdminPaymentsQueue'
-import { AdminShell, AdminStatCard } from '../components/AdminShell'
+import { AdminShell, AdminPanelSkeleton, AdminStatCard, AdminStatsSkeleton } from '../components/AdminShell'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPosingIsAdmin } from '../lib/posingAccount'
-import {
-  adminConfirmPayment,
-  adminCreateSlot,
-  adminDeleteMember,
-  adminDeleteSlot,
-  fetchAdminBookings,
-  fetchAdminMembers,
-  fetchAdminOverview,
-  fetchAdminPayments,
-  type AdminBookingRow,
-  type AdminMember,
-  type AdminOverviewStats,
-  type AdminPayment,
-} from '../lib/posingApi'
-import {
-  addDays,
-  athensDateKey,
-  athensTimeKey,
-  buildSlotEndIso,
-  buildSlotIso,
-  cellKey,
-  isPastCell,
-  POSE_DAY_PRESET_TIMES,
-  POSE_WEEK_DAYS,
-  startOfWeek,
-} from '../lib/posingDates'
+import { addDays, POSE_WEEK_DAYS, startOfWeek } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
-
-type AdminSlot = {
-  id: string
-  start_at: string
-  end_at: string
-  is_blocked: boolean
-  booking?: {
-    id: string
-    status: string
-    plan_key: string
-    profiles?: { full_name: string | null; email: string } | null
-  } | null
-}
-
-const ADMIN_TABS = ['overview', 'calendar', 'members', 'payments', 'bookings'] as const
-type AdminTab = (typeof ADMIN_TABS)[number]
-
-function isAdminTab(value: string | null): value is AdminTab {
-  return ADMIN_TABS.includes(value as AdminTab)
-}
+import { isAdminTab, usePosingAdminPanel, type AdminTab } from '../hooks/usePosingAdminPanel'
 
 export function PosingAdminPage() {
   const { t, locale } = useTranslation()
@@ -64,16 +20,8 @@ export function PosingAdminPage() {
 
   const { loading, user, accessToken } = usePosingAuth()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
-  const [slots, setSlots] = useState<AdminSlot[]>([])
-  const [members, setMembers] = useState<AdminMember[]>([])
-  const [payments, setPayments] = useState<AdminPayment[]>([])
-  const [bookings, setBookings] = useState<AdminBookingRow[]>([])
-  const [stats, setStats] = useState<AdminOverviewStats | null>(null)
   const [bookingStatusFilter, setBookingStatusFilter] = useState('')
   const [duration, setDuration] = useState(30)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [dataLoading, setDataLoading] = useState(false)
   const [authorized, setAuthorized] = useState<boolean | null>(null)
 
   const range = useMemo(() => {
@@ -82,15 +30,15 @@ export function PosingAdminPage() {
     return { from, to }
   }, [weekStart])
 
-  const slotByCell = useMemo(() => {
-    const map = new Map<string, AdminSlot>()
-    for (const slot of slots) {
-      const dayKey = athensDateKey(new Date(slot.start_at))
-      const time = athensTimeKey(slot.start_at)
-      map.set(cellKey(dayKey, time), slot)
-    }
-    return map
-  }, [slots])
+  const admin = usePosingAdminPanel({
+    activeTab,
+    accessToken,
+    authorized: authorized === true,
+    range,
+    bookingStatusFilter,
+    duration,
+    translate: t,
+  })
 
   useEffect(() => {
     if (!loading && !user) {
@@ -106,171 +54,25 @@ export function PosingAdminPage() {
       .catch(() => setAuthorized(false))
   }, [user?.id])
 
-  async function loadCalendarData() {
-    if (!accessToken) return
-    const slotsRes = await fetch(
-      `/api/posing/admin/slots?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } },
-    ).then((r) => r.json())
-    if (!slotsRes.ok) throw new Error(slotsRes.error ?? 'slots_failed')
-    setSlots(slotsRes.slots ?? [])
-  }
-
-  async function loadMembers() {
-    if (!accessToken) return
-    setMembers(await fetchAdminMembers(accessToken))
-  }
-
-  async function loadPayments() {
-    if (!accessToken) return
-    setPayments(await fetchAdminPayments(accessToken))
-  }
-
-  async function loadBookings(status?: string) {
-    if (!accessToken) return
-    setBookings(await fetchAdminBookings(accessToken, status || undefined))
-  }
-
-  async function loadOverview() {
-    if (!accessToken) return
-    setStats(await fetchAdminOverview(accessToken))
-  }
-
-  async function loadTabData(tab: AdminTab) {
-    if (!accessToken) return
-    setDataLoading(true)
-    setError('')
-    try {
-      if (tab === 'overview') {
-        await Promise.all([loadOverview(), loadPayments(), loadMembers()])
-      } else if (tab === 'calendar') {
-        await loadCalendarData()
-      } else if (tab === 'members') {
-        await loadMembers()
-      } else if (tab === 'payments') {
-        await loadPayments()
-      } else if (tab === 'bookings') {
-        await loadBookings(bookingStatusFilter)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'load_failed')
-    } finally {
-      setDataLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (!authorized) return
-    void loadTabData(activeTab)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authorized, activeTab, range.from, range.to, accessToken])
-
-  useEffect(() => {
-    if (!authorized || activeTab !== 'bookings') return
-    void loadBookings(bookingStatusFilter)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingStatusFilter])
-
   function setActiveTab(tab: AdminTab) {
     setSearchParams({ tab })
   }
 
-  async function handleToggleSlot(dayKey: string, time: string) {
-    if (!accessToken || isPastCell(dayKey, time)) return
-    const existing = slotByCell.get(cellKey(dayKey, time))
-    if (existing?.booking) return
-
-    setBusy(true)
-    setError('')
-    try {
-      if (existing) {
-        await adminDeleteSlot(accessToken, existing.id)
-      } else {
-        const start_at = buildSlotIso(dayKey, time)
-        const end_at = buildSlotEndIso(dayKey, time, duration)
-        await adminCreateSlot(accessToken, start_at, end_at)
-      }
-      await loadCalendarData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'toggle_failed')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleOpenDayPreset(dayKey: string) {
-    if (!accessToken) return
-    setBusy(true)
-    setError('')
-    try {
-      const toCreate = POSE_DAY_PRESET_TIMES.filter((time) => {
-        if (isPastCell(dayKey, time)) return false
-        return !slotByCell.has(cellKey(dayKey, time))
-      })
-      await Promise.all(
-        toCreate.map((time) =>
-          adminCreateSlot(
-            accessToken,
-            buildSlotIso(dayKey, time),
-            buildSlotEndIso(dayKey, time, duration),
-          ),
-        ),
-      )
-      await loadCalendarData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'preset_failed')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleClearDay(dayKey: string) {
-    if (!accessToken) return
-    setBusy(true)
-    setError('')
-    try {
-      const toDelete = slots.filter((slot) => {
-        if (athensDateKey(new Date(slot.start_at)) !== dayKey) return false
-        return !slot.booking
-      })
-      await Promise.all(toDelete.map((slot) => adminDeleteSlot(accessToken, slot.id)))
-      await loadCalendarData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'clear_failed')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleDeleteMember(memberId: string) {
-    if (!accessToken) return
-    setBusy(true)
-    try {
-      await adminDeleteMember(accessToken, memberId)
-      await loadMembers()
-      if (activeTab === 'overview') await loadOverview()
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function handleConfirmPayment(bookingId: string) {
-    if (!accessToken) return
-    setBusy(true)
-    try {
-      await adminConfirmPayment(accessToken, bookingId)
-      await Promise.all([loadPayments(), loadOverview()])
-      if (activeTab === 'bookings') await loadBookings(bookingStatusFilter)
-    } finally {
-      setBusy(false)
-    }
-  }
+  const pendingBadge = admin.stats?.pendingPayments ?? admin.payments.length
 
   const tabs = [
-    { id: 'overview', label: t('posing.admin.tabOverview') },
+    {
+      id: 'overview',
+      label: t('posing.admin.tabOverview'),
+      badge: pendingBadge > 0 ? pendingBadge : undefined,
+    },
     { id: 'calendar', label: t('posing.admin.tabCalendar') },
     { id: 'members', label: t('posing.admin.tabMembers') },
-    { id: 'payments', label: t('posing.admin.tabPayments') },
+    {
+      id: 'payments',
+      label: t('posing.admin.tabPayments'),
+      badge: pendingBadge > 0 ? pendingBadge : undefined,
+    },
     { id: 'bookings', label: t('posing.admin.tabBookings') },
   ]
 
@@ -293,6 +95,8 @@ export function PosingAdminPage() {
     )
   }
 
+  const isBusy = admin.busy || admin.loading
+
   return (
     <AdminShell
       title={t('posing.admin.title')}
@@ -300,6 +104,8 @@ export function PosingAdminPage() {
       activeTab={activeTab}
       onTabChange={(tab) => setActiveTab(tab as AdminTab)}
       tabs={tabs}
+      onRefresh={() => void admin.refresh()}
+      refreshDisabled={isBusy}
       actions={
         <Link
           to="/posing/account/settings"
@@ -309,33 +115,66 @@ export function PosingAdminPage() {
         </Link>
       }
     >
-      {error ? (
+      {admin.error ? (
         <p className="mb-6 rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-          {error}
+          {admin.error}
         </p>
       ) : null}
 
       {activeTab === 'overview' ? (
         <div className="space-y-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <AdminStatCard label={t('posing.admin.statMembers')} value={stats?.members ?? '—'} />
-            <AdminStatCard
-              label={t('posing.admin.statPendingPayments')}
-              value={stats?.pendingPayments ?? '—'}
-              accent="amber"
-            />
-            <AdminStatCard
-              label={t('posing.admin.statActivePackages')}
-              value={stats?.activePackages ?? '—'}
-              accent="emerald"
-            />
-            <AdminStatCard
-              label={t('posing.admin.statWeekBookings')}
-              value={stats?.weekBookings ?? '—'}
-              accent="cyan"
-            />
+          {admin.loading ? (
+            <AdminStatsSkeleton />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <AdminStatCard
+                label={t('posing.admin.statMembers')}
+                value={admin.stats?.members ?? '—'}
+                onClick={() => setActiveTab('members')}
+              />
+              <AdminStatCard
+                label={t('posing.admin.statPendingPayments')}
+                value={admin.stats?.pendingPayments ?? '—'}
+                accent="amber"
+                onClick={() => setActiveTab('payments')}
+              />
+              <AdminStatCard
+                label={t('posing.admin.statActivePackages')}
+                value={admin.stats?.activePackages ?? '—'}
+                accent="emerald"
+                onClick={() => setActiveTab('members')}
+              />
+              <AdminStatCard
+                label={t('posing.admin.statWeekBookings')}
+                value={admin.stats?.weekBookings ?? '—'}
+                accent="cyan"
+                onClick={() => setActiveTab('bookings')}
+              />
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab('calendar')}
+              className="rounded-full border border-white/14 bg-white/[0.035] px-4 py-2 text-xs font-semibold text-white/78 transition hover:border-fuchsia-100/28 hover:bg-white/[0.06] hover:text-white"
+            >
+              {t('posing.admin.openCalendar')}
+            </button>
+            {(admin.stats?.pendingPayments ?? 0) > 0 ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab('payments')}
+                className="rounded-full border border-amber-300/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-500/15"
+              >
+                {t('posing.admin.reviewPayments')}
+              </button>
+            ) : null}
           </div>
-          {payments.length > 0 ? (
+
+          {admin.loading ? (
+            <AdminPanelSkeleton rows={2} />
+          ) : admin.payments.length > 0 ? (
             <div>
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h2 className="text-lg font-semibold text-white">{t('posing.admin.pendingPaymentsTitle')}</h2>
@@ -348,10 +187,10 @@ export function PosingAdminPage() {
                 </button>
               </div>
               <AdminPaymentsQueue
-                payments={payments.slice(0, 3)}
+                payments={admin.payments.slice(0, 3)}
                 locale={locale}
-                busy={busy || dataLoading}
-                onConfirm={handleConfirmPayment}
+                busy={isBusy}
+                onConfirm={admin.confirmPayment}
               />
             </div>
           ) : null}
@@ -360,46 +199,57 @@ export function PosingAdminPage() {
 
       {activeTab === 'calendar' ? (
         <AdminWeekCalendar
-          slots={slots}
+          slots={admin.slots}
           weekStart={weekStart}
           duration={duration}
           locale={locale}
-          busy={busy || dataLoading}
-          loading={dataLoading}
+          busy={isBusy}
+          loading={admin.loading}
+          feedback={admin.calendarFeedback}
           onWeekStartChange={setWeekStart}
           onDurationChange={setDuration}
-          onToggleSlot={handleToggleSlot}
-          onOpenDayPreset={handleOpenDayPreset}
-          onClearDay={handleClearDay}
+          onToggleSlot={admin.toggleSlot}
+          onOpenDayPreset={admin.openDayPreset}
+          onClearDay={admin.clearDay}
         />
       ) : null}
 
       {activeTab === 'members' && user ? (
-        <AdminMembersList
-          members={members}
-          locale={locale}
-          currentUserId={user.id}
-          busy={busy || dataLoading}
-          onDeleteMember={handleDeleteMember}
-        />
+        admin.loading ? (
+          <AdminPanelSkeleton rows={4} />
+        ) : (
+          <AdminMembersList
+            members={admin.members}
+            locale={locale}
+            currentUserId={user.id}
+            busy={isBusy}
+            onDeleteMember={admin.deleteMember}
+          />
+        )
       ) : null}
 
       {activeTab === 'payments' ? (
-        <AdminPaymentsQueue
-          payments={payments}
-          locale={locale}
-          busy={busy || dataLoading}
-          onConfirm={handleConfirmPayment}
-        />
+        admin.loading ? (
+          <AdminPanelSkeleton rows={3} />
+        ) : (
+          <AdminPaymentsQueue
+            payments={admin.payments}
+            locale={locale}
+            busy={isBusy}
+            onConfirm={admin.confirmPayment}
+          />
+        )
       ) : null}
 
       {activeTab === 'bookings' ? (
         <AdminBookingsPanel
-          bookings={bookings}
+          bookings={admin.bookings}
           locale={locale}
           statusFilter={bookingStatusFilter}
           onStatusFilterChange={setBookingStatusFilter}
-          loading={dataLoading}
+          loading={admin.loading}
+          busy={isBusy}
+          onConfirmPayment={admin.confirmPayment}
         />
       ) : null}
     </AdminShell>

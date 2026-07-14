@@ -4,6 +4,8 @@ import type { AdminMember } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { bookingStatusLabel, planKeyLabel } from '../lib/posingLabels'
+import { translateAdminError } from '../hooks/usePosingAdminPanel'
+import { ConfirmDialog } from './ConfirmDialog'
 
 type AdminMembersListProps = {
   members: AdminMember[]
@@ -30,12 +32,6 @@ function formatSlot(iso: string, locale: Locale) {
     minute: '2-digit',
     timeZone: 'Europe/Athens',
   }).format(new Date(iso))
-}
-
-function translateMemberError(code: string, t: (key: string) => string) {
-  const key = `posing.admin.memberErrors.${code}`
-  const translated = t(key)
-  return translated === key ? code : translated
 }
 
 function packageStatusLabel(status: string, t: (key: string) => string) {
@@ -65,7 +61,7 @@ export function AdminMembersList({
       setConfirmId(null)
     } catch (err) {
       const code = err instanceof Error ? err.message : 'delete_member_failed'
-      setDeleteError(translateMemberError(code, t))
+      setDeleteError(translateAdminError(code, t))
     } finally {
       setDeletingId(null)
     }
@@ -90,15 +86,15 @@ export function AdminMembersList({
       ) : null}
 
       {members.length === 0 ? (
-        <p className="mt-4 text-sm text-white/50">{t('posing.admin.noMembers')}</p>
+        <p className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/50">
+          {t('posing.admin.noMembers')}
+        </p>
       ) : (
         <div className="mt-4 space-y-3">
           {members.map((member) => {
             const isSelf = member.id === currentUserId
             const isAdmin = member.role === 'admin'
             const canDelete = !isSelf && !isAdmin
-            const isConfirming = confirmId === member.id
-            const isDeleting = deletingId === member.id
             const isExpanded = expandedId === member.id
             const activePackages = (member.user_packages ?? []).filter((p) => p.status === 'active')
             const pendingPackages = (member.user_packages ?? []).filter(
@@ -147,31 +143,10 @@ export function AdminMembersList({
                     </div>
                   </button>
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    {!canDelete ? null : isConfirming ? (
-                      <>
-                        <button
-                          type="button"
-                          disabled={busy || isDeleting}
-                          onClick={() => void handleDelete(member.id)}
-                          className="rounded-full border border-rose-300/40 bg-rose-500/15 px-3 py-1 text-xs font-semibold text-rose-100 hover:bg-rose-500/25 disabled:opacity-50"
-                        >
-                          {isDeleting
-                            ? t('posing.admin.deletingMember')
-                            : t('posing.admin.confirmDeleteMember')}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isDeleting}
-                          onClick={() => setConfirmId(null)}
-                          className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70 hover:bg-white/5"
-                        >
-                          {t('posing.admin.cancelDeleteMember')}
-                        </button>
-                      </>
-                    ) : (
+                    {canDelete ? (
                       <button
                         type="button"
-                        disabled={busy || isDeleting}
+                        disabled={busy || deletingId === member.id}
                         onClick={() => {
                           setDeleteError('')
                           setConfirmId(member.id)
@@ -180,7 +155,7 @@ export function AdminMembersList({
                       >
                         {t('posing.admin.deleteMember')}
                       </button>
-                    )}
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => setExpandedId(isExpanded ? null : member.id)}
@@ -263,6 +238,22 @@ export function AdminMembersList({
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmId !== null}
+        title={t('posing.admin.confirmDeleteMemberTitle')}
+        body={t('posing.admin.confirmDeleteMemberBody')}
+        confirmLabel={
+          deletingId ? t('posing.admin.deletingMember') : t('posing.admin.confirmDeleteMember')
+        }
+        cancelLabel={t('posing.admin.cancelDeleteMember')}
+        busy={deletingId !== null}
+        destructive
+        onConfirm={() => {
+          if (confirmId) void handleDelete(confirmId)
+        }}
+        onCancel={() => setConfirmId(null)}
+      />
     </section>
   )
 }

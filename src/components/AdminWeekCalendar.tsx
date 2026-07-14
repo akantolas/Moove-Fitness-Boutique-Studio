@@ -16,6 +16,7 @@ import {
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
+import type { CalendarFeedback } from '../hooks/usePosingAdminPanel'
 
 export type AdminCalendarSlot = {
   id: string
@@ -46,6 +47,7 @@ type AdminWeekCalendarProps = {
   locale: Locale
   busy: boolean
   loading: boolean
+  feedback?: CalendarFeedback
   onWeekStartChange: (date: Date) => void
   onDurationChange: (minutes: number) => void
   onToggleSlot: (dayKey: string, time: string) => void
@@ -259,6 +261,7 @@ export function AdminWeekCalendar({
   locale,
   busy,
   loading,
+  feedback,
   onWeekStartChange,
   onDurationChange,
   onToggleSlot,
@@ -328,6 +331,18 @@ export function AdminWeekCalendar({
           </select>
         </div>
       </div>
+
+      <p className="mt-2 text-xs text-white/45">
+        {t('posing.admin.durationHint', { minutes: duration })}
+      </p>
+
+      {feedback ? (
+        <p className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-2.5 text-sm text-emerald-100">
+          {feedback.type === 'slots_created'
+            ? t('posing.admin.slotsCreated', { count: feedback.count })
+            : t('posing.admin.slotsDeleted', { count: feedback.count })}
+        </p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-4">
         <LegendItem color="bg-white/10" label={t('posing.admin.legendEmpty')} />

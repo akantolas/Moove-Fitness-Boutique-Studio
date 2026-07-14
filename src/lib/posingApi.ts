@@ -87,6 +87,19 @@ export type AdminBookingRow = {
   slot?: { start_at: string; end_at: string } | null
 }
 
+export type AdminCalendarSlot = {
+  id: string
+  start_at: string
+  end_at: string
+  is_blocked: boolean
+  booking?: {
+    id: string
+    status: string
+    plan_key: string
+    profiles?: { full_name: string | null; email: string } | null
+  } | null
+}
+
 async function parseApiJson(res: Response) {
   const text = await res.text()
   try {
@@ -139,6 +152,20 @@ export async function fetchPosingMe(accessToken: string) {
     packages: UserPackage[]
     bookings: PosingBooking[]
   }
+}
+
+export async function fetchAdminSlots(
+  accessToken: string,
+  from: string,
+  to: string,
+): Promise<AdminCalendarSlot[]> {
+  const res = await fetch(
+    `/api/posing/admin/slots?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  )
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'slots_failed'))
+  return (data.slots ?? []) as AdminCalendarSlot[]
 }
 
 export async function adminCreateSlot(accessToken: string, start_at: string, end_at: string) {
