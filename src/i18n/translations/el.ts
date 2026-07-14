@@ -45,7 +45,8 @@ export const el = {
   },
   footer: {
     studioBlurb: 'Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {{owner}}.',
-    posingBlurb: 'Online posing coaching για bodybuilding shows — by {{coach}}.',
+    posingBlurb: 'Online posing coaching για διαγωνισμούς bodybuilding — από την {{coach}}.',
+    posingSubtitle: 'Η Ακαδημία Posing',
     backToStudio: '← Επιστροφή στο {{name}} studio',
     nav: 'Πλοήγηση',
     details: 'Στοιχεία',

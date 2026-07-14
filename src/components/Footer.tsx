@@ -41,7 +41,7 @@ export function Footer() {
                 />
               </Link>
               <p className="mt-3 text-xs uppercase tracking-[0.22em] text-cyan-300/80">
-                {posingBrand.brandSubtitle}
+                {t('footer.posingSubtitle')}
               </p>
               <p className="mt-4 text-sm leading-relaxed text-white/55">
                 {t('footer.posingBlurb', vars)}

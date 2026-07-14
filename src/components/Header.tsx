@@ -131,7 +131,7 @@ export function Header() {
   const logoLink = posing ? '/posing' : '/'
   const logoSrc = posing ? posingBrand.logo : '/logo-header.png'
   const logoAlt = posing
-    ? `${posingBrand.brandName} — ${posingBrand.brandSubtitle}`
+    ? `${posingBrand.brandName} — ${t('footer.posingSubtitle')}`
     : `${site.name} ${site.tagline}`
 
   return (

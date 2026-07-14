@@ -76,7 +76,7 @@ export function PosingPage() {
               {posing.brandName}
             </h1>
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.32em] text-fuchsia-100/65">
-              {posing.brandSubtitle}
+              {t('footer.posingSubtitle')}
             </p>
             <h2 className="font-display mt-6 max-w-xl text-2xl font-semibold leading-tight text-white/92 sm:text-3xl lg:text-[2.35rem]">
               {t('posing.hero.title')}
@@ -140,7 +140,7 @@ export function PosingPage() {
             <div className="relative overflow-hidden rounded-[2rem] border border-fuchsia-100/18 bg-white/[0.04] p-2 shadow-[0_32px_90px_-42px_rgba(244,114,182,0.9)]">
               <ZoomableImage
                 src={posing.heroImage}
-                alt={`${posing.brandName} — ${posing.brandSubtitle}`}
+                alt={`${posing.brandName} — ${t('footer.posingSubtitle')}`}
                 wrapperClassName="block w-full cursor-zoom-in"
                 className="aspect-[4/5] w-full rounded-[1.55rem] object-cover"
                 width={640}

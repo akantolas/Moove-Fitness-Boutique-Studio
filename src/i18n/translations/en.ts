@@ -46,6 +46,7 @@ export const en = {
   footer: {
     studioBlurb: 'Pilates & Reformer studio in Volos, led by {{owner}}.',
     posingBlurb: 'Online posing coaching for bodybuilding shows — by {{coach}}.',
+    posingSubtitle: 'The Posing Academy',
     backToStudio: '← Back to {{name}} studio',
     nav: 'Navigation',
     details: 'Details',

@@ -69,7 +69,7 @@ export function PosingAboutPage() {
             <div className="relative overflow-hidden rounded-[2rem] border border-fuchsia-100/18 bg-white/[0.04] p-2 shadow-[0_32px_90px_-42px_rgba(244,114,182,0.9)]">
               <ZoomableImage
                 src={posing.heroImage}
-                alt={`${posing.brandName} — ${posing.brandSubtitle}`}
+                alt={`${posing.brandName} — ${t('footer.posingSubtitle')}`}
                 wrapperClassName="block w-full cursor-zoom-in"
                 className="aspect-[4/5] w-full rounded-[1.55rem] object-cover"
                 width={640}
