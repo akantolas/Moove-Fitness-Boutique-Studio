@@ -50,14 +50,26 @@ function sortTimes(times) {
   })
 }
 
-function validateWeekdayTemplates(raw, gridStart, gridEnd) {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return { ok: false, error: 'invalid_weekday_templates' }
+function coerceWeekdayTemplatesRaw(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const coerced = {}
+  for (const [k, v] of Object.entries(raw)) {
+    const key = String(k)
+    if (WEEKDAY_KEYS.includes(key)) {
+      coerced[key] = v
+    }
   }
+  return coerced
+}
+
+function validateWeekdayTemplates(raw, gridStart, gridEnd) {
+  const coerced = coerceWeekdayTemplatesRaw(raw)
+  const defaults = buildDefaultWeekdayTemplates(gridStart, gridEnd)
+  const merged = { ...defaults, ...coerced }
 
   const templates = {}
   for (const key of WEEKDAY_KEYS) {
-    const entry = raw[key]
+    const entry = merged[key]
     if (!entry || typeof entry !== 'object') {
       return { ok: false, error: 'invalid_weekday_templates' }
     }
@@ -102,6 +114,20 @@ function validateWeekdayTemplates(raw, gridStart, gridEnd) {
   }
 
   return { ok: true, templates }
+}
+
+function mergeWeekdayTemplates(raw, gridStart, gridEnd) {
+  const defaults = buildDefaultWeekdayTemplates(gridStart, gridEnd)
+  const coerced = coerceWeekdayTemplatesRaw(raw)
+  const templates = {}
+
+  for (const key of WEEKDAY_KEYS) {
+    const entry = coerced[key] ?? defaults[key]
+    const single = validateWeekdayTemplates({ ...defaults, [key]: entry }, gridStart, gridEnd)
+    templates[key] = single.ok ? single.templates[key] : defaults[key]
+  }
+
+  return templates
 }
 
 function validateSettings(body) {
@@ -149,9 +175,7 @@ function validateSettings(body) {
 }
 
 function normalizeWeekdayTemplates(raw, gridStart, gridEnd) {
-  const validated = validateWeekdayTemplates(raw, gridStart, gridEnd)
-  if (validated.ok) return validated.templates
-  return buildDefaultWeekdayTemplates(gridStart, gridEnd)
+  return mergeWeekdayTemplates(raw, gridStart, gridEnd)
 }
 
 function toResponse(row) {
@@ -222,7 +246,13 @@ export default async function handler(req, res) {
         }
         return json(res, 500, { ok: false, error: error.message })
       }
-      return json(res, 200, { ok: true, settings: toResponse(data) })
+      return json(res, 200, {
+        ok: true,
+        settings: {
+          ...validated.settings,
+          updated_at: data?.updated_at ?? new Date().toISOString(),
+        },
+      })
     } catch {
       return json(res, 400, { ok: false, error: 'invalid_json' })
     }

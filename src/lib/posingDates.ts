@@ -84,23 +84,48 @@ export function timeToMinutes(time: string): number {
   return hour * 60 + minute
 }
 
-const ATHENS_WEEKDAY_MAP: Record<string, WeekdayKey> = {
-  Mon: '1',
-  Tue: '2',
-  Wed: '3',
-  Thu: '4',
-  Fri: '5',
-  Sat: '6',
-  Sun: '7',
+const ATHENS_WEEKDAY_LONG_MAP: Record<string, WeekdayKey> = {
+  Monday: '1',
+  Tuesday: '2',
+  Wednesday: '3',
+  Thursday: '4',
+  Friday: '5',
+  Saturday: '6',
+  Sunday: '7',
+}
+
+/** ISO weekday (Mon=1 … Sun=7) from an Athens calendar date string. */
+function isoWeekdayFromDayKey(dayKey: string): WeekdayKey {
+  const [year, month, day] = dayKey.split('-').map(Number)
+  const y = month < 3 ? year - 1 : year
+  const m = month < 3 ? month + 12 : month
+  const k = y % 100
+  const j = Math.floor(y / 100)
+  const h =
+    (day +
+      Math.floor((13 * (m + 1)) / 5) +
+      k +
+      Math.floor(k / 4) +
+      Math.floor(j / 4) +
+      5 * j) %
+    7
+  const zellerToIso: WeekdayKey[] = ['6', '7', '1', '2', '3', '4', '5']
+  return zellerToIso[h] ?? '1'
 }
 
 export function getAthensWeekday(dayKey: string): WeekdayKey {
   const utc = athensWallTimeToUtc(dayKey, '12:00')
-  const short = new Intl.DateTimeFormat('en-US', {
+  const longName = new Intl.DateTimeFormat('en-US', {
     timeZone: POSE_TIMEZONE,
-    weekday: 'short',
+    weekday: 'long',
   }).format(utc)
-  return ATHENS_WEEKDAY_MAP[short] ?? '1'
+  const mapped = ATHENS_WEEKDAY_LONG_MAP[longName]
+  if (mapped) return mapped
+
+  if (import.meta.env.DEV) {
+    console.warn(`getAthensWeekday: unmapped weekday "${longName}" for ${dayKey}, using ISO fallback`)
+  }
+  return isoWeekdayFromDayKey(dayKey)
 }
 
 export function getWeekdayTemplate(settings: CalendarSettings, weekday: WeekdayKey): WeekdayTemplate {
@@ -118,13 +143,120 @@ export function isActiveCell(dayKey: string, time: string, settings: CalendarSet
   return minutes >= start_hour * 60 && minutes < end_hour * 60
 }
 
+function normalizeWeekdayTemplateEntry(
+  raw: unknown,
+  key: WeekdayKey,
+  gridStart: number,
+  gridEnd: number,
+  defaults: WeekdayTemplates,
+): WeekdayTemplate {
+  const def = defaults[key]
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return def
+
+  const entry = raw as Record<string, unknown>
+  const times = Array.isArray(entry.times)
+    ? sortTimeStrings(
+        entry.times
+          .filter((t): t is string => typeof t === 'string')
+          .map((t) => normalizeTimeInput(t))
+          .filter((t): t is string => t !== null),
+      )
+    : [...def.times]
+
+  let start_hour = Number(entry.start_hour)
+  let end_hour = Number(entry.end_hour)
+  if (!Number.isInteger(start_hour) || start_hour < gridStart || start_hour > 23) {
+    start_hour = def.start_hour
+  }
+  if (!Number.isInteger(end_hour) || end_hour <= start_hour || end_hour > gridEnd) {
+    end_hour = def.end_hour
+  }
+  start_hour = Math.max(gridStart, Math.min(start_hour, end_hour - 1))
+  end_hour = Math.min(gridEnd, Math.max(end_hour, start_hour + 1))
+
+  return { times, start_hour, end_hour }
+}
+
+export function normalizeCalendarSettings(raw: unknown): CalendarSettings {
+  const obj =
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {}
+
+  const grid_start_hour =
+    Number.isInteger(Number(obj.grid_start_hour)) && Number(obj.grid_start_hour) >= 0
+      ? Number(obj.grid_start_hour)
+      : POSE_GRID_START_HOUR
+  const grid_end_hour =
+    Number.isInteger(Number(obj.grid_end_hour)) && Number(obj.grid_end_hour) > grid_start_hour
+      ? Number(obj.grid_end_hour)
+      : POSE_GRID_END_HOUR
+  const grid_step_minutes = [15, 30, 60].includes(Number(obj.grid_step_minutes))
+    ? Number(obj.grid_step_minutes)
+    : POSE_GRID_STEP_MINUTES
+  const default_duration_minutes =
+    Number.isInteger(Number(obj.default_duration_minutes)) &&
+    Number(obj.default_duration_minutes) >= 15
+      ? Number(obj.default_duration_minutes)
+      : 30
+
+  const defaults = createDefaultWeekdayTemplates(grid_start_hour, grid_end_hour)
+  const rawTemplates =
+    obj.weekday_templates &&
+    typeof obj.weekday_templates === 'object' &&
+    !Array.isArray(obj.weekday_templates)
+      ? (obj.weekday_templates as Record<string, unknown>)
+      : {}
+
+  const coerced: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(rawTemplates)) {
+    const key = String(k)
+    if (WEEKDAY_KEYS.includes(key as WeekdayKey)) {
+      coerced[key] = v
+    }
+  }
+
+  const weekday_templates = Object.fromEntries(
+    WEEKDAY_KEYS.map((key) => [
+      key,
+      normalizeWeekdayTemplateEntry(coerced[key], key, grid_start_hour, grid_end_hour, defaults),
+    ]),
+  ) as WeekdayTemplates
+
+  return {
+    grid_start_hour,
+    grid_end_hour,
+    grid_step_minutes,
+    default_duration_minutes,
+    weekday_templates,
+    updated_at:
+      typeof obj.updated_at === 'string' || obj.updated_at === null
+        ? (obj.updated_at as string | null)
+        : undefined,
+  }
+}
+
+export function formatActiveHoursRange(startHour: number, endHour: number): string {
+  const pad = (h: number) => `${String(h).padStart(2, '0')}:00`
+  return `${pad(startHour)}–${pad(endHour)}`
+}
+
 export function buildAdminGridTimes(
   settings: CalendarSettings,
   slots: { start_at: string }[],
+  weekDayKeys?: string[],
 ): string[] {
   const base = generateGridTimes(settings)
   const fromSlots = slots.map((slot) => athensTimeKey(slot.start_at))
-  return mergeGridTimes(base, fromSlots)
+  const merged = mergeGridTimes(base, fromSlots)
+
+  if (!weekDayKeys?.length) return merged
+
+  const slotSet = new Set(fromSlots)
+  return merged.filter(
+    (time) =>
+      weekDayKeys.some((dayKey) => isActiveCell(dayKey, time, settings)) || slotSet.has(time),
+  )
 }
 
 export function startOfWeek(date: Date) {

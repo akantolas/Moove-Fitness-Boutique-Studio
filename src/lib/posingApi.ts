@@ -1,5 +1,5 @@
 import { site } from '../site'
-import type { CalendarSettings } from './posingDates'
+import { normalizeCalendarSettings, type CalendarSettings } from './posingDates'
 
 export { isSupabaseConfigured } from './supabase'
 export type { CalendarSettings }
@@ -199,7 +199,7 @@ export async function fetchAdminCalendarSettings(accessToken: string): Promise<C
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'settings_fetch_failed'))
-  return data.settings as CalendarSettings
+  return normalizeCalendarSettings(data.settings)
 }
 
 export async function saveAdminCalendarSettings(
@@ -216,7 +216,7 @@ export async function saveAdminCalendarSettings(
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'settings_save_failed'))
-  return data.settings as CalendarSettings
+  return normalizeCalendarSettings(data.settings)
 }
 
 export async function fetchAdminMembers(accessToken: string): Promise<AdminMember[]> {

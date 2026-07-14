@@ -5,9 +5,11 @@ import {
   buildAdminGridTimes,
   cellKey,
   athensTimeKey,
+  formatActiveHoursRange,
   formatDayLabel,
   formatWeekRange,
   formatWeekdayShort,
+  getWeekdayTemplateForDay,
   isActiveCell,
   isPastCell,
   POSE_WEEK_DAYS,
@@ -171,6 +173,7 @@ function TimeGrid({
         {days.map((day) => {
           const dayKey = athensDateKey(day)
           const isToday = dayKey === todayKey
+          const weekdayTemplate = getWeekdayTemplateForDay(dayKey, calendarSettings)
           return (
             <div
               key={dayKey}
@@ -182,6 +185,9 @@ function TimeGrid({
                 {formatWeekdayShort(day, locale)}
               </p>
               <p className="mt-0.5 text-xs font-medium text-white">{formatDayLabel(day, locale)}</p>
+              <p className="mt-1 text-[10px] font-medium text-cyan-200/70">
+                {formatActiveHoursRange(weekdayTemplate.start_hour, weekdayTemplate.end_hour)}
+              </p>
               <div className="mt-2 flex flex-wrap justify-center gap-1">
                 <button
                   type="button"
@@ -261,7 +267,8 @@ function TimeGrid({
                 } else if (state === 'past') {
                   cellClass += 'bg-white/[0.01] opacity-40 cursor-not-allowed'
                 } else if (state === 'inactive') {
-                  cellClass += 'bg-white/[0.01] opacity-25 cursor-not-allowed'
+                  cellClass +=
+                    'bg-[repeating-linear-gradient(-45deg,transparent,transparent_4px,rgba(255,255,255,0.04)_4px,rgba(255,255,255,0.04)_8px)] bg-zinc-900/50 opacity-50 cursor-not-allowed'
                 }
 
                 const canToggle = !busy && active && (state === 'empty' || state === 'open')
@@ -381,14 +388,16 @@ export function AdminWeekCalendar({
     return Math.min(Math.max(diff, 0), POSE_WEEK_DAYS - 1)
   })
 
-  const gridTimes = useMemo(
-    () => buildAdminGridTimes(calendarSettings, slots),
-    [calendarSettings, slots],
-  )
-
   const days = useMemo(
     () => Array.from({ length: POSE_WEEK_DAYS }, (_, i) => addDays(weekStart, i)),
     [weekStart],
+  )
+
+  const weekDayKeys = useMemo(() => days.map((day) => athensDateKey(day)), [days])
+
+  const gridTimes = useMemo(
+    () => buildAdminGridTimes(calendarSettings, slots, weekDayKeys),
+    [calendarSettings, slots, weekDayKeys],
   )
 
   const cellMap = useMemo(
