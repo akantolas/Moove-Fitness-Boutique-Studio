@@ -1,5 +1,5 @@
 import { cors, ensureAdmin, getSupabaseAdmin, getUserFromRequest, json, readJsonBody } from '../../_lib.js'
-import { CATALOG_PRICES_EUR, PLAN_KEYS } from '../../pricing.js'
+import { CATALOG_PRICES_EUR, PLAN_KEYS } from '../../_pricing.js'
 
 const PROFILE_SELECT = 'id, full_name, email, phone, division, role, avatar_url, created_at, updated_at'
 

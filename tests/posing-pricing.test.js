@@ -4,7 +4,7 @@ import {
   CATALOG_PRICES_EUR,
   getPayPalUrl,
   getRevolutUrl,
-} from './pricing.js'
+} from '../api/posing/_pricing.js'
 
 describe('payment link amounts', () => {
   for (const [planKey, amountEur] of Object.entries(CATALOG_PRICES_EUR)) {

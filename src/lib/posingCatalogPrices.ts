@@ -1,6 +1,6 @@
 import { site, type PosingPlanKey } from '../site'
 
-/** Admin-only catalog reference — mirrors api/posing/pricing.js */
+/** Admin-only catalog reference — mirrors api/posing/_pricing.js */
 export const CATALOG_PRICES_EUR: Record<PosingPlanKey, number> = {
   single: 70,
   sapphire: 80,

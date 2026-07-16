@@ -550,6 +550,9 @@ export const en = {
         calendar_download_failed: 'Could not download calendar file. Please try again.',
         not_confirmed: 'Calendar is only available for confirmed sessions.',
         calendar_unavailable: 'Session details for calendar are unavailable.',
+        calendar_failed: 'Could not download calendar file. Please try again.',
+        unauthorized: 'Sign in to download your calendar file.',
+        method_not_allowed: 'Calendar download is not available yet. Please try again shortly.',
       },
     },
     calendar: {

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { sendPaidConfirmationEmail } from '../email/sendPaidConfirmation.js'
+import { sendPaidConfirmationEmail } from '../../lib/email/sendPaidConfirmation.js'
 import { activatePackagePayment, getSupabaseAdmin, json, readRawBody } from './_lib.js'
 
 export const config = {

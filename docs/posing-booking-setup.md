@@ -141,7 +141,7 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 **Ακύρωση** confirmed κράτησης: cancel `.ics` με ίδιο `UID` (`posing-booking-{id}@moovefitness.gr`) ώστε να αφαιρείται το event.
 
-Υλοποίηση: `api/email/calendar.js`, `api/email/sendSessionCalendar.js`. Timezone: `Europe/Athens`. Location: `Online (WhatsApp)`.
+Υλοποίηση: `lib/email/calendar.js`, `lib/email/sendSessionCalendar.js`. Timezone: `Europe/Athens`. Location: `Online (WhatsApp)`.
 
 Tests: `npm run test:calendar`
 

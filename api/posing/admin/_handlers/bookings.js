@@ -1,4 +1,4 @@
-import { sendPaidConfirmationEmail } from '../../../email/sendPaidConfirmation.js'
+import { sendPaidConfirmationEmail } from '../../../../lib/email/sendPaidConfirmation.js'
 import {
   activatePackagePayment,
   cors,

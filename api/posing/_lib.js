@@ -3,7 +3,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { PLAN_KEYS } from './pricing.js'
+import { PLAN_KEYS } from './_pricing.js'
 
 export const PACKAGE_KEYS = PLAN_KEYS
 
@@ -238,7 +238,7 @@ export async function sendResendEmail({ from, to, subject, html, text, idempoten
       typeof file.content === 'string' && /^[A-Za-z0-9+/=\r\n]+$/.test(file.content.trim())
         ? file.content.trim()
         : Buffer.from(file.content, 'utf8').toString('base64'),
-    content_type: file.contentType ?? 'application/octet-stream',
+    ...(file.contentType ? { content_type: file.contentType.split(';')[0].trim() } : {}),
   }))
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -330,13 +330,23 @@ export async function sendPosingEmailReliable(payload) {
   try {
     return await sendPosingEmail(payload)
   } catch (error) {
-    if (!payload.text) throw error
-    const { text: _text, ...withoutText } = payload
-    return await sendPosingEmail(withoutText)
+    if (payload.text) {
+      const { text: _text, ...withoutText } = payload
+      try {
+        return await sendPosingEmail(withoutText)
+      } catch (retryError) {
+        if (!payload.attachments?.length) throw retryError
+      }
+    }
+    if (payload.attachments?.length) {
+      const { attachments: _attachments, ...withoutAttachments } = payload
+      return await sendPosingEmail(withoutAttachments)
+    }
+    throw error
   }
 }
 
-export { buildConfirmationEmail, buildPaymentEmail } from '../email/templates.js'
+export { buildConfirmationEmail, buildPaymentEmail } from '../../lib/email/templates.js'
 
 export async function findBookablePackage(supabase, userId, planKey) {
   const now = new Date().toISOString()

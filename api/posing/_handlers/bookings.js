@@ -2,16 +2,16 @@ import {
   buildAdminBookingNotifyEmail,
   buildConfirmationEmail,
   buildPaymentEmail,
-} from '../../email/templates.js'
+} from '../../../lib/email/templates.js'
 import {
   buildCalendarForBooking,
-} from '../../email/sendSessionCalendar.js'
+} from '../../../lib/email/sendSessionCalendar.js'
 import {
   fetchBookingCancellationSnapshot,
   packageNameForLocale,
   sendCancellationEmails,
   sessionTimeForLocale,
-} from '../../email/sendCancellationEmails.js'
+} from '../../../lib/email/sendCancellationEmails.js'
 import {
   cancelPosingBooking,
   cors,
@@ -31,7 +31,7 @@ import {
   getPayPalUrl,
   getRevolutUrl,
   resolvePlanPrice,
-} from '../pricing.js'
+} from '../_pricing.js'
 
 async function sendBookingNotify({
   from,

@@ -1,8 +1,8 @@
 import {
   buildContactAdminEmail,
   buildContactAutoReplyEmail,
-} from './email/templates.js'
-import { escapeHtml } from './email/brand.js'
+} from '../lib/email/templates.js'
+import { escapeHtml } from '../lib/email/brand.js'
 import {
   cors,
   hasEmailTransportConfig,

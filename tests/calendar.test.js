@@ -5,7 +5,7 @@ import {
   buildBookingCalendarArtifacts,
   buildGoogleCalendarUrl,
   buildIcsEvent,
-} from './calendar.js'
+} from '../lib/email/calendar.js'
 
 const BOOKING_ID = 'abc123-test-booking'
 const START_AT = '2026-07-20T12:00:00.000Z'
@@ -116,7 +116,7 @@ describe('buildBookingCalendarArtifacts', () => {
     })
 
     assert.equal(artifacts.attachment.filename, 'move-pose-session.ics')
-    assert.equal(artifacts.attachment.contentType, 'text/calendar; charset=utf-8')
+    assert.equal(artifacts.attachment.contentType, 'text/calendar')
     assert.ok(artifacts.ics.includes(bookingCalendarUid(BOOKING_ID)))
     assert.ok(artifacts.googleCalendarUrl?.startsWith('https://calendar.google.com/calendar/render?'))
   })
