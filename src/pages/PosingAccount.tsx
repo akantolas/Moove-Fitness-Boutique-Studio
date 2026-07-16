@@ -14,6 +14,7 @@ import type { PosingBooking, UserPackage } from '../lib/posingApi'
 import { cancelPosingBooking, downloadBookingCalendar } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
+import { AccountHistoryItem, AccountHistoryModal } from '../components/AccountHistoryModal'
 import { AccountProfileHero } from '../components/AccountProfileHero'
 import { AccountProfileSection } from '../components/AccountProfileSection'
 import { AccountSecuritySection } from '../components/AccountSecuritySection'
@@ -22,7 +23,6 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { PasswordInput } from '../components/PasswordInput'
 import { isBookingSlotUpcoming } from '../lib/posingDates'
 import {
-  bookingDisplayStatus,
   bookingStatusChipClass,
   bookingStatusLabel,
   planKeyLabel,
@@ -30,6 +30,12 @@ import {
 import { sumActiveSessionsRemaining } from '../lib/posingPackages'
 
 const cardClass = 'rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6'
+const HISTORY_PREVIEW_COUNT = 5
+
+function bookingSlotTime(booking: PosingBooking) {
+  if (!booking.slot?.start_at) return 0
+  return new Date(booking.slot.start_at).getTime()
+}
 
 function formatSlotTime(startAt: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
@@ -100,6 +106,7 @@ export function PosingAccountPage() {
   const [cancelError, setCancelError] = useState('')
   const [calendarBusyId, setCalendarBusyId] = useState<string | null>(null)
   const [calendarError, setCalendarError] = useState('')
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const lastFetchedUserId = useRef<string | null>(null)
 
   async function reloadAccountData() {
@@ -236,14 +243,24 @@ export function PosingAccountPage() {
 
   const pastBookings = useMemo(
     () =>
-      bookings.filter(
-        (b) =>
-          b.status === 'completed' ||
-          b.status === 'cancelled' ||
-          (b.status === 'confirmed' && !isBookingSlotUpcoming(b.slot)),
-      ),
+      bookings
+        .filter(
+          (b) =>
+            b.status === 'completed' ||
+            b.status === 'cancelled' ||
+            (b.status === 'confirmed' && !isBookingSlotUpcoming(b.slot)),
+        )
+        .sort((a, b) => bookingSlotTime(b) - bookingSlotTime(a)),
     [bookings],
   )
+
+  const historyPreview = useMemo(
+    () => pastBookings.slice(0, HISTORY_PREVIEW_COUNT),
+    [pastBookings],
+  )
+
+  const getPackageName = (index: number) =>
+    dictionary.posing.pricing.packages[index]?.name
 
   const awaitingData = Boolean(user?.id) && lastFetchedUserId.current !== user?.id
   const pageReady = !loading && Boolean(user) && !awaitingData && !dataLoading
@@ -571,32 +588,36 @@ export function PosingAccountPage() {
         <section className={`mt-6 ${cardClass}`}>
           <h2 className="text-lg font-semibold text-white">{t('posing.account.history')}</h2>
           <ul className="mt-4 space-y-3">
-            {pastBookings.map((booking) => {
-              const displayStatus = bookingDisplayStatus(booking)
-              return (
-              <li
+            {historyPreview.map((booking) => (
+              <AccountHistoryItem
                 key={booking.id}
-                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 opacity-80"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="text-sm text-white">
-                    {booking.slot ? formatSlotTime(booking.slot.start_at, locale) : '—'}
-                  </p>
-                  <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(displayStatus)}`}
-                  >
-                    {bookingStatusLabel(displayStatus, t)}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-white/50">
-                  {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
-                </p>
-              </li>
-              )
-            })}
+                booking={booking}
+                locale={locale}
+                planName={planKeyLabel(booking.plan_key, getPackageName, t)}
+                t={t}
+              />
+            ))}
           </ul>
+          {pastBookings.length > HISTORY_PREVIEW_COUNT ? (
+            <button
+              type="button"
+              onClick={() => setHistoryModalOpen(true)}
+              className="mt-4 w-full rounded-full border border-fuchsia-300/30 px-4 py-2.5 text-sm font-semibold text-fuchsia-100 transition hover:border-fuchsia-300/50 hover:bg-fuchsia-400/10 hover:shadow-[0_0_24px_-8px_rgba(244,114,182,0.45)]"
+            >
+              {t('posing.account.showAllHistory', { count: pastBookings.length })}
+            </button>
+          ) : null}
         </section>
       ) : null}
+
+      <AccountHistoryModal
+        open={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        bookings={pastBookings}
+        locale={locale}
+        getPackageName={getPackageName}
+        t={t}
+      />
 
       <ConfirmDialog
         open={cancelTarget !== null}
