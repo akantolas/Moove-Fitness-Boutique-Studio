@@ -8,7 +8,7 @@
 2. **Authentication → Providers:** ενεργοποίησε Email (password), **Google** και **Apple** (βλ. §1b)
 3. **Authentication → URL Configuration:**
    - **Site URL:** `https://moovefitness.gr`
-   - **Redirect URLs:** πρόσθεσε `https://moovefitness.gr/**`, `https://moovefitness.gr/posing/account`, και `https://moovefitness.gr/posing/reset-password`
+   - **Redirect URLs:** πρόσθεσε `https://moovefitness.gr/**`, `https://www.moovefitness.gr/**`, `https://moovefitness.gr/posing/auth/callback`, `https://moovefitness.gr/posing/account`, και `https://moovefitness.gr/posing/reset-password`
    - (Μην αφήνεις `http://localhost:3000` — τα email links θα σε πετάνε εκεί)
 4. **SQL Editor:** τρέξε τα migrations:
    - `supabase/migrations/001_posing_booking.sql`

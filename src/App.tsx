@@ -14,6 +14,7 @@ import { TermsOfUsePage } from './pages/TermsOfUse'
 import { PosingPage } from './pages/Posing'
 import { PosingAboutPage } from './pages/PosingAbout'
 import { PosingForgotPasswordPage, PosingLoginPage, PosingResetPasswordPage, PosingSignupPage } from './pages/PosingAuth'
+import { PosingOAuthCallbackPage, PosingOAuthReturnGuard } from './pages/PosingOAuthCallback'
 import { PosingAccountPage } from './pages/PosingAccount'
 import { PosingAccountSettingsPage } from './pages/PosingAccountSettings'
 import { PosingAdminPage } from './pages/PosingAdmin'
@@ -24,6 +25,7 @@ export default function App() {
       <ScrollToTop />
       <PosingAuthProvider>
         <ConditionalAnalytics />
+        <PosingOAuthReturnGuard />
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
@@ -38,6 +40,7 @@ export default function App() {
             <Route path="/posing/about" element={<PosingAboutPage />} />
             <Route path="/posing/login" element={<PosingLoginPage />} />
             <Route path="/posing/signup" element={<PosingSignupPage />} />
+            <Route path="/posing/auth/callback" element={<PosingOAuthCallbackPage />} />
             <Route path="/posing/forgot-password" element={<PosingForgotPasswordPage />} />
             <Route path="/posing/reset-password" element={<PosingResetPasswordPage />} />
             <Route path="/posing/account" element={<PosingAccountPage />} />

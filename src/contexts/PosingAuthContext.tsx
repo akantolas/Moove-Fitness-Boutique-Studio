@@ -78,10 +78,12 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
   const signInWithOAuth = useCallback(async (provider: OAuthProvider, redirectPath: string) => {
     const supabase = createSupabaseClient()
     const safeRedirect = sanitizeAuthRedirect(redirectPath)
+    const callbackUrl = new URL('/posing/auth/callback', window.location.origin)
+    callbackUrl.searchParams.set('redirect', safeRedirect)
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}${safeRedirect}`,
+        redirectTo: callbackUrl.toString(),
         ...(provider === 'apple' ? { scopes: 'name email' } : {}),
       },
     })
