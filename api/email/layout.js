@@ -3,15 +3,33 @@ import { escapeHtml } from './brand.js'
 const BODY_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 const DISPLAY_FONT = "Georgia, 'Times New Roman', Times, serif"
 
-function renderCta({ href, label, bg, color, border }) {
+function renderCta({ href, label, bg, color, border, marginTop = '28px' }) {
   if (!href || !label) return ''
   const safeHref = escapeHtml(href)
   const safeLabel = escapeHtml(label)
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 8px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:${marginTop} 0 8px;">
       <tr>
         <td align="center" style="border-radius:999px;background:${bg};${border ? `border:1px solid ${border};` : ''}">
           <a href="${safeHref}" target="_blank" style="display:inline-block;padding:14px 32px;font-family:${BODY_FONT};font-size:15px;font-weight:600;color:${color};text-decoration:none;border-radius:999px;">
+            ${safeLabel}
+          </a>
+        </td>
+      </tr>
+    </table>`
+}
+
+function renderSecondaryCta({ href, label, colors, brandType }) {
+  if (!href || !label) return ''
+  const border = brandType === 'posing' ? colors.accent : colors.accent
+  const color = brandType === 'posing' ? colors.accent : colors.text
+  const safeHref = escapeHtml(href)
+  const safeLabel = escapeHtml(label)
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 8px;">
+      <tr>
+        <td align="center" style="border-radius:999px;border:1px solid ${border};">
+          <a href="${safeHref}" target="_blank" style="display:inline-block;padding:12px 28px;font-family:${BODY_FONT};font-size:14px;font-weight:600;color:${color};text-decoration:none;border-radius:999px;">
             ${safeLabel}
           </a>
         </td>
@@ -77,8 +95,20 @@ function renderPosingHeader(brand) {
 }
 
 function renderMooveHeader(brand) {
+  const logoBlock = brand.logoUrl
+    ? `
+      <tr>
+        <td align="center" style="padding:0 0 16px;">
+          <div style="width:56px;height:56px;border-radius:14px;background:${brand.colors.ctaBg};display:inline-block;line-height:56px;text-align:center;">
+            <span style="font-family:${DISPLAY_FONT};font-size:22px;color:${brand.colors.ctaText};">M</span>
+          </div>
+        </td>
+      </tr>`
+    : ''
+
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      ${logoBlock}
       <tr>
         <td align="center" style="font-family:${DISPLAY_FONT};font-size:28px;font-weight:400;color:${brand.colors.text};letter-spacing:-0.02em;">
           ${escapeHtml(brand.name)}
@@ -89,23 +119,48 @@ function renderMooveHeader(brand) {
           ${escapeHtml(brand.subtitle)}
         </td>
       </tr>
+      <tr>
+        <td align="center" style="padding-top:16px;">
+          <div style="width:48px;height:3px;background:${brand.colors.accent};border-radius:2px;margin:0 auto;"></div>
+        </td>
+      </tr>
     </table>`
 }
 
-function renderFooter({ brand, locale }) {
+function renderFooter({ brand, locale, brandType }) {
   const isEl = locale === 'el'
   const socialLabel = isEl ? 'Ακολούθησέ μας' : 'Follow us'
   const contactLabel = isEl ? 'Επικοινωνία' : 'Contact'
+  const whatsappLabel = isEl ? 'WhatsApp (συνεδρίες)' : 'WhatsApp (sessions)'
+
+  const contactLines =
+    brandType === 'posing' && brand.whatsapp
+      ? `
+          <p style="margin:0 0 4px;">
+            <a href="${escapeHtml(brand.whatsappUrl())}" style="color:${brand.colors.accent};text-decoration:none;">${escapeHtml(whatsappLabel)}: ${escapeHtml(brand.whatsapp)}</a>
+          </p>
+          <p style="margin:0 0 4px;">
+            <a href="mailto:${escapeHtml(brand.email)}" style="color:${brand.colors.accent};text-decoration:none;">${escapeHtml(brand.email)}</a>
+          </p>
+          <p style="margin:0 0 12px;">${escapeHtml(brand.phone)}</p>`
+      : `
+          <p style="margin:0 0 4px;">
+            <a href="mailto:${escapeHtml(brand.email)}" style="color:${brand.colors.accent};text-decoration:none;">${escapeHtml(brand.email)}</a>
+          </p>
+          <p style="margin:0 0 12px;">${escapeHtml(brand.phone)}</p>`
+
+  const addressBlock =
+    brandType === 'moove' && brand.address
+      ? `<p style="margin:0 0 8px;">${escapeHtml(brand.address)}</p>`
+      : ''
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:32px;">
       <tr>
         <td style="border-top:1px solid ${brand.colors.cardBorder ?? brand.colors.divider};padding-top:24px;font-family:${BODY_FONT};font-size:12px;line-height:1.6;color:${brand.colors.muted};text-align:center;">
           <p style="margin:0 0 8px;font-weight:600;color:${brand.colors.text};">${contactLabel}</p>
-          <p style="margin:0 0 4px;">
-            <a href="mailto:${escapeHtml(brand.email)}" style="color:${brand.colors.accent};text-decoration:none;">${escapeHtml(brand.email)}</a>
-          </p>
-          <p style="margin:0 0 12px;">${escapeHtml(brand.phone)}</p>
+          ${addressBlock}
+          ${contactLines}
           <p style="margin:0 0 4px;font-weight:600;color:${brand.colors.text};">${socialLabel}</p>
           <p style="margin:0;">
             <a href="${escapeHtml(brand.instagram)}" style="color:${brand.colors.accent};text-decoration:none;">Instagram</a>
@@ -128,6 +183,8 @@ function renderFooter({ brand, locale }) {
  * @param {string} [options.bodyHtml] - extra HTML inside card
  * @param {string} [options.ctaHref]
  * @param {string} [options.ctaLabel]
+ * @param {string} [options.secondaryCtaHref]
+ * @param {string} [options.secondaryCtaLabel]
  * @param {string} [options.badgeLabel]
  * @param {string} [options.badgeBg]
  * @param {string} [options.badgeColor]
@@ -144,6 +201,8 @@ export function renderEmailLayout({
   bodyHtml = '',
   ctaHref,
   ctaLabel,
+  secondaryCtaHref,
+  secondaryCtaLabel,
   badgeLabel,
   badgeBg,
   badgeColor,
@@ -189,7 +248,8 @@ export function renderEmailLayout({
               ${renderDetailsBlock({ rows: details, colors })}
               ${bodyHtml}
               ${renderCta({ href: ctaHref, label: ctaLabel, bg: ctaBg, color: ctaColor, border: ctaBorder })}
-              ${renderFooter({ brand, locale })}
+              ${renderSecondaryCta({ href: secondaryCtaHref, label: secondaryCtaLabel, colors, brandType })}
+              ${renderFooter({ brand, locale, brandType })}
             </td>
           </tr>
         </table>
@@ -202,7 +262,20 @@ export function renderEmailLayout({
   return html
 }
 
-export function buildPlainText({ title, greeting, intro, details, ctaHref, ctaLabel, brand, locale }) {
+export function buildPlainText({
+  title,
+  greeting,
+  intro,
+  details,
+  bodyText,
+  ctaHref,
+  ctaLabel,
+  secondaryCtaHref,
+  secondaryCtaLabel,
+  brand,
+  locale,
+  brandType,
+}) {
   const isEl = locale === 'el'
   const lines = [title, '', greeting, intro, ''].filter(Boolean)
 
@@ -210,14 +283,29 @@ export function buildPlainText({ title, greeting, intro, details, ctaHref, ctaLa
     lines.push(`${row.label}: ${row.value}`)
   }
 
+  if (bodyText) {
+    lines.push('', bodyText)
+  }
+
   if (ctaHref && ctaLabel) {
     lines.push('', ctaLabel, ctaHref)
   }
 
+  if (secondaryCtaHref && secondaryCtaLabel) {
+    lines.push('', secondaryCtaLabel, secondaryCtaHref)
+  }
+
+  lines.push('', '—', brand.name)
+
+  if (brandType === 'posing' && brand.whatsapp) {
+    lines.push(`${isEl ? 'WhatsApp' : 'WhatsApp'}: ${brand.whatsapp}`, brand.whatsappUrl())
+  }
+
+  if (brand.address) {
+    lines.push(brand.address)
+  }
+
   lines.push(
-    '',
-    '—',
-    brand.name,
     brand.email,
     brand.phone,
     '',

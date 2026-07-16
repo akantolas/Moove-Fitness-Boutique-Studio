@@ -3,7 +3,7 @@ export const site = {
   name: 'Moove',
   tagline: 'Fitness Boutique Studio',
   /** Compact mark για bubbles / dark surfaces */
-  logoMark: '/logo-mark.png',
+  logoMark: '/pose1-transparent.png',
   /** Ιδιοκτήτρια & μοναδική γυμνάστρια */
   ownerName: 'Μαγδα Σαμαρά',
   ownerNameEn: 'Magda Samara',

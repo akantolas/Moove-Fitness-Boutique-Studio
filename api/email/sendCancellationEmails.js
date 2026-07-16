@@ -1,5 +1,5 @@
 import {
-  formatSessionTime,
+  formatSessionTimeWithZone,
   sendPosingEmailReliable,
 } from '../posing/_lib.js'
 import {
@@ -18,6 +18,7 @@ export async function sendCancellationEmails({
   notes,
   packageName,
   sessionTime,
+  durationMinutes,
 }) {
   const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
@@ -26,6 +27,8 @@ export async function sendCancellationEmails({
     attendeeName,
     packageName,
     sessionTime,
+    bookingId,
+    durationMinutes,
     previousStatus,
     locale,
   })
@@ -40,7 +43,7 @@ export async function sendCancellationEmails({
       idempotencyKey: `posing-cancel-customer-${bookingId}`,
     })
   } catch (err) {
-    console.error('cancellation customer email error:', err)
+    console.error('cancellation customer email error:', { bookingId, error: err })
     return { ok: false, error: 'customer_send_failed' }
   }
 
@@ -63,13 +66,14 @@ export async function sendCancellationEmails({
     await sendPosingEmailReliable({
       from,
       to: [notifyEmail],
+      replyTo: userEmail,
       subject: adminEmail.subject,
       html: adminEmail.html,
       text: adminEmail.text,
       idempotencyKey: `posing-cancel-notify-${bookingId}`,
     })
   } catch (err) {
-    console.error('cancellation admin notify error:', err)
+    console.error('cancellation admin notify error:', { bookingId, error: err })
     return { ok: false, error: 'admin_send_failed' }
   }
 
@@ -91,7 +95,7 @@ export async function fetchBookingCancellationSnapshot(supabase, bookingId) {
   const [{ data: plan }, { data: profile }, { data: authUser }] = await Promise.all([
     supabase
       .from('package_plans')
-      .select('name_en, name_el')
+      .select('name_en, name_el, duration_minutes')
       .eq('key', booking.plan_key)
       .maybeSingle(),
     supabase
@@ -119,6 +123,7 @@ export async function fetchBookingCancellationSnapshot(supabase, bookingId) {
     phone: profile?.phone ?? null,
     division: profile?.division ?? null,
     notes: profile?.notes ?? null,
+    durationMinutes: plan?.duration_minutes ?? null,
     packageNameEl: plan?.name_el ?? booking.plan_key,
     packageNameEn: plan?.name_en ?? booking.plan_key,
     sessionStartAt: slot.start_at,
@@ -130,5 +135,5 @@ export function packageNameForLocale(snapshot, locale) {
 }
 
 export function sessionTimeForLocale(snapshot, locale) {
-  return formatSessionTime(snapshot.sessionStartAt, locale)
+  return formatSessionTimeWithZone(snapshot.sessionStartAt, locale)
 }

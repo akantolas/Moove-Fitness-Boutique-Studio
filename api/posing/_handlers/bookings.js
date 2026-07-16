@@ -14,13 +14,14 @@ import {
   cors,
   createStripeCheckoutUrl,
   findBookablePackage,
-  formatSessionTime,
+  formatSessionTimeWithZone,
   getSupabaseAdmin,
   getUserFromRequest,
   json,
+  normalizeBookingLocale,
   PACKAGE_KEYS,
   readJsonBody,
-  sendPosingEmail,
+  sendPosingEmailReliable,
 } from '../_lib.js'
 
 async function sendBookingNotify({
@@ -34,6 +35,7 @@ async function sendBookingNotify({
   sessionTime,
   bookingId,
   status,
+  stripeLink,
   locale,
 }) {
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
@@ -49,12 +51,14 @@ async function sendBookingNotify({
     sessionTime,
     bookingId,
     status,
+    stripeLink,
     locale,
   })
 
-  await sendPosingEmail({
+  await sendPosingEmailReliable({
     from,
     to: [notifyEmail],
+    replyTo: userEmail,
     subject,
     html,
     text,
@@ -75,7 +79,7 @@ export async function handleBookings(req, res) {
       return json(res, 400, { ok: false, error: 'missing_id' })
     }
 
-    const locale = req.query?.locale === 'en' ? 'en' : 'el'
+    const locale = normalizeBookingLocale(req.query?.locale)
 
     try {
       const supabase = getSupabaseAdmin()
@@ -99,21 +103,24 @@ export async function handleBookings(req, res) {
       }
 
       if (!result.already && snapshot) {
-        try {
-          await sendCancellationEmails({
+        const emailResult = await sendCancellationEmails({
+          bookingId: snapshot.bookingId,
+          locale,
+          previousStatus: snapshot.previousStatus,
+          attendeeName: snapshot.attendeeName,
+          userEmail: snapshot.userEmail,
+          phone: snapshot.phone,
+          division: snapshot.division,
+          notes: snapshot.notes,
+          durationMinutes: snapshot.durationMinutes,
+          packageName: packageNameForLocale(snapshot, locale),
+          sessionTime: sessionTimeForLocale(snapshot, locale),
+        })
+        if (!emailResult.ok) {
+          console.error('posing cancellation email failed:', {
             bookingId: snapshot.bookingId,
-            locale,
-            previousStatus: snapshot.previousStatus,
-            attendeeName: snapshot.attendeeName,
-            userEmail: snapshot.userEmail,
-            phone: snapshot.phone,
-            division: snapshot.division,
-            notes: snapshot.notes,
-            packageName: packageNameForLocale(snapshot, locale),
-            sessionTime: sessionTimeForLocale(snapshot, locale),
+            error: emailResult.error,
           })
-        } catch (error) {
-          console.error('posing cancellation email error:', error)
         }
       }
 
@@ -136,7 +143,9 @@ export async function handleBookings(req, res) {
     return json(res, 400, { ok: false, error: 'invalid_json' })
   }
 
-  const { slot_id: slotId, plan_key: planKey, locale = 'el' } = body
+  const { slot_id: slotId, plan_key: planKey } = body
+  const bookingLocale = normalizeBookingLocale(body.locale)
+
   if (!slotId || !planKey || !PACKAGE_KEYS.includes(planKey)) {
     return json(res, 400, { ok: false, error: 'invalid_payload' })
   }
@@ -166,7 +175,7 @@ export async function handleBookings(req, res) {
 
   const { data: plan } = await supabase
     .from('package_plans')
-    .select('key, name_en, name_el, sessions_total, period_days')
+    .select('key, name_en, name_el, sessions_total, period_days, duration_minutes')
     .eq('key', planKey)
     .single()
 
@@ -187,8 +196,9 @@ export async function handleBookings(req, res) {
   const profilePhone = profile?.phone ?? null
   const profileDivision = profile?.division ?? null
   const profileNotes = profile?.notes ?? null
-  const packageName = locale === 'el' ? plan.name_el : plan.name_en
-  const sessionTime = formatSessionTime(slot.start_at, locale)
+  const packageName = bookingLocale === 'el' ? plan.name_el : plan.name_en
+  const sessionTime = formatSessionTimeWithZone(slot.start_at, bookingLocale)
+  const durationMinutes = plan.duration_minutes
   const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
 
   const bookable = await findBookablePackage(supabase, user.id, planKey)
@@ -211,6 +221,7 @@ export async function handleBookings(req, res) {
         plan_key: planKey,
         user_package_id: userPackage.id,
         status: 'confirmed',
+        locale: bookingLocale,
       })
       .select('id')
       .single()
@@ -233,10 +244,12 @@ export async function handleBookings(req, res) {
         attendeeName: profileName,
         packageName,
         sessionTime,
-        locale,
+        bookingId: booking.id,
+        durationMinutes,
+        locale: bookingLocale,
       })
 
-      await sendPosingEmail({
+      await sendPosingEmailReliable({
         from,
         to: [userEmail],
         subject: confirmation.subject,
@@ -255,10 +268,10 @@ export async function handleBookings(req, res) {
         sessionTime,
         bookingId: booking.id,
         status: 'confirmed',
-        locale,
+        locale: bookingLocale,
       })
     } catch (error) {
-      console.error('posing included session email error:', error)
+      console.error('posing included session email error:', { bookingId: booking.id, error })
     }
 
     return json(res, 201, {
@@ -268,7 +281,7 @@ export async function handleBookings(req, res) {
       status: 'confirmed',
       sessions_remaining: userPackage.sessions_total - userPackage.sessions_used - 1,
       message:
-        locale === 'el'
+        bookingLocale === 'el'
           ? 'Η συνεδρία επιβεβαιώθηκε.'
           : 'Your session is confirmed.',
     })
@@ -304,6 +317,7 @@ export async function handleBookings(req, res) {
       plan_key: planKey,
       user_package_id: userPackage.id,
       status: 'pending_payment',
+      locale: bookingLocale,
     })
     .select('id')
     .single()
@@ -320,6 +334,7 @@ export async function handleBookings(req, res) {
       bookingId: booking.id,
       userPackageId: userPackage.id,
       customerEmail: userEmail,
+      locale: bookingLocale,
     })
     stripeLink = checkout.url
     if (checkout.sessionId) {
@@ -329,7 +344,7 @@ export async function handleBookings(req, res) {
         .eq('id', booking.id)
     }
   } catch (error) {
-    console.error('stripe checkout error:', error)
+    console.error('stripe checkout error:', { bookingId: booking.id, error })
   }
 
   try {
@@ -338,10 +353,12 @@ export async function handleBookings(req, res) {
       packageName,
       sessionTime,
       stripeLink,
-      locale,
+      bookingId: booking.id,
+      durationMinutes,
+      locale: bookingLocale,
     })
 
-    await sendPosingEmail({
+    await sendPosingEmailReliable({
       from,
       to: [userEmail],
       subject: payment.subject,
@@ -360,7 +377,8 @@ export async function handleBookings(req, res) {
       sessionTime,
       bookingId: booking.id,
       status: 'pending_payment',
-      locale,
+      stripeLink,
+      locale: bookingLocale,
     })
 
     await supabase
@@ -368,7 +386,7 @@ export async function handleBookings(req, res) {
       .update({ payment_email_sent_at: new Date().toISOString() })
       .eq('id', booking.id)
   } catch (error) {
-    console.error('posing booking email error:', error)
+    console.error('posing booking email error:', { bookingId: booking.id, error })
   }
 
   return json(res, 201, {
@@ -377,7 +395,7 @@ export async function handleBookings(req, res) {
     booking_type: 'new_package',
     status: 'pending_payment',
     message:
-      locale === 'el'
+      bookingLocale === 'el'
         ? 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου για πληρωμή.'
         : 'Booking reserved. Check your email to complete payment.',
   })

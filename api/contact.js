@@ -66,24 +66,36 @@ function logEmailError(label, error) {
   }
 }
 
-function buildLegacyAdminEmail({ name, email, message }) {
+function buildLegacyAdminEmail({ name, email, message, locale = 'el' }) {
+  const isEl = locale === 'el'
   const safeName = escapeHtml(name)
   const safeEmail = escapeHtml(email)
   const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>')
 
   return {
-    subject: `Νέο μήνυμα επικοινωνίας — ${name}`,
+    subject: isEl
+      ? `Νέο μήνυμα επικοινωνίας — ${name}`
+      : `New contact message — ${name}`,
     html: `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-      <p><strong>Όνομα:</strong> ${safeName}</p>
+      <p><strong>${isEl ? 'Όνομα' : 'Name'}:</strong> ${safeName}</p>
       <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
-      <p><strong>Μήνυμα:</strong></p>
+      <p><strong>${isEl ? 'Μήνυμα' : 'Message'}:</strong></p>
       <p style="white-space:pre-wrap;">${safeMessage}</p>
     </body></html>`,
+    text: `${isEl ? 'Όνομα' : 'Name'}: ${name}\nEmail: ${email}\n\n${isEl ? 'Μήνυμα' : 'Message'}:\n${message}`,
   }
 }
 
-async function sendAdminNotifyEmail({ fromEmail, notifyEmail, customerEmail, name, email, message }) {
-  const adminEmail = buildContactAdminEmail({ name, email, message })
+async function sendAdminNotifyEmail({
+  fromEmail,
+  notifyEmail,
+  customerEmail,
+  name,
+  email,
+  message,
+  locale = 'el',
+}) {
+  const adminEmail = buildContactAdminEmail({ name, email, message, locale })
 
   try {
     await sendPosingEmailReliable({
@@ -99,13 +111,14 @@ async function sendAdminNotifyEmail({ fromEmail, notifyEmail, customerEmail, nam
     logEmailError('contact premium admin email error', error)
   }
 
-  const legacy = buildLegacyAdminEmail({ name, email, message })
+  const legacy = buildLegacyAdminEmail({ name, email, message, locale })
   await sendPosingEmailReliable({
     from: fromEmail,
     to: [notifyEmail],
     replyTo: customerEmail,
     subject: legacy.subject,
     html: legacy.html,
+    text: legacy.text,
   })
 }
 
@@ -137,6 +150,8 @@ export default async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'invalid_email' })
     }
 
+    const locale = body.locale === 'en' ? 'en' : 'el'
+
     const notifyEmail = getContactNotifyEmail()
     const fromEmail = getContactFromEmail()
     const replyFromEmail = getContactReplyFromEmail()
@@ -148,7 +163,7 @@ export default async function handler(req, res) {
 
     console.info('contact email send', { from: fromEmail, replyFrom: replyFromEmail, to: notifyEmail })
 
-    const autoReply = buildContactAutoReplyEmail({ name })
+    const autoReply = buildContactAutoReplyEmail({ name, locale })
 
     try {
       await sendAdminNotifyEmail({
@@ -158,6 +173,7 @@ export default async function handler(req, res) {
         name,
         email,
         message,
+        locale,
       })
     } catch (error) {
       logEmailError('contact admin email error', error)

@@ -107,7 +107,7 @@ export async function handleAdminBookings(req, res) {
 
       const { data: booking } = await supabase
         .from('posing_bookings')
-        .select('id, status, user_package_id')
+        .select('id, status, user_package_id, locale')
         .eq('id', bookingId)
         .maybeSingle()
 
@@ -131,10 +131,14 @@ export async function handleAdminBookings(req, res) {
       }
 
       if (!result.already) {
-        try {
-          await sendPaidConfirmationEmail(bookingId)
-        } catch (error) {
-          console.error('admin manual confirm paid confirmation email error:', error)
+        const emailResult = await sendPaidConfirmationEmail(bookingId, {
+          locale: booking?.locale,
+        })
+        if (!emailResult.ok) {
+          console.error('admin manual confirm paid confirmation email failed:', {
+            bookingId,
+            error: emailResult.error,
+          })
         }
       }
 

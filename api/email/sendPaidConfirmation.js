@@ -1,13 +1,18 @@
-import { formatSessionTime, getSupabaseAdmin, sendPosingEmail } from '../posing/_lib.js'
+import {
+  formatSessionTimeWithZone,
+  getSupabaseAdmin,
+  normalizeBookingLocale,
+  sendPosingEmailReliable,
+} from '../posing/_lib.js'
 import { buildPaidConfirmationEmail } from './templates.js'
 
-export async function sendPaidConfirmationEmail(bookingId, { locale = 'el' } = {}) {
+export async function sendPaidConfirmationEmail(bookingId, { locale: localeOverride } = {}) {
   const supabase = getSupabaseAdmin()
 
   const { data: booking, error } = await supabase
     .from('posing_bookings')
     .select(
-      'id, plan_key, user_id, slot:availability_slots(start_at)',
+      'id, plan_key, locale, user_id, slot:availability_slots(start_at)',
     )
     .eq('id', bookingId)
     .maybeSingle()
@@ -23,10 +28,12 @@ export async function sendPaidConfirmationEmail(bookingId, { locale = 'el' } = {
     return { ok: false, error: 'missing_slot' }
   }
 
+  const locale = normalizeBookingLocale(booking.locale ?? localeOverride)
+
   const [{ data: plan }, { data: profile }, { data: authUser }] = await Promise.all([
     supabase
       .from('package_plans')
-      .select('name_en, name_el')
+      .select('name_en, name_el, duration_minutes')
       .eq('key', booking.plan_key)
       .maybeSingle(),
     supabase
@@ -50,18 +57,20 @@ export async function sendPaidConfirmationEmail(bookingId, { locale = 'el' } = {
     'there'
 
   const packageName = locale === 'el' ? plan?.name_el : plan?.name_en
-  const sessionTime = formatSessionTime(slot.start_at, locale)
+  const sessionTime = formatSessionTimeWithZone(slot.start_at, locale)
   const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
 
   const { subject, html, text } = buildPaidConfirmationEmail({
     attendeeName,
     packageName: packageName ?? booking.plan_key,
     sessionTime,
+    bookingId: booking.id,
+    durationMinutes: plan?.duration_minutes,
     locale,
   })
 
   try {
-    await sendPosingEmail({
+    await sendPosingEmailReliable({
       from,
       to: [userEmail],
       subject,
@@ -71,7 +80,7 @@ export async function sendPaidConfirmationEmail(bookingId, { locale = 'el' } = {
     })
     return { ok: true }
   } catch (err) {
-    console.error('paid confirmation email send error:', err)
+    console.error('paid confirmation email send error:', { bookingId, error: err })
     return { ok: false, error: 'send_failed' }
   }
 }

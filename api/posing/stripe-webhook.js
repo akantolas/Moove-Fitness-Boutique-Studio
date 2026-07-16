@@ -73,10 +73,14 @@ export default async function handler(req, res) {
   }
 
   if (!result.already) {
-    try {
-      await sendPaidConfirmationEmail(bookingId)
-    } catch (error) {
-      console.error('stripe webhook paid confirmation email error:', error)
+    const emailResult = await sendPaidConfirmationEmail(bookingId, {
+      locale: session?.metadata?.locale,
+    })
+    if (!emailResult.ok) {
+      console.error('stripe webhook paid confirmation email failed:', {
+        bookingId,
+        error: emailResult.error,
+      })
     }
   }
 

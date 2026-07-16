@@ -9,8 +9,11 @@ function posingTemplate({
   intro,
   details,
   bodyHtml,
+  bodyText,
   ctaHref,
   ctaLabel,
+  secondaryCtaHref,
+  secondaryCtaLabel,
   badgeLabel,
   badgeBg,
   badgeColor,
@@ -28,6 +31,8 @@ function posingTemplate({
     bodyHtml,
     ctaHref,
     ctaLabel,
+    secondaryCtaHref,
+    secondaryCtaLabel,
     badgeLabel,
     badgeBg,
     badgeColor,
@@ -38,10 +43,14 @@ function posingTemplate({
     greeting,
     intro,
     details,
+    bodyText,
     ctaHref,
     ctaLabel,
+    secondaryCtaHref,
+    secondaryCtaLabel,
     brand: posingBrand,
     locale,
+    brandType: 'posing',
   })
 
   return { subject, html, text }
@@ -55,6 +64,7 @@ function mooveTemplate({
   intro,
   details,
   bodyHtml,
+  bodyText,
   ctaHref,
   ctaLabel,
   subject,
@@ -78,10 +88,12 @@ function mooveTemplate({
     greeting,
     intro,
     details,
+    bodyText,
     ctaHref,
     ctaLabel,
     brand: mooveBrand,
     locale,
+    brandType: 'moove',
   })
 
   return { subject, html, text }
@@ -91,6 +103,75 @@ export function formatProfileField(value, locale = 'el') {
   const trimmed = typeof value === 'string' ? value.trim() : ''
   if (trimmed) return trimmed
   return locale === 'el' ? '—' : 'Not provided'
+}
+
+export function formatBookingRef(bookingId) {
+  if (!bookingId) return '—'
+  return String(bookingId).slice(0, 8).toUpperCase()
+}
+
+export function formatDurationLabel(minutes, locale = 'el') {
+  const n = Number(minutes)
+  if (!n || Number.isNaN(n)) return locale === 'el' ? '—' : 'Not provided'
+  return locale === 'el' ? `${n} λεπτά` : `${n} min`
+}
+
+export function buildBookingDetailRows({
+  sessionTime,
+  packageName,
+  durationMinutes,
+  bookingId,
+  locale = 'el',
+}) {
+  const isEl = locale === 'el'
+  const rows = [
+    { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
+    { label: isEl ? 'Διάρκεια' : 'Duration', value: formatDurationLabel(durationMinutes, locale) },
+    { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
+  ]
+  if (bookingId) {
+    rows.push({
+      label: isEl ? 'Κωδικός κράτησης' : 'Booking ref',
+      value: formatBookingRef(bookingId),
+    })
+  }
+  return rows
+}
+
+export function buildPoseSessionInfoBlock({ locale, variant = 'full' }) {
+  const isEl = locale === 'el'
+  const colors = posingBrand.colors
+
+  if (variant === 'contact') {
+    const text = isEl
+      ? 'Για ερωτήσεις σχετικά με την ακύρωση, επικοινώνησε μαζί μας στο WhatsApp.'
+      : 'Questions about this cancellation? Reach us on WhatsApp.'
+    return {
+      bodyHtml: `
+        <div style="margin:20px 0 0;padding:16px;background:${colors.outerBg};border:1px solid ${colors.cardBorder};border-radius:12px;">
+          <p style="margin:0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${colors.muted};">${escapeHtml(text)}</p>
+        </div>`,
+      bodyText: text,
+      secondaryCtaHref: posingBrand.whatsappUrl(),
+      secondaryCtaLabel: isEl ? 'WhatsApp' : 'WhatsApp',
+    }
+  }
+
+  const text = isEl
+    ? 'Οι online συνεδρίες γίνονται μέσω WhatsApp στο κινητό. Θα επικοινωνήσουμε μαζί σου εκεί πριν την ώρα της συνεδρίας — πρότεινε να είσαι διαθέσιμος/η 15 λεπτά πριν.'
+    : 'Online sessions take place via WhatsApp on your phone. We will reach out there before your session — please be available 15 minutes early.'
+
+  return {
+    bodyHtml: `
+      <div style="margin:20px 0 0;padding:16px;background:${colors.outerBg};border:1px solid ${colors.cardBorder};border-radius:12px;">
+        <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${colors.muted};">${isEl ? 'Πώς γίνεται η συνεδρία' : 'How your session works'}</p>
+        <p style="margin:0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${colors.text};">${escapeHtml(text)}</p>
+        <p style="margin:12px 0 0;font-family:system-ui,sans-serif;font-size:14px;color:${colors.muted};">${escapeHtml(posingBrand.whatsapp)}</p>
+      </div>`,
+    bodyText: text,
+    secondaryCtaHref: posingBrand.whatsappUrl(),
+    secondaryCtaLabel: isEl ? 'WhatsApp' : 'WhatsApp',
+  }
 }
 
 export function buildAdminClientDetailRows({
@@ -107,7 +188,7 @@ export function buildAdminClientDetailRows({
   const notesTrimmed = typeof notes === 'string' ? notes.trim() : ''
   const notesValue = formatProfileField(notes, locale)
 
-  const rows = [
+  return [
     { label: isEl ? 'Πελάτης' : 'Client', value: profileName },
     { label: 'Email', value: userEmail, isLink: true },
     {
@@ -128,13 +209,23 @@ export function buildAdminClientDetailRows({
         : undefined,
     },
   ]
-
-  return rows
 }
 
 /** Customer — new booking pending payment */
-export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stripeLink, locale = 'el' }) {
+export function buildPaymentEmail({
+  attendeeName,
+  packageName,
+  sessionTime,
+  stripeLink,
+  bookingId,
+  durationMinutes,
+  locale = 'el',
+}) {
   const isEl = locale === 'el'
+  const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'full' })
+  const paymentFallback = isEl
+    ? 'Ο σύνδεσμος πληρωμής δεν είναι ρυθμισμένος — θα επικοινωνήσουμε σύντομα.'
+    : 'Payment link is not configured yet — we will contact you shortly.'
 
   return posingTemplate({
     locale,
@@ -147,25 +238,29 @@ export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stri
     title: isEl ? 'Η κράτησή σου καταχωρήθηκε' : 'Your booking is reserved',
     greeting: isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`,
     intro: isEl
-      ? 'Ολοκλήρωσε την πληρωμή για να επιβεβαιωθεί η συνεδρία σου.'
-      : 'Complete payment to confirm your session.',
-    details: [
-      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
-      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
-    ],
+      ? 'Η ώρα σου είναι κρατημένη. Ολοκλήρωσε την πληρωμή για να επιβεβαιωθεί η συνεδρία — μετά θα λάβεις email επιβεβαίωσης.'
+      : 'Your time slot is reserved. Complete payment to confirm your session — you will receive a confirmation email afterwards.',
+    details: buildBookingDetailRows({
+      sessionTime,
+      packageName,
+      durationMinutes,
+      bookingId,
+      locale,
+    }),
+    bodyHtml: `${sessionInfo.bodyHtml}${
+      !stripeLink
+        ? `<p style="margin:16px 0 0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${posingBrand.colors.muted};">${escapeHtml(paymentFallback)}</p>`
+        : ''
+    }`,
+    bodyText: `${sessionInfo.bodyText}${!stripeLink ? `\n\n${paymentFallback}` : ''}`,
     ctaHref: stripeLink || undefined,
     ctaLabel: stripeLink
       ? isEl
         ? 'Πληρωμή μέσω Stripe'
         : 'Pay with Stripe'
       : undefined,
-    bodyHtml: !stripeLink
-      ? `<p style="margin:16px 0 0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${posingBrand.colors.muted};">${
-          isEl
-            ? 'Ο σύνδεσμος πληρωμής δεν είναι ρυθμισμένος — θα επικοινωνήσουμε σύντομα.'
-            : 'Payment link is not configured yet — we will contact you shortly.'
-        }</p>`
-      : '',
+    secondaryCtaHref: sessionInfo.secondaryCtaHref,
+    secondaryCtaLabel: sessionInfo.secondaryCtaLabel,
     badgeLabel: isEl ? 'Εκκρεμεί πληρωμή' : 'Payment pending',
     badgeBg: posingBrand.colors.badgePending,
     badgeColor: posingBrand.colors.badgePendingText,
@@ -173,8 +268,16 @@ export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stri
 }
 
 /** Customer — session confirmed (included in active package) */
-export function buildConfirmationEmail({ attendeeName, packageName, sessionTime, locale = 'el' }) {
+export function buildConfirmationEmail({
+  attendeeName,
+  packageName,
+  sessionTime,
+  bookingId,
+  durationMinutes,
+  locale = 'el',
+}) {
   const isEl = locale === 'el'
+  const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'full' })
 
   return posingTemplate({
     locale,
@@ -185,14 +288,21 @@ export function buildConfirmationEmail({ attendeeName, packageName, sessionTime,
     title: isEl ? 'Η συνεδρία σου επιβεβαιώθηκε' : 'Your session is confirmed',
     greeting: isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`,
     intro: isEl
-      ? 'Σε περιμένουμε online. Μπορείς να δεις τις λεπτομέρειες στον λογαριασμό σου.'
-      : 'We look forward to seeing you online. View details in your account.',
-    details: [
-      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
-      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
-    ],
+      ? 'Σε περιμένουμε online. Δες τις λεπτομέρειες παρακάτω και βεβαιώσου ότι έχεις πρόσβαση στο WhatsApp.'
+      : 'We look forward to seeing you online. See the details below and make sure you can access WhatsApp.',
+    details: buildBookingDetailRows({
+      sessionTime,
+      packageName,
+      durationMinutes,
+      bookingId,
+      locale,
+    }),
+    bodyHtml: sessionInfo.bodyHtml,
+    bodyText: sessionInfo.bodyText,
     ctaHref: posingBrand.accountUrl(),
     ctaLabel: isEl ? 'Ο λογαριασμός μου' : 'My account',
+    secondaryCtaHref: sessionInfo.secondaryCtaHref,
+    secondaryCtaLabel: sessionInfo.secondaryCtaLabel,
     badgeLabel: isEl ? 'Επιβεβαιωμένη' : 'Confirmed',
     badgeBg: posingBrand.colors.badgeConfirmed,
     badgeColor: posingBrand.colors.badgeConfirmedText,
@@ -200,8 +310,16 @@ export function buildConfirmationEmail({ attendeeName, packageName, sessionTime,
 }
 
 /** Customer — payment completed, session confirmed */
-export function buildPaidConfirmationEmail({ attendeeName, packageName, sessionTime, locale = 'el' }) {
+export function buildPaidConfirmationEmail({
+  attendeeName,
+  packageName,
+  sessionTime,
+  bookingId,
+  durationMinutes,
+  locale = 'el',
+}) {
   const isEl = locale === 'el'
+  const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'full' })
 
   return posingTemplate({
     locale,
@@ -214,14 +332,21 @@ export function buildPaidConfirmationEmail({ attendeeName, packageName, sessionT
     title: isEl ? 'Η πληρωμή ολοκληρώθηκε' : 'Payment confirmed',
     greeting: isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`,
     intro: isEl
-      ? 'Η συνεδρία σου είναι πλέον επιβεβαιωμένη. Σε περιμένουμε!'
-      : 'Your session is now confirmed. See you soon!',
-    details: [
-      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
-      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
-    ],
+      ? 'Η συνεδρία σου είναι πλέον επιβεβαιωμένη. Θα επικοινωνήσουμε μαζί σου στο WhatsApp πριν την ώρα της συνεδρίας.'
+      : 'Your session is now confirmed. We will contact you on WhatsApp before your session time.',
+    details: buildBookingDetailRows({
+      sessionTime,
+      packageName,
+      durationMinutes,
+      bookingId,
+      locale,
+    }),
+    bodyHtml: sessionInfo.bodyHtml,
+    bodyText: sessionInfo.bodyText,
     ctaHref: posingBrand.accountUrl(),
     ctaLabel: isEl ? 'Δες την κράτησή σου' : 'View your booking',
+    secondaryCtaHref: sessionInfo.secondaryCtaHref,
+    secondaryCtaLabel: sessionInfo.secondaryCtaLabel,
     badgeLabel: isEl ? 'Επιβεβαιωμένη' : 'Confirmed',
     badgeBg: posingBrand.colors.badgeConfirmed,
     badgeColor: posingBrand.colors.badgeConfirmedText,
@@ -239,6 +364,7 @@ export function buildAdminBookingNotifyEmail({
   sessionTime,
   bookingId,
   status,
+  stripeLink,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
@@ -251,28 +377,43 @@ export function buildAdminBookingNotifyEmail({
       ? 'Επιβεβαιωμένη'
       : 'Confirmed'
 
+  const details = [
+    ...buildAdminClientDetailRows({
+      profileName,
+      userEmail,
+      phone,
+      division,
+      notes,
+      locale,
+    }),
+    { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
+    { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
+    { label: 'Booking ID', value: bookingId },
+    { label: isEl ? 'Κατάσταση' : 'Status', value: statusLabel },
+  ]
+
+  if (isPending && stripeLink) {
+    details.push({
+      label: isEl ? 'Πληρωμή Stripe' : 'Stripe payment',
+      value: isEl ? 'Άνοιγμα συνδέσμου' : 'Open link',
+      isLink: true,
+      href: stripeLink,
+    })
+  }
+
   return posingTemplate({
     locale,
-    subject: `New Move & Pose booking — ${profileName}`,
+    subject: isEl
+      ? `Νέα κράτηση Move & Pose — ${profileName}`
+      : `New Move & Pose booking — ${profileName}`,
     preheader: `${profileName} · ${packageName} · ${sessionTime}`,
     title: isEl ? 'Νέα κράτηση' : 'New booking',
     intro: isEl
       ? 'Νέα κράτηση καταχωρήθηκε στο σύστημα.'
       : 'A new booking has been registered.',
-    details: [
-      ...buildAdminClientDetailRows({
-        profileName,
-        userEmail,
-        phone,
-        division,
-        notes,
-        locale,
-      }),
-      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
-      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
-      { label: 'Booking ID', value: bookingId },
-      { label: isEl ? 'Κατάσταση' : 'Status', value: statusLabel },
-    ],
+    details,
+    ctaHref: posingBrand.adminUrl(),
+    ctaLabel: isEl ? 'Άνοιγμα admin' : 'Open admin',
     badgeLabel: statusLabel,
     badgeBg: isPending ? posingBrand.colors.badgePending : posingBrand.colors.badgeConfirmed,
     badgeColor: isPending ? posingBrand.colors.badgePendingText : posingBrand.colors.badgeConfirmedText,
@@ -284,11 +425,14 @@ export function buildCancellationEmail({
   attendeeName,
   packageName,
   sessionTime,
+  bookingId,
+  durationMinutes,
   previousStatus,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
   const wasConfirmed = previousStatus === 'confirmed'
+  const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'contact' })
 
   return posingTemplate({
     locale,
@@ -307,12 +451,19 @@ export function buildCancellationEmail({
       : isEl
         ? 'Η παραγγελία και η κράτησή σου ακυρώθηκαν.'
         : 'Your order and booking have been cancelled.',
-    details: [
-      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
-      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
-    ],
+    details: buildBookingDetailRows({
+      sessionTime,
+      packageName,
+      durationMinutes,
+      bookingId,
+      locale,
+    }),
+    bodyHtml: sessionInfo.bodyHtml,
+    bodyText: sessionInfo.bodyText,
     ctaHref: posingBrand.accountUrl(),
     ctaLabel: isEl ? 'Ο λογαριασμός μου' : 'My account',
+    secondaryCtaHref: sessionInfo.secondaryCtaHref,
+    secondaryCtaLabel: sessionInfo.secondaryCtaLabel,
     badgeLabel: isEl ? 'Ακυρωμένη' : 'Cancelled',
     badgeBg: posingBrand.colors.badgeCancelled,
     badgeColor: posingBrand.colors.badgeCancelledText,
@@ -345,7 +496,9 @@ export function buildAdminCancellationNotifyEmail({
 
   return posingTemplate({
     locale,
-    subject: `Move & Pose cancellation — ${profileName}`,
+    subject: isEl
+      ? `Ακύρωση Move & Pose — ${profileName}`
+      : `Move & Pose cancellation — ${profileName}`,
     preheader: `${profileName} · ${packageName} · ${sessionTime}`,
     title: isEl ? 'Ακύρωση κράτησης' : 'Booking cancelled',
     intro: isEl
@@ -365,6 +518,8 @@ export function buildAdminCancellationNotifyEmail({
       { label: 'Booking ID', value: bookingId },
       { label: isEl ? 'Προηγ. κατάσταση' : 'Previous status', value: previousStatusLabel },
     ],
+    ctaHref: posingBrand.adminUrl(),
+    ctaLabel: isEl ? 'Άνοιγμα admin' : 'Open admin',
     badgeLabel: cancelledLabel,
     badgeBg: posingBrand.colors.badgeCancelled,
     badgeColor: posingBrand.colors.badgeCancelledText,
@@ -372,44 +527,64 @@ export function buildAdminCancellationNotifyEmail({
 }
 
 /** Admin — contact form notification */
-export function buildContactAdminEmail({ name, email, message }) {
+export function buildContactAdminEmail({ name, email, message, locale = 'el' }) {
+  const isEl = locale === 'el'
   const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>')
+  const messagePlain = String(message ?? '').trim()
 
   return mooveTemplate({
-    locale: 'el',
-    subject: `Νέο μήνυμα επικοινωνίας — ${name}`,
+    locale,
+    subject: isEl
+      ? `Νέο μήνυμα επικοινωνίας — ${name}`
+      : `New contact message — ${name}`,
     preheader: `${name} · ${email}`,
-    title: 'Νέο μήνυμα επικοινωνίας',
-    intro: 'Έλαβες νέο μήνυμα από τη φόρμα επικοινωνίας του site.',
+    title: isEl ? 'Νέο μήνυμα επικοινωνίας' : 'New contact message',
+    intro: isEl
+      ? 'Έλαβες νέο μήνυμα από τη φόρμα επικοινωνίας του site.'
+      : 'You received a new message from the website contact form.',
     details: [
-      { label: 'Όνομα', value: name },
+      { label: isEl ? 'Όνομα' : 'Name', value: name },
       { label: 'Email', value: email, isLink: true },
+      {
+        label: isEl ? 'Μήνυμα' : 'Message',
+        value: messagePlain.slice(0, 200) + (messagePlain.length > 200 ? '…' : ''),
+        valueHtml: safeMessage,
+      },
     ],
     bodyHtml: `
       <div style="margin:20px 0 0;padding:16px;background:${mooveBrand.colors.outerBg};border:1px solid ${mooveBrand.colors.cardBorder};border-radius:12px;">
-        <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${mooveBrand.colors.muted};">Μήνυμα</p>
+        <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${mooveBrand.colors.muted};">${isEl ? 'Μήνυμα' : 'Message'}</p>
         <p style="margin:0;font-family:system-ui,sans-serif;font-size:15px;line-height:1.6;color:${mooveBrand.colors.text};">${safeMessage}</p>
       </div>`,
+    bodyText: messagePlain,
     ctaHref: `mailto:${email}`,
-    ctaLabel: 'Απάντηση στο email',
+    ctaLabel: isEl ? 'Απάντηση στο email' : 'Reply by email',
   })
 }
 
 /** Customer — contact form auto-reply */
-export function buildContactAutoReplyEmail({ name }) {
+export function buildContactAutoReplyEmail({ name, locale = 'el' }) {
+  const isEl = locale === 'el'
+  const hours = isEl ? mooveBrand.hours : mooveBrand.hoursEn
+
   return mooveTemplate({
-    locale: 'el',
-    subject: 'Moove — λάβαμε το μήνυμά σου',
-    preheader: 'Ευχαριστούμε που επικοινώνησες μαζί μας.',
-    title: 'Λάβαμε το μήνυμά σου',
-    greeting: `Γεια σου ${name},`,
-    intro:
-      'Ευχαριστούμε που επικοινώνησες με το Moove. Θα απαντήσουμε το συντομότερο δυνατό, συνήθως εντός 24 ωρών.',
+    locale,
+    subject: isEl ? 'Moove — λάβαμε το μήνυμά σου' : 'Moove — we received your message',
+    preheader: isEl
+      ? 'Ευχαριστούμε που επικοινώνησες μαζί μας.'
+      : 'Thank you for getting in touch.',
+    title: isEl ? 'Λάβαμε το μήνυμά σου' : 'We received your message',
+    greeting: isEl ? `Γεια σου ${name},` : `Hi ${name},`,
+    intro: isEl
+      ? 'Ευχαριστούμε που επικοινώνησες με το Moove. Θα απαντήσουμε το συντομότερο δυνατό, συνήθως εντός 24 ωρών.'
+      : 'Thank you for contacting Moove. We will reply as soon as possible, usually within 24 hours.',
     details: [
       { label: 'Email', value: mooveBrand.email, isLink: true },
-      { label: 'Τηλέφωνο', value: mooveBrand.phone },
+      { label: isEl ? 'Τηλέφωνο' : 'Phone', value: mooveBrand.phone },
+      { label: isEl ? 'Διεύθυνση' : 'Address', value: mooveBrand.address },
+      { label: isEl ? 'Ώρες' : 'Hours', value: hours },
     ],
-    ctaHref: mooveBrand.siteUrl(),
-    ctaLabel: 'Επισκέψου το site',
+    ctaHref: mooveBrand.mapsUrl,
+    ctaLabel: isEl ? 'Βρες μας στον χάρτη' : 'Find us on the map',
   })
 }

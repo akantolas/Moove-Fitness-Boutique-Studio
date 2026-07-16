@@ -10,7 +10,7 @@ export function ContactPage() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -30,7 +30,7 @@ export function ContactPage() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message, _gotcha }),
+        body: JSON.stringify({ name, email, message, _gotcha, locale }),
       })
 
       if (!res.ok) {

@@ -79,6 +79,7 @@ export async function createStripeCheckoutUrl({
   bookingId,
   userPackageId,
   customerEmail,
+  locale = 'el',
 }) {
   const secret = process.env.STRIPE_SECRET_KEY
   const priceEnv = STRIPE_PRICE_ENV[planKey] ?? STRIPE_PRICE_ENV.single
@@ -101,6 +102,7 @@ export async function createStripeCheckoutUrl({
   params.set('metadata[booking_id]', bookingId)
   params.set('metadata[user_package_id]', userPackageId)
   params.set('metadata[plan_key]', planKey)
+  params.set('metadata[locale]', locale === 'en' ? 'en' : 'el')
 
   const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
@@ -180,6 +182,10 @@ export async function readRawBody(req) {
   })
 }
 
+export function normalizeBookingLocale(locale) {
+  return locale === 'en' ? 'en' : 'el'
+}
+
 export function formatSessionTime(startTime, locale = 'el') {
   const date = new Date(startTime)
   if (Number.isNaN(date.getTime())) return startTime
@@ -192,6 +198,12 @@ export function formatSessionTime(startTime, locale = 'el') {
     minute: '2-digit',
     timeZone: 'Europe/Athens',
   }).format(date)
+}
+
+export function formatSessionTimeWithZone(startTime, locale = 'el') {
+  const time = formatSessionTime(startTime, locale)
+  const suffix = locale === 'el' ? ' (ώρα Ελλάδας)' : ' (Greece time)'
+  return `${time}${suffix}`
 }
 
 export async function sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo }) {
