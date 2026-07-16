@@ -9,9 +9,7 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { createSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
-import { normalizeAuthEmail, type OAuthProvider, sanitizeAuthRedirect } from '../lib/posingAuthErrors'
-
-export type { OAuthProvider } from '../lib/posingAuthErrors'
+import { normalizeAuthEmail, sanitizeAuthRedirect } from '../lib/posingAuthErrors'
 
 type PosingAuthContextValue = {
   configured: boolean
@@ -22,7 +20,7 @@ type PosingAuthContextValue = {
   passwordRecovery: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
-  signInWithOAuth: (provider: OAuthProvider, redirectPath: string) => Promise<void>
+  signInWithGoogle: (redirectPath: string) => Promise<void>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
@@ -75,16 +73,15 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }, [])
 
-  const signInWithOAuth = useCallback(async (provider: OAuthProvider, redirectPath: string) => {
+  const signInWithGoogle = useCallback(async (redirectPath: string) => {
     const supabase = createSupabaseClient()
     const safeRedirect = sanitizeAuthRedirect(redirectPath)
     const callbackUrl = new URL('/posing/auth/callback', window.location.origin)
     callbackUrl.searchParams.set('redirect', safeRedirect)
     const { error } = await supabase.auth.signInWithOAuth({
-      provider,
+      provider: 'google',
       options: {
         redirectTo: callbackUrl.toString(),
-        ...(provider === 'apple' ? { scopes: 'name email' } : {}),
       },
     })
     if (error) throw error
@@ -122,7 +119,7 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
       passwordRecovery,
       signIn,
       signUp,
-      signInWithOAuth,
+      signInWithGoogle,
       signOut,
       requestPasswordReset,
       updatePassword,
@@ -132,7 +129,7 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
       passwordRecovery,
       session,
       signIn,
-      signInWithOAuth,
+      signInWithGoogle,
       signOut,
       signUp,
       requestPasswordReset,

@@ -459,7 +459,6 @@ export const en = {
       weakPassword: 'Password is too weak or too short.',
       backToLogin: 'Back to log in',
       continueWithGoogle: 'Continue with Google',
-      continueWithApple: 'Continue with Apple',
       orContinueWithEmail: 'or with email',
       oauthRedirecting: 'Redirecting…',
     },

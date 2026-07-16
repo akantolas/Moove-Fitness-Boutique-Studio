@@ -458,7 +458,6 @@ export const el = {
       weakPassword: 'Ο κωδικός είναι πολύ ασθενής ή σύντομος.',
       backToLogin: 'Πίσω στη σύνδεση',
       continueWithGoogle: 'Συνέχεια με Google',
-      continueWithApple: 'Συνέχεια με Apple',
       orContinueWithEmail: 'ή με email',
       oauthRedirecting: 'Μετάβαση…',
     },

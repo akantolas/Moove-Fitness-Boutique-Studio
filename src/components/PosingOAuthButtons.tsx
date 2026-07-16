@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { OAuthProvider } from '../lib/posingAuthErrors'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { translateAuthError } from '../lib/posingAuthErrors'
 import { useTranslation } from '../i18n/useTranslation'
@@ -36,51 +35,32 @@ function GoogleIcon() {
   )
 }
 
-function AppleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-    </svg>
-  )
-}
-
 export function PosingOAuthButtons({ redirect, disabled = false, onError }: PosingOAuthButtonsProps) {
   const { t } = useTranslation()
-  const { signInWithOAuth } = usePosingAuth()
-  const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(null)
+  const { signInWithGoogle } = usePosingAuth()
+  const [loading, setLoading] = useState(false)
 
-  async function handleOAuth(provider: OAuthProvider) {
+  async function handleGoogle() {
     onError?.('')
-    setLoadingProvider(provider)
+    setLoading(true)
     try {
-      await signInWithOAuth(provider, redirect)
+      await signInWithGoogle(redirect)
     } catch (err) {
       onError?.(translateAuthError(err, t))
-      setLoadingProvider(null)
+      setLoading(false)
     }
   }
-
-  const busy = disabled || loadingProvider !== null
 
   return (
     <div className="space-y-3">
       <button
         type="button"
-        disabled={busy}
-        onClick={() => handleOAuth('google')}
+        disabled={disabled || loading}
+        onClick={handleGoogle}
         className={oauthButtonClass}
       >
         <GoogleIcon />
-        {loadingProvider === 'google' ? t('posing.auth.oauthRedirecting') : t('posing.auth.continueWithGoogle')}
-      </button>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => handleOAuth('apple')}
-        className={oauthButtonClass}
-      >
-        <AppleIcon />
-        {loadingProvider === 'apple' ? t('posing.auth.oauthRedirecting') : t('posing.auth.continueWithApple')}
+        {loading ? t('posing.auth.oauthRedirecting') : t('posing.auth.continueWithGoogle')}
       </button>
       <div className="relative py-2">
         <div className="absolute inset-0 flex items-center" aria-hidden>

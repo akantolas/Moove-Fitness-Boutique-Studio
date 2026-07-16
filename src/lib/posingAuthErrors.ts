@@ -1,6 +1,4 @@
-import type { AuthError, Provider } from '@supabase/supabase-js'
-
-export type OAuthProvider = Extract<Provider, 'google' | 'apple'>
+import type { AuthError } from '@supabase/supabase-js'
 
 export function sanitizeAuthRedirect(path: string | null): string {
   if (!path || !path.startsWith('/posing') || path.startsWith('//')) {
