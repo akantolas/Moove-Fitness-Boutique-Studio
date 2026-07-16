@@ -458,6 +458,10 @@ export const en = {
       samePassword: 'The new password must be different from your previous one.',
       weakPassword: 'Password is too weak or too short.',
       backToLogin: 'Back to log in',
+      continueWithGoogle: 'Continue with Google',
+      continueWithApple: 'Continue with Apple',
+      orContinueWithEmail: 'or with email',
+      oauthRedirecting: 'Redirecting…',
     },
     account: {
       title: 'My account',

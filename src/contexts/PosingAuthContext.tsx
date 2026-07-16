@@ -9,7 +9,9 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { createSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
-import { normalizeAuthEmail } from '../lib/posingAuthErrors'
+import { normalizeAuthEmail, type OAuthProvider, sanitizeAuthRedirect } from '../lib/posingAuthErrors'
+
+export type { OAuthProvider } from '../lib/posingAuthErrors'
 
 type PosingAuthContextValue = {
   configured: boolean
@@ -20,6 +22,7 @@ type PosingAuthContextValue = {
   passwordRecovery: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
+  signInWithOAuth: (provider: OAuthProvider, redirectPath: string) => Promise<void>
   signOut: () => Promise<void>
   requestPasswordReset: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
@@ -72,6 +75,19 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }, [])
 
+  const signInWithOAuth = useCallback(async (provider: OAuthProvider, redirectPath: string) => {
+    const supabase = createSupabaseClient()
+    const safeRedirect = sanitizeAuthRedirect(redirectPath)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}${safeRedirect}`,
+        ...(provider === 'apple' ? { scopes: 'name email' } : {}),
+      },
+    })
+    if (error) throw error
+  }, [])
+
   const signOut = useCallback(async () => {
     const supabase = createSupabaseClient()
     const { error } = await supabase.auth.signOut()
@@ -104,6 +120,7 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
       passwordRecovery,
       signIn,
       signUp,
+      signInWithOAuth,
       signOut,
       requestPasswordReset,
       updatePassword,
@@ -113,6 +130,7 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
       passwordRecovery,
       session,
       signIn,
+      signInWithOAuth,
       signOut,
       signUp,
       requestPasswordReset,

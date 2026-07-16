@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PasswordInput } from '../components/PasswordInput'
+import { PosingOAuthButtons } from '../components/PosingOAuthButtons'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
-import { translateAuthError } from '../lib/posingAuthErrors'
+import { sanitizeAuthRedirect, translateAuthError } from '../lib/posingAuthErrors'
 import { useTranslation } from '../i18n/useTranslation'
 
 const inputClass =
@@ -12,7 +13,7 @@ export function PosingLoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/posing/account'
+  const redirect = sanitizeAuthRedirect(searchParams.get('redirect'))
   const { configured, loading, user, signIn } = usePosingAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -58,7 +59,11 @@ export function PosingLoginPage() {
       </h1>
       <p className="mt-3 text-center text-sm text-white/60">{t('posing.auth.loginBody')}</p>
 
-      <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
+      <div className="mt-10">
+        <PosingOAuthButtons redirect={redirect} disabled={submitting || loading} onError={setError} />
+      </div>
+
+      <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="login-email" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
             {t('common.email')}
@@ -124,7 +129,7 @@ export function PosingSignupPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/posing/account'
+  const redirect = sanitizeAuthRedirect(searchParams.get('redirect'))
   const { configured, loading, user, signUp } = usePosingAuth()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -191,7 +196,11 @@ export function PosingSignupPage() {
       </h1>
       <p className="mt-3 text-center text-sm text-white/60">{t('posing.auth.signupBody')}</p>
 
-      <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
+      <div className="mt-10">
+        <PosingOAuthButtons redirect={redirect} disabled={submitting || loading} onError={setError} />
+      </div>
+
+      <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="signup-name" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
             {t('posing.auth.fullName')}
@@ -265,7 +274,7 @@ export function PosingSignupPage() {
 export function PosingForgotPasswordPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
-  const redirect = searchParams.get('redirect') ?? '/posing/account'
+  const redirect = sanitizeAuthRedirect(searchParams.get('redirect'))
   const { configured, loading, user, requestPasswordReset } = usePosingAuth()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')

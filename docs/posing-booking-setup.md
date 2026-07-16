@@ -5,7 +5,7 @@
 ## 1. Supabase project
 
 1. Δημιούργησε project στο [supabase.com](https://supabase.com)
-2. **Authentication → Providers:** ενεργοποίησε Email (password)
+2. **Authentication → Providers:** ενεργοποίησε Email (password), **Google** και **Apple** (βλ. §1b)
 3. **Authentication → URL Configuration:**
    - **Site URL:** `https://moovefitness.gr`
    - **Redirect URLs:** πρόσθεσε `https://moovefitness.gr/**`, `https://moovefitness.gr/posing/account`, και `https://moovefitness.gr/posing/reset-password`
@@ -31,6 +31,25 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 ```
 
 Το πρώτο login με αυτό το email παίρνει αυτόματα `role=admin` και πρόσβαση στο `/posing/admin`.
+
+### 1b. Google & Apple sign-in
+
+Το site έχει κουμπιά **Google** / **Apple** στο `/posing/login` και `/posing/signup`. Μετά το enable στο Supabase:
+
+**Google**
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → OAuth 2.0 Client ID (Web)
+2. **Authorized redirect URI:** `https://<PROJECT_REF>.supabase.co/auth/v1/callback` (το βρίσκεις στο Supabase → Authentication → Google → callback URL)
+3. Client ID + Secret → paste στο Supabase Google provider → Save
+
+**Apple**
+1. [Apple Developer](https://developer.apple.com/) → Identifiers → Services ID + Sign in with Apple key
+2. Domains: `moovefitness.gr` (και `www` αν χρησιμοποιείται)
+3. Return URL: ίδιο Supabase callback `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
+4. Services ID, Team ID, Key ID, private key (.p8) → Supabase Apple provider
+
+**Redirect URLs** (URL Configuration): πρέπει να περιλαμβάνουν τα paths όπου επιστρέφει ο χρήστης μετά το OAuth, π.χ. `https://moovefitness.gr/posing/account` και `https://moovefitness.gr/**`. Για local dev πρόσθεσε `http://localhost:5173/**`.
+
+**Σημείωση:** OAuth δημιουργεί αυτόματα `profiles` row (trigger `handle_new_user`). Apple μπορεί να δώσει private relay email. Χρήστης με υπάρχοντα email/password λογαριασμό δεν συνδέεται αυτόματα με Google — χρειάζεται ίδιο provider ή manual linking στο Supabase.
 
 ## 2. Stripe
 

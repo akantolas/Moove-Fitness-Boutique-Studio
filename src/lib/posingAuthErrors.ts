@@ -1,4 +1,13 @@
-import type { AuthError } from '@supabase/supabase-js'
+import type { AuthError, Provider } from '@supabase/supabase-js'
+
+export type OAuthProvider = Extract<Provider, 'google' | 'apple'>
+
+export function sanitizeAuthRedirect(path: string | null): string {
+  if (!path || !path.startsWith('/posing') || path.startsWith('//')) {
+    return '/posing/account'
+  }
+  return path
+}
 
 export function normalizeAuthEmail(email: string) {
   return email.trim().toLowerCase()

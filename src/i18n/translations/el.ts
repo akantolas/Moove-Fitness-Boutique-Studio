@@ -457,6 +457,10 @@ export const el = {
       samePassword: 'Ο νέος κωδικός πρέπει να είναι διαφορετικός από τον προηγούμενο.',
       weakPassword: 'Ο κωδικός είναι πολύ ασθενής ή σύντομος.',
       backToLogin: 'Πίσω στη σύνδεση',
+      continueWithGoogle: 'Συνέχεια με Google',
+      continueWithApple: 'Συνέχεια με Apple',
+      orContinueWithEmail: 'ή με email',
+      oauthRedirecting: 'Μετάβαση…',
     },
     account: {
       title: 'Ο λογαριασμός μου',
