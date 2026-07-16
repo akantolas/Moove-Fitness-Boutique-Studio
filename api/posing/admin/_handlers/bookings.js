@@ -1,4 +1,4 @@
-import { sendPaidConfirmationEmail } from '../../email/sendPaidConfirmation.js'
+import { sendPaidConfirmationEmail } from '../../../email/sendPaidConfirmation.js'
 import {
   activatePackagePayment,
   cors,
@@ -7,7 +7,7 @@ import {
   getUserFromRequest,
   json,
   readJsonBody,
-} from '../_lib.js'
+} from '../../_lib.js'
 
 async function fetchOverviewStats(supabase) {
   const now = new Date()
@@ -87,7 +87,7 @@ async function fetchPendingPayments(supabase) {
   }))
 }
 
-export default async function handler(req, res) {
+export async function handleAdminBookings(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
 

@@ -5,7 +5,7 @@ import {
   getUserFromRequest,
   json,
   readJsonBody,
-} from '../_lib.js'
+} from '../../_lib.js'
 
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
 const GRID_STEPS = new Set([15, 30, 60])
@@ -203,7 +203,7 @@ function toResponse(row) {
   }
 }
 
-export default async function handler(req, res) {
+export async function handleAdminCalendarSettings(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
 

@@ -1,6 +1,6 @@
-import { cors, getSupabaseAdmin, hasEmailTransportConfig, json } from './_lib.js'
+import { cors, getSupabaseAdmin, hasEmailTransportConfig, json } from '../_lib.js'
 
-export default async function handler(req, res) {
+export async function handleHealth(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'method_not_allowed' })

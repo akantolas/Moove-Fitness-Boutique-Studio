@@ -2,7 +2,7 @@ import {
   buildAdminBookingNotifyEmail,
   buildConfirmationEmail,
   buildPaymentEmail,
-} from '../email/templates.js'
+} from '../../email/templates.js'
 import {
   cancelPosingBooking,
   cors,
@@ -15,7 +15,7 @@ import {
   PACKAGE_KEYS,
   readJsonBody,
   sendPosingEmail,
-} from './_lib.js'
+} from '../_lib.js'
 
 async function sendBookingNotify({
   from,
@@ -50,7 +50,7 @@ async function sendBookingNotify({
   })
 }
 
-export default async function handler(req, res) {
+export async function handleBookings(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
 

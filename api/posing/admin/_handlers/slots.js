@@ -5,9 +5,9 @@ import {
   getUserFromRequest,
   json,
   readJsonBody,
-} from '../_lib.js'
+} from '../../_lib.js'
 
-export default async function handler(req, res) {
+export async function handleAdminSlots(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
 
