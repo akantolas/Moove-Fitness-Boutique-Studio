@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
+import { PosingOffersModal } from '../components/PosingOffersModal'
 import { PosingOffersSection } from '../components/PosingOffersSection'
 import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { isJulyOfferActive } from '../lib/posingOffers'
+import { hasSeenOffersPopup, isJulyOfferActive } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
 import { site, type PosingOfferPlanKey, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -47,12 +48,18 @@ export function PosingPage() {
     planKeyFromSearchParams(searchParams, posing.packageKeys),
   )
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
+  const [offersModalOpen, setOffersModalOpen] = useState(false)
 
   const selectedPackageName = useMemo(
     () =>
       planKeyLabel(selectedPlanKey, (i) => dictionary.posing.pricing.packages[i]?.name, t),
     [selectedPlanKey, dictionary.posing.pricing.packages, t],
   )
+
+  useEffect(() => {
+    if (!isJulyOfferActive()) return
+    if (!hasSeenOffersPopup()) setOffersModalOpen(true)
+  }, [])
 
   useEffect(() => {
     const param = searchParams.get('package')
@@ -88,6 +95,11 @@ export function PosingPage() {
 
   return (
     <div className="pose-page bg-[#08080c] text-white">
+      <PosingOffersModal
+        open={offersModalOpen}
+        onClose={() => setOffersModalOpen(false)}
+        onSelectOffer={handleOfferSelect}
+      />
       {accountDeleted ? (
         <div className="border-b border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-center text-sm text-emerald-100">
           {t('posing.account.deleteSuccess')}

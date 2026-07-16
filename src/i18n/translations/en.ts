@@ -410,6 +410,8 @@ export const en = {
       priceInEmail: 'Price will be sent in your confirmation email',
       ctaRuby: 'Book Ruby x8',
       ctaDiamond: 'Book Diamond x8',
+      modalDismiss: 'Not now',
+      modalCloseAria: 'Close offers',
     },
     auth: {
       login: 'Log in',

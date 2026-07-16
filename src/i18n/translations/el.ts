@@ -409,6 +409,8 @@ export const el = {
       priceInEmail: 'Η τιμή θα σταλεί στο email επιβεβαίωσης',
       ctaRuby: 'Κλείσε Ruby x8',
       ctaDiamond: 'Κλείσε Diamond x8',
+      modalDismiss: 'Όχι τώρα',
+      modalCloseAria: 'Κλείσιμο προσφορών',
     },
     auth: {
       login: 'Σύνδεση',
