@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test:pricing": "node --test api/posing/pricing.test.js",
+    "test:calendar": "node --test api/email/calendar.test.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -225,12 +225,21 @@ export function formatSessionTimeWithZone(startTime, locale = 'el') {
   return `${time}${suffix}`
 }
 
-export async function sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo }) {
+export async function sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo, attachments }) {
   const apiKey = process.env.RESEND_API_KEY?.trim()
   if (!apiKey) throw new Error('missing_resend_api_key')
 
   const recipients = (Array.isArray(to) ? to : [to]).map((entry) => String(entry).trim()).filter(Boolean)
   if (!recipients.length) throw new Error('missing_resend_recipients')
+
+  const resendAttachments = (attachments ?? []).map((file) => ({
+    filename: file.filename,
+    content:
+      typeof file.content === 'string' && /^[A-Za-z0-9+/=\r\n]+$/.test(file.content.trim())
+        ? file.content.trim()
+        : Buffer.from(file.content, 'utf8').toString('base64'),
+    content_type: file.contentType ?? 'application/octet-stream',
+  }))
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -246,6 +255,7 @@ export async function sendResendEmail({ from, to, subject, html, text, idempoten
       html,
       ...(text ? { text: String(text) } : {}),
       ...(replyTo ? { reply_to: String(replyTo).trim() } : {}),
+      ...(resendAttachments.length ? { attachments: resendAttachments } : {}),
     }),
   })
 
@@ -273,7 +283,7 @@ export function hasEmailTransportConfig() {
   return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY)
 }
 
-export async function sendPosingEmail({ from, to, subject, html, text, idempotencyKey, replyTo }) {
+export async function sendPosingEmail({ from, to, subject, html, text, idempotencyKey, replyTo, attachments }) {
   const smtp = getSmtpConfig()
   if (smtp) {
     const nodemailer = await import('nodemailer')
@@ -286,12 +296,30 @@ export async function sendPosingEmail({ from, to, subject, html, text, idempoten
       html,
       ...(text ? { text: String(text) } : {}),
       ...(replyTo ? { replyTo } : {}),
+      ...(attachments?.length
+        ? {
+            attachments: attachments.map((file) => ({
+              filename: file.filename,
+              content: file.content,
+              contentType: file.contentType,
+            })),
+          }
+        : {}),
     })
     return { ok: true, provider: 'smtp' }
   }
 
   if (process.env.RESEND_API_KEY) {
-    const result = await sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo })
+    const result = await sendResendEmail({
+      from,
+      to,
+      subject,
+      html,
+      text,
+      idempotencyKey,
+      replyTo,
+      attachments,
+    })
     return { ...result, provider: 'resend' }
   }
 

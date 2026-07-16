@@ -516,6 +516,8 @@ export const en = {
       pendingOrdersBody: 'Complete payment or cancel the order.',
       cancelOrder: 'Cancel order',
       cancelBooking: 'Cancel booking',
+      addToCalendar: 'Add to calendar',
+      downloadingCalendar: 'Downloading…',
       cancelOrderTitle: 'Cancel order?',
       cancelOrderBody: 'The booking and package will be cancelled. The slot will become available again.',
       cancelBookingTitle: 'Cancel booking?',
@@ -545,6 +547,9 @@ export const en = {
         cannot_cancel: 'You cannot cancel this booking.',
         cancel_failed: 'Cancellation failed. Please try again.',
         booking_not_found: 'Booking not found.',
+        calendar_download_failed: 'Could not download calendar file. Please try again.',
+        not_confirmed: 'Calendar is only available for confirmed sessions.',
+        calendar_unavailable: 'Session details for calendar are unavailable.',
       },
     },
     calendar: {

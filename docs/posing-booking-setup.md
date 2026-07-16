@@ -129,6 +129,22 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 Αποστολή κρατήσεων και φόρμας επικοινωνίας: Resend API μέσω `sendPosingEmail` (ή SMTP αν οριστεί).
 
+### Calendar invites (επιβεβαιωμένες συνεδρίες)
+
+Όταν μια κράτηση είναι **επιβεβαιωμένη** (`confirmed`):
+
+- **Πελάτης:** email επιβεβαίωσης με `.ics` attachment + κουμπί Google Calendar στο HTML
+- **Admin** (`POSE_NOTIFY_EMAIL`, π.χ. `info@moovefitness.gr`): ίδιο `.ics` — ανοίγει από Gmail/Outlook στο κινητό
+- **Λογαριασμός πελάτη** (`/posing/account`): κουμπί «Πρόσθεσε στο ημερολόγιο» → `GET /api/posing/bookings?id=...&format=ics`
+
+**Δεν** στέλνεται calendar στο payment-pending email (πριν την πληρωμή).
+
+**Ακύρωση** confirmed κράτησης: cancel `.ics` με ίδιο `UID` (`posing-booking-{id}@moovefitness.gr`) ώστε να αφαιρείται το event.
+
+Υλοποίηση: `api/email/calendar.js`, `api/email/sendSessionCalendar.js`. Timezone: `Europe/Athens`. Location: `Online (WhatsApp)`.
+
+Tests: `npm run test:calendar`
+
 ## 4. Vercel environment variables
 
 Αντέγραψε από `.env.example` και συμπλήρωσε όλα τα Move & Pose vars.
@@ -175,6 +191,7 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 |----------|-------|
 | `GET /api/posing/slots` | Διαθέσιμα slots |
 | `POST /api/posing/bookings` | Κράτηση + email |
+| `GET /api/posing/bookings?id=&format=ics` | Λήψη `.ics` (auth, confirmed only) |
 | `GET /api/posing/health` | Έλεγχος Vercel env (hasUrl, hasServiceKey) |
 | `POST /api/posing/account/delete` | Διαγραφή λογαριασμού (password + Bearer JWT) |
 | `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη (legacy API) |
@@ -191,9 +208,12 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 2. `vercel dev` με env vars
 3. Signup → login → `/posing/account` (κενό dashboard)
 4. Admin login → `/posing/admin` → πρόσθεσε slot
-5. Client κλείνει slot → `pending_payment` + email
-6. Stripe test payment → webhook → `confirmed` + active package
-7. `npm run build` περνάει
+5. Client κλείνει slot → `pending_payment` + email (**χωρίς** calendar)
+6. Stripe test payment → webhook → `confirmed` + active package + calendar emails (customer + admin)
+7. Included session (ενεργό πακέτο) → `confirmed` + calendar emails
+8. Ακύρωση confirmed → cancel `.ics` στο email
+9. `npm run build` περνάει
+10. `npm run test:calendar` περνάει
 
 ## 8. Timezone
 

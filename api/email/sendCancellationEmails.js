@@ -1,11 +1,9 @@
-import {
-  formatSessionTimeWithZone,
-  sendPosingEmailReliable,
-} from '../posing/_lib.js'
+import { buildBookingCalendarArtifacts } from './calendar.js'
 import {
   buildAdminCancellationNotifyEmail,
   buildCancellationEmail,
 } from './templates.js'
+import { formatSessionTimeWithZone, sendPosingEmailReliable } from '../posing/_lib.js'
 
 export async function sendCancellationEmails({
   bookingId,
@@ -19,9 +17,24 @@ export async function sendCancellationEmails({
   packageName,
   sessionTime,
   durationMinutes,
+  sessionStartAt,
 }) {
   const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
+  const sendCancelCalendar = previousStatus === 'confirmed' && sessionStartAt
+
+  const cancelCalendar = sendCancelCalendar
+    ? buildBookingCalendarArtifacts({
+        bookingId,
+        startAt: sessionStartAt,
+        durationMinutes,
+        packageName,
+        attendeeName,
+        locale,
+        status: 'cancelled',
+        sequence: 1,
+      })
+    : null
 
   const customerEmail = buildCancellationEmail({
     attendeeName,
@@ -41,6 +54,7 @@ export async function sendCancellationEmails({
       html: customerEmail.html,
       text: customerEmail.text,
       idempotencyKey: `posing-cancel-customer-${bookingId}`,
+      ...(cancelCalendar ? { attachments: [cancelCalendar.attachment] } : {}),
     })
   } catch (err) {
     console.error('cancellation customer email error:', { bookingId, error: err })
@@ -71,6 +85,7 @@ export async function sendCancellationEmails({
       html: adminEmail.html,
       text: adminEmail.text,
       idempotencyKey: `posing-cancel-notify-${bookingId}`,
+      ...(cancelCalendar ? { attachments: [cancelCalendar.attachment] } : {}),
     })
   } catch (err) {
     console.error('cancellation admin notify error:', { bookingId, error: err })

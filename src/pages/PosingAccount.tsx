@@ -11,7 +11,7 @@ import {
   type PosingProfile,
 } from '../lib/posingAccount'
 import type { PosingBooking, UserPackage } from '../lib/posingApi'
-import { cancelPosingBooking } from '../lib/posingApi'
+import { cancelPosingBooking, downloadBookingCalendar } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { AccountProfileHero } from '../components/AccountProfileHero'
@@ -98,6 +98,8 @@ export function PosingAccountPage() {
   } | null>(null)
   const [cancelBusy, setCancelBusy] = useState(false)
   const [cancelError, setCancelError] = useState('')
+  const [calendarBusyId, setCalendarBusyId] = useState<string | null>(null)
+  const [calendarError, setCalendarError] = useState('')
   const lastFetchedUserId = useRef<string | null>(null)
 
   async function reloadAccountData() {
@@ -215,6 +217,20 @@ export function PosingAccountPage() {
       setCancelError(translateAccountError(code, t))
     } finally {
       setCancelBusy(false)
+    }
+  }
+
+  async function handleDownloadCalendar(bookingId: string) {
+    if (!accessToken) return
+    setCalendarBusyId(bookingId)
+    setCalendarError('')
+    try {
+      await downloadBookingCalendar(accessToken, bookingId, locale)
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'calendar_download_failed'
+      setCalendarError(translateAccountError(code, t))
+    } finally {
+      setCalendarBusyId(null)
     }
   }
 
@@ -516,15 +532,32 @@ export function PosingAccountPage() {
                     <p className="mt-1 text-xs text-white/50">
                       {planKeyLabel(booking.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
                     </p>
-                    {canCancelBooking(booking) && booking.status === 'confirmed' ? (
-                      <button
-                        type="button"
-                        disabled={cancelBusy}
-                        onClick={() => setCancelTarget({ id: booking.id, type: 'booking' })}
-                        className="mt-3 rounded-full border border-rose-300/30 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50"
-                      >
-                        {t('posing.account.cancelBooking')}
-                      </button>
+                    {booking.status === 'confirmed' ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={calendarBusyId === booking.id}
+                          onClick={() => handleDownloadCalendar(booking.id)}
+                          className="rounded-full border border-fuchsia-300/30 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-400/10 disabled:opacity-50"
+                        >
+                          {calendarBusyId === booking.id
+                            ? t('posing.account.downloadingCalendar')
+                            : t('posing.account.addToCalendar')}
+                        </button>
+                        {canCancelBooking(booking) ? (
+                          <button
+                            type="button"
+                            disabled={cancelBusy}
+                            onClick={() => setCancelTarget({ id: booking.id, type: 'booking' })}
+                            className="rounded-full border border-rose-300/30 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10 disabled:opacity-50"
+                          >
+                            {t('posing.account.cancelBooking')}
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {calendarError && booking.status === 'confirmed' ? (
+                      <p className="mt-2 text-xs text-rose-200">{calendarError}</p>
                     ) : null}
                   </li>
                 ))}

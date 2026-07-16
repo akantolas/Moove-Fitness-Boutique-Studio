@@ -213,6 +213,46 @@ function buildPaymentAlternativesBlock({
   return { bodyHtml, bodyText: bodyTextParts.join('\n') }
 }
 
+export function buildCalendarActionsBlock({ googleCalendarUrl, locale = 'el' }) {
+  const isEl = locale === 'el'
+  const colors = posingBrand.colors
+
+  if (!googleCalendarUrl) {
+    const fallback = isEl
+      ? 'Συνημμένο αρχείο ημερολογίου (.ics) — άνοιξέ το από το email για να προσθέσεις τη συνεδρία στο κινητό σου.'
+      : 'Calendar file (.ics) attached — open it from your email to add the session to your phone.'
+    return {
+      bodyHtml: `
+        <div style="margin:20px 0 0;padding:16px;background:${colors.outerBg};border:1px solid ${colors.cardBorder};border-radius:12px;">
+          <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${colors.muted};">${isEl ? 'Ημερολόγιο' : 'Calendar'}</p>
+          <p style="margin:0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${colors.text};">${escapeHtml(fallback)}</p>
+        </div>`,
+      bodyText: fallback,
+    }
+  }
+
+  const linkStyle =
+    'display:inline-block;margin:8px 8px 0 0;padding:10px 16px;border-radius:999px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;text-decoration:none;background:' +
+    colors.accent +
+    ';color:' +
+    colors.ctaText +
+    ';'
+
+  const note = isEl
+    ? 'Συνημμένο .ics για iPhone/Android Mail ή πρόσθεσε στο Google Calendar:'
+    : 'Attached .ics for iPhone/Android Mail, or add to Google Calendar:'
+
+  return {
+    bodyHtml: `
+      <div style="margin:20px 0 0;padding:16px;background:${colors.outerBg};border:1px solid ${colors.cardBorder};border-radius:12px;">
+        <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${colors.muted};">${isEl ? 'Πρόσθεσε στο ημερολόγιο' : 'Add to calendar'}</p>
+        <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${colors.text};">${escapeHtml(note)}</p>
+        <a href="${escapeHtml(googleCalendarUrl)}" style="${linkStyle}">Google Calendar</a>
+      </div>`,
+    bodyText: `${note}\nGoogle Calendar: ${googleCalendarUrl}`,
+  }
+}
+
 export function buildPoseSessionInfoBlock({ locale, variant = 'full' }) {
   const isEl = locale === 'el'
   const colors = posingBrand.colors
@@ -357,10 +397,12 @@ export function buildConfirmationEmail({
   sessionTime,
   bookingId,
   durationMinutes,
+  googleCalendarUrl = null,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
   const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'full' })
+  const calendarBlock = buildCalendarActionsBlock({ googleCalendarUrl, locale })
 
   return posingTemplate({
     locale,
@@ -380,8 +422,8 @@ export function buildConfirmationEmail({
       bookingId,
       locale,
     }),
-    bodyHtml: sessionInfo.bodyHtml,
-    bodyText: sessionInfo.bodyText,
+    bodyHtml: `${calendarBlock.bodyHtml}${sessionInfo.bodyHtml}`,
+    bodyText: `${calendarBlock.bodyText}\n\n${sessionInfo.bodyText}`,
     ctaHref: posingBrand.accountUrl(),
     ctaLabel: isEl ? 'Ο λογαριασμός μου' : 'My account',
     secondaryCtaHref: sessionInfo.secondaryCtaHref,
@@ -399,10 +441,12 @@ export function buildPaidConfirmationEmail({
   sessionTime,
   bookingId,
   durationMinutes,
+  googleCalendarUrl = null,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
   const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'full' })
+  const calendarBlock = buildCalendarActionsBlock({ googleCalendarUrl, locale })
 
   return posingTemplate({
     locale,
@@ -424,12 +468,60 @@ export function buildPaidConfirmationEmail({
       bookingId,
       locale,
     }),
-    bodyHtml: sessionInfo.bodyHtml,
-    bodyText: sessionInfo.bodyText,
+    bodyHtml: `${calendarBlock.bodyHtml}${sessionInfo.bodyHtml}`,
+    bodyText: `${calendarBlock.bodyText}\n\n${sessionInfo.bodyText}`,
     ctaHref: posingBrand.accountUrl(),
     ctaLabel: isEl ? 'Δες την κράτησή σου' : 'View your booking',
     secondaryCtaHref: sessionInfo.secondaryCtaHref,
     secondaryCtaLabel: sessionInfo.secondaryCtaLabel,
+    badgeLabel: isEl ? 'Επιβεβαιωμένη' : 'Confirmed',
+    badgeBg: posingBrand.colors.badgeConfirmed,
+    badgeColor: posingBrand.colors.badgeConfirmedText,
+  })
+}
+
+/** Admin — session confirmed (after payment or included session) */
+export function buildAdminSessionConfirmedEmail({
+  profileName,
+  userEmail,
+  phone,
+  packageName,
+  sessionTime,
+  bookingId,
+  googleCalendarUrl = null,
+  locale = 'el',
+}) {
+  const isEl = locale === 'el'
+  const calendarBlock = buildCalendarActionsBlock({ googleCalendarUrl, locale })
+
+  return posingTemplate({
+    locale,
+    subject: isEl
+      ? `Move & Pose — επιβεβαιωμένη συνεδρία · ${profileName}`
+      : `Move & Pose — confirmed session · ${profileName}`,
+    preheader: `${profileName} · ${packageName} · ${sessionTime}`,
+    title: isEl ? 'Επιβεβαιωμένη συνεδρία' : 'Confirmed session',
+    greeting: isEl ? 'Νέα επιβεβαιωμένη κράτηση.' : 'New confirmed booking.',
+    intro: isEl
+      ? 'Πρόσθεσε τη συνεδρία στο ημερολόγιό σου (συνημμένο .ics).'
+      : 'Add this session to your calendar (attached .ics file).',
+    details: [
+      { label: isEl ? 'Πελάτης' : 'Client', value: profileName },
+      { label: 'Email', value: userEmail, isLink: true },
+      {
+        label: isEl ? 'Τηλέφωνο' : 'Phone',
+        value: phone?.trim() ? phone : isEl ? '—' : '—',
+        isLink: Boolean(phone?.trim()),
+        href: phone?.trim() ? `tel:${phone.trim().replace(/\s/g, '')}` : undefined,
+      },
+      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
+      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
+      { label: 'Booking ID', value: bookingId },
+    ],
+    bodyHtml: calendarBlock.bodyHtml,
+    bodyText: calendarBlock.bodyText,
+    ctaHref: posingBrand.adminUrl(),
+    ctaLabel: isEl ? 'Admin panel' : 'Admin panel',
     badgeLabel: isEl ? 'Επιβεβαιωμένη' : 'Confirmed',
     badgeBg: posingBrand.colors.badgeConfirmed,
     badgeColor: posingBrand.colors.badgeConfirmedText,

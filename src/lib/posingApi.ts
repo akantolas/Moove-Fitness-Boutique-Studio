@@ -317,6 +317,30 @@ export async function cancelPosingBooking(accessToken: string, bookingId: string
   return data as { ok: boolean; already?: boolean }
 }
 
+export async function downloadBookingCalendar(
+  accessToken: string,
+  bookingId: string,
+  locale: string,
+) {
+  const res = await fetch(
+    `/api/posing/bookings?id=${encodeURIComponent(bookingId)}&format=ics&locale=${encodeURIComponent(locale)}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
+  if (!res.ok) {
+    const data = await parseApiJson(res).catch(() => ({ error: 'calendar_download_failed' }))
+    throw new Error(String(data.error ?? 'calendar_download_failed'))
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `move-pose-${bookingId.slice(0, 8)}.ics`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function fetchAdminOverview(accessToken: string): Promise<AdminOverviewStats> {
   const res = await fetch('/api/posing/admin/bookings?view=stats', {
     headers: { Authorization: `Bearer ${accessToken}` },

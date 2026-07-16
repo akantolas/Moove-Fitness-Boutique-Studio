@@ -515,6 +515,8 @@ export const el = {
       pendingOrdersBody: 'Ολοκλήρωσε την πληρωμή ή ακύρωσε την παραγγελία.',
       cancelOrder: 'Ακύρωση παραγγελίας',
       cancelBooking: 'Ακύρωση κράτησης',
+      addToCalendar: 'Πρόσθεσε στο ημερολόγιο',
+      downloadingCalendar: 'Λήψη…',
       cancelOrderTitle: 'Ακύρωση παραγγελίας;',
       cancelOrderBody: 'Η κράτηση και το πακέτο θα ακυρωθούν. Η ώρα θα ξαναγίνει διαθέσιμη.',
       cancelBookingTitle: 'Ακύρωση κράτησης;',
@@ -544,6 +546,9 @@ export const el = {
         cannot_cancel: 'Δεν μπορείς να ακυρώσεις αυτή την κράτηση.',
         cancel_failed: 'Η ακύρωση απέτυχε. Δοκίμασε ξανά.',
         booking_not_found: 'Η κράτηση δεν βρέθηκε.',
+        calendar_download_failed: 'Αποτυχία λήψης ημερολογίου. Δοκίμασε ξανά.',
+        not_confirmed: 'Το ημερολόγιο είναι διαθέσιμο μόνο για επιβεβαιωμένες συνεδρίες.',
+        calendar_unavailable: 'Δεν βρέθηκαν στοιχεία συνεδρίας για το ημερολόγιο.',
       },
     },
     calendar: {

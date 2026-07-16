@@ -4,6 +4,9 @@ import {
   buildPaymentEmail,
 } from '../../email/templates.js'
 import {
+  buildCalendarForBooking,
+} from '../../email/sendSessionCalendar.js'
+import {
   fetchBookingCancellationSnapshot,
   packageNameForLocale,
   sendCancellationEmails,
@@ -47,6 +50,7 @@ async function sendBookingNotify({
   amountEur,
   priceSource,
   locale,
+  calendarAttachment,
 }) {
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
   if (!notifyEmail) return
@@ -77,12 +81,62 @@ async function sendBookingNotify({
     html,
     text,
     idempotencyKey: `posing-notify-${bookingId}`,
+    ...(status === 'confirmed' && calendarAttachment ? { attachments: [calendarAttachment] } : {}),
   })
 }
 
 export async function handleBookings(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
+
+  if (req.method === 'GET') {
+    const user = await getUserFromRequest(req)
+    if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
+
+    const bookingId = req.query?.id
+    const format = req.query?.format
+    if (!bookingId || typeof bookingId !== 'string') {
+      return json(res, 400, { ok: false, error: 'missing_id' })
+    }
+    if (format !== 'ics') {
+      return json(res, 400, { ok: false, error: 'invalid_format' })
+    }
+
+    try {
+      const supabase = getSupabaseAdmin()
+      const { data: booking, error } = await supabase
+        .from('posing_bookings')
+        .select('id, user_id, status')
+        .eq('id', bookingId)
+        .maybeSingle()
+
+      if (error || !booking) {
+        return json(res, 404, { ok: false, error: 'booking_not_found' })
+      }
+      if (booking.user_id !== user.id) {
+        return json(res, 403, { ok: false, error: 'forbidden' })
+      }
+      if (booking.status !== 'confirmed') {
+        return json(res, 409, { ok: false, error: 'not_confirmed' })
+      }
+
+      const locale = normalizeBookingLocale(req.query?.locale)
+      const calendarBundle = await buildCalendarForBooking(supabase, bookingId, locale)
+      if (!calendarBundle) {
+        return json(res, 404, { ok: false, error: 'calendar_unavailable' })
+      }
+
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8')
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="move-pose-${bookingId.slice(0, 8)}.ics"`,
+      )
+      return res.status(200).send(calendarBundle.calendar.ics)
+    } catch (error) {
+      console.error('booking calendar download error:', error)
+      return json(res, 500, { ok: false, error: 'calendar_failed' })
+    }
+  }
 
   if (req.method === 'DELETE') {
     const user = await getUserFromRequest(req)
@@ -129,6 +183,7 @@ export async function handleBookings(req, res) {
           durationMinutes: snapshot.durationMinutes,
           packageName: packageNameForLocale(snapshot, locale),
           sessionTime: sessionTimeForLocale(snapshot, locale),
+          sessionStartAt: snapshot.sessionStartAt,
         })
         if (!emailResult.ok) {
           console.error('posing cancellation email failed:', {
@@ -254,12 +309,16 @@ export async function handleBookings(req, res) {
       .eq('id', userPackage.id)
 
     try {
+      const calendarBundle = await buildCalendarForBooking(supabase, booking.id, bookingLocale)
+      const calendar = calendarBundle?.calendar ?? null
+
       const confirmation = buildConfirmationEmail({
         attendeeName: profileName,
         packageName,
         sessionTime,
         bookingId: booking.id,
         durationMinutes,
+        googleCalendarUrl: calendar?.googleCalendarUrl ?? null,
         locale: bookingLocale,
       })
 
@@ -270,6 +329,7 @@ export async function handleBookings(req, res) {
         html: confirmation.html,
         text: confirmation.text,
         idempotencyKey: `posing-booking-confirm-${booking.id}`,
+        ...(calendar ? { attachments: [calendar.attachment] } : {}),
       })
       await sendBookingNotify({
         from,
@@ -283,6 +343,7 @@ export async function handleBookings(req, res) {
         bookingId: booking.id,
         status: 'confirmed',
         locale: bookingLocale,
+        calendarAttachment: calendar?.attachment ?? null,
       })
     } catch (error) {
       console.error('posing included session email error:', { bookingId: booking.id, error })
