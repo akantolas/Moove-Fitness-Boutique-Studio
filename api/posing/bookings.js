@@ -1,6 +1,9 @@
 import {
+  buildAdminBookingNotifyEmail,
   buildConfirmationEmail,
   buildPaymentEmail,
+} from '../email/templates.js'
+import {
   cancelPosingBooking,
   cors,
   createStripeCheckoutUrl,
@@ -14,14 +17,35 @@ import {
   sendPosingEmail,
 } from './_lib.js'
 
-async function sendBookingNotify({ from, profileName, userEmail, packageName, sessionTime, bookingId }) {
+async function sendBookingNotify({
+  from,
+  profileName,
+  userEmail,
+  packageName,
+  sessionTime,
+  bookingId,
+  status,
+  locale,
+}) {
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
   if (!notifyEmail) return
+
+  const { subject, html, text } = buildAdminBookingNotifyEmail({
+    profileName,
+    userEmail,
+    packageName,
+    sessionTime,
+    bookingId,
+    status,
+    locale,
+  })
+
   await sendPosingEmail({
     from,
     to: [notifyEmail],
-    subject: `New Move & Pose booking — ${profileName}`,
-    html: `<p>New booking: ${profileName} (${userEmail})<br/>${packageName}<br/>${sessionTime}</p>`,
+    subject,
+    html,
+    text,
     idempotencyKey: `posing-notify-${bookingId}`,
   })
 }
@@ -157,19 +181,19 @@ export default async function handler(req, res) {
       .eq('id', userPackage.id)
 
     try {
+      const confirmation = buildConfirmationEmail({
+        attendeeName: profileName,
+        packageName,
+        sessionTime,
+        locale,
+      })
+
       await sendPosingEmail({
         from,
         to: [user.email],
-        subject:
-          locale === 'el'
-            ? 'Move & Pose — επιβεβαίωση συνεδρίας'
-            : 'Move & Pose — session confirmed',
-        html: buildConfirmationEmail({
-          attendeeName: profileName,
-          packageName,
-          sessionTime,
-          locale,
-        }),
+        subject: confirmation.subject,
+        html: confirmation.html,
+        text: confirmation.text,
         idempotencyKey: `posing-booking-confirm-${booking.id}`,
       })
       await sendBookingNotify({
@@ -179,6 +203,8 @@ export default async function handler(req, res) {
         packageName,
         sessionTime,
         bookingId: booking.id,
+        status: 'confirmed',
+        locale,
       })
     } catch (error) {
       console.error('posing included session email error:', error)
@@ -256,20 +282,20 @@ export default async function handler(req, res) {
   }
 
   try {
+    const payment = buildPaymentEmail({
+      attendeeName: profileName,
+      packageName,
+      sessionTime,
+      stripeLink,
+      locale,
+    })
+
     await sendPosingEmail({
       from,
       to: [user.email],
-      subject:
-        locale === 'el'
-          ? 'Move & Pose — επιβεβαίωση κράτησης & πληρωμή'
-          : 'Move & Pose — booking confirmation & payment',
-      html: buildPaymentEmail({
-        attendeeName: profileName,
-        packageName,
-        sessionTime,
-        stripeLink,
-        locale,
-      }),
+      subject: payment.subject,
+      html: payment.html,
+      text: payment.text,
       idempotencyKey: `posing-booking-${booking.id}`,
     })
     await sendBookingNotify({
@@ -279,6 +305,8 @@ export default async function handler(req, res) {
       packageName,
       sessionTime,
       bookingId: booking.id,
+      status: 'pending_payment',
+      locale,
     })
 
     await supabase

@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { sendPaidConfirmationEmail } from '../email/sendPaidConfirmation.js'
 import { activatePackagePayment, getSupabaseAdmin, json, readRawBody } from './_lib.js'
 
 export const config = {
@@ -69,6 +70,14 @@ export default async function handler(req, res) {
 
   if (!result.ok) {
     return json(res, 500, { ok: false, error: result.error })
+  }
+
+  if (!result.already) {
+    try {
+      await sendPaidConfirmationEmail(bookingId)
+    } catch (error) {
+      console.error('stripe webhook paid confirmation email error:', error)
+    }
   }
 
   return json(res, 200, { ok: true, already: result.already ?? false })

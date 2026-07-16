@@ -1,3 +1,4 @@
+import { sendPaidConfirmationEmail } from '../../email/sendPaidConfirmation.js'
 import {
   activatePackagePayment,
   cors,
@@ -127,6 +128,14 @@ export default async function handler(req, res) {
       if (!result.ok) {
         const status = result.error === 'invalid_booking_status' ? 409 : 500
         return json(res, status, { ok: false, error: result.error })
+      }
+
+      if (!result.already) {
+        try {
+          await sendPaidConfirmationEmail(bookingId)
+        } catch (error) {
+          console.error('admin manual confirm paid confirmation email error:', error)
+        }
       }
 
       return json(res, 200, { ok: true, already: result.already ?? false })

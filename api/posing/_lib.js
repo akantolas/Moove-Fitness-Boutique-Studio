@@ -174,7 +174,7 @@ export function formatSessionTime(startTime, locale = 'el') {
   }).format(date)
 }
 
-export async function sendResendEmail({ from, to, subject, html, idempotencyKey, replyTo }) {
+export async function sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo }) {
   const apiKey = process.env.RESEND_API_KEY?.trim()
   if (!apiKey) throw new Error('missing_resend_api_key')
 
@@ -193,6 +193,7 @@ export async function sendResendEmail({ from, to, subject, html, idempotencyKey,
       to: recipients,
       subject,
       html,
+      ...(text ? { text: String(text) } : {}),
       ...(replyTo ? { reply_to: String(replyTo).trim() } : {}),
     }),
   })
@@ -221,7 +222,7 @@ export function hasEmailTransportConfig() {
   return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY)
 }
 
-export async function sendPosingEmail({ from, to, subject, html, idempotencyKey, replyTo }) {
+export async function sendPosingEmail({ from, to, subject, html, text, idempotencyKey, replyTo }) {
   const smtp = getSmtpConfig()
   if (smtp) {
     const nodemailer = await import('nodemailer')
@@ -232,44 +233,21 @@ export async function sendPosingEmail({ from, to, subject, html, idempotencyKey,
       to: recipients.join(', '),
       subject,
       html,
+      ...(text ? { text: String(text) } : {}),
       ...(replyTo ? { replyTo } : {}),
     })
     return { ok: true, provider: 'smtp' }
   }
 
   if (process.env.RESEND_API_KEY) {
-    const result = await sendResendEmail({ from, to, subject, html, idempotencyKey, replyTo })
+    const result = await sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo })
     return { ...result, provider: 'resend' }
   }
 
   throw new Error('missing_email_config')
 }
 
-export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stripeLink, locale }) {
-  const isEl = locale === 'el'
-  const paySection = stripeLink
-    ? `<p style="margin:20px 0;"><a href="${stripeLink}" style="display:inline-block;background:#c026d3;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;">${isEl ? 'Πληρωμή μέσω Stripe' : 'Pay with Stripe'}</a></p>`
-    : `<p>${isEl ? 'Ο σύνδεσμος πληρωμής δεν είναι ρυθμισμένος — θα επικοινωνήσουμε σύντομα.' : 'Payment link is not configured yet — we will contact you shortly.'}</p>`
-
-  return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-    <p>${isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`}</p>
-    <p>${isEl ? 'Η κράτησή σου καταχωρήθηκε.' : 'Your booking has been reserved.'}</p>
-    <p><strong>${isEl ? 'Ώρα' : 'Time'}:</strong> ${sessionTime}</p>
-    <p><strong>${isEl ? 'Πακέτο' : 'Package'}:</strong> ${packageName}</p>
-    <p>${isEl ? 'Ολοκλήρωσε την πληρωμή για να επιβεβαιωθεί η συνεδρία.' : 'Complete payment to confirm your session.'}</p>
-    ${paySection}
-  </body></html>`
-}
-
-export function buildConfirmationEmail({ attendeeName, packageName, sessionTime, locale }) {
-  const isEl = locale === 'el'
-  return `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-    <p>${isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`}</p>
-    <p>${isEl ? 'Η συνεδρία σου επιβεβαιώθηκε.' : 'Your session is confirmed.'}</p>
-    <p><strong>${isEl ? 'Ώρα' : 'Time'}:</strong> ${sessionTime}</p>
-    <p><strong>${isEl ? 'Πακέτο' : 'Package'}:</strong> ${packageName}</p>
-  </body></html>`
-}
+export { buildConfirmationEmail, buildPaymentEmail } from '../email/templates.js'
 
 export async function findBookablePackage(supabase, userId, planKey) {
   const now = new Date().toISOString()

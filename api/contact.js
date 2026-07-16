@@ -1,4 +1,8 @@
 import {
+  buildContactAdminEmail,
+  buildContactAutoReplyEmail,
+} from './email/templates.js'
+import {
   cors,
   hasEmailTransportConfig,
   json,
@@ -12,15 +16,6 @@ const MAX_EMAIL = 254
 const MAX_MESSAGE = 4000
 const DEFAULT_FROM = 'noreply@moovefitness.gr'
 const DEFAULT_NOTIFY = 'info@moovefitness.gr'
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
 
 function trimField(value, maxLen) {
   return String(value ?? '').trim().slice(0, maxLen)
@@ -95,21 +90,25 @@ export default async function handler(req, res) {
 
     console.info('contact email send', { from: fromEmail, to: notifyEmail })
 
-    const safeName = escapeHtml(name)
-    const safeEmail = escapeHtml(email)
-    const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>')
+    const adminEmail = buildContactAdminEmail({ name, email, message })
+    const autoReply = buildContactAutoReplyEmail({ name })
 
     await sendPosingEmail({
       from: fromEmail,
       to: [notifyEmail],
       replyTo: email,
-      subject: `Νέο μήνυμα επικοινωνίας — ${name}`,
-      html: `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
-        <p><strong>Όνομα:</strong> ${safeName}</p>
-        <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
-        <p><strong>Μήνυμα:</strong></p>
-        <p style="white-space:pre-wrap;">${safeMessage}</p>
-      </body></html>`,
+      subject: adminEmail.subject,
+      html: adminEmail.html,
+      text: adminEmail.text,
+    })
+
+    await sendPosingEmail({
+      from: fromEmail,
+      to: [email],
+      replyTo: notifyEmail,
+      subject: autoReply.subject,
+      html: autoReply.html,
+      text: autoReply.text,
     })
 
     return json(res, 200, { ok: true })
