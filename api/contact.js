@@ -2,6 +2,7 @@ import {
   buildContactAdminEmail,
   buildContactAutoReplyEmail,
 } from './email/templates.js'
+import { escapeHtml } from './email/brand.js'
 import {
   cors,
   hasEmailTransportConfig,
@@ -65,6 +66,49 @@ function logEmailError(label, error) {
   }
 }
 
+function buildLegacyAdminEmail({ name, email, message }) {
+  const safeName = escapeHtml(name)
+  const safeEmail = escapeHtml(email)
+  const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>')
+
+  return {
+    subject: `Νέο μήνυμα επικοινωνίας — ${name}`,
+    html: `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;">
+      <p><strong>Όνομα:</strong> ${safeName}</p>
+      <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+      <p><strong>Μήνυμα:</strong></p>
+      <p style="white-space:pre-wrap;">${safeMessage}</p>
+    </body></html>`,
+  }
+}
+
+async function sendAdminNotifyEmail({ fromEmail, notifyEmail, customerEmail, name, email, message }) {
+  const adminEmail = buildContactAdminEmail({ name, email, message })
+
+  try {
+    await sendPosingEmailReliable({
+      from: fromEmail,
+      to: [notifyEmail],
+      replyTo: customerEmail,
+      subject: adminEmail.subject,
+      html: adminEmail.html,
+      text: adminEmail.text,
+    })
+    return
+  } catch (error) {
+    logEmailError('contact premium admin email error', error)
+  }
+
+  const legacy = buildLegacyAdminEmail({ name, email, message })
+  await sendPosingEmailReliable({
+    from: fromEmail,
+    to: [notifyEmail],
+    replyTo: customerEmail,
+    subject: legacy.subject,
+    html: legacy.html,
+  })
+}
+
 export default async function handler(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
@@ -104,17 +148,16 @@ export default async function handler(req, res) {
 
     console.info('contact email send', { from: fromEmail, replyFrom: replyFromEmail, to: notifyEmail })
 
-    const adminEmail = buildContactAdminEmail({ name, email, message })
     const autoReply = buildContactAutoReplyEmail({ name })
 
     try {
-      await sendPosingEmailReliable({
-        from: fromEmail,
-        to: [notifyEmail],
-        replyTo: email,
-        subject: adminEmail.subject,
-        html: adminEmail.html,
-        text: adminEmail.text,
+      await sendAdminNotifyEmail({
+        fromEmail,
+        notifyEmail,
+        customerEmail: email,
+        name,
+        email,
+        message,
       })
     } catch (error) {
       logEmailError('contact admin email error', error)

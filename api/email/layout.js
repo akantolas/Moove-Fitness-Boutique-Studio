@@ -169,7 +169,7 @@ export function renderEmailLayout({
 </head>
 <body style="margin:0;padding:0;background:${colors.outerBg};font-family:${BODY_FONT};">
   <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
-    ${escapeHtml(preheader)}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+    ${escapeHtml(preheader)}
   </div>
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${colors.outerBg};">
     <tr>
