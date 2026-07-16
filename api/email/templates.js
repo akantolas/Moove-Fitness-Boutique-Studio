@@ -225,6 +225,89 @@ export function buildAdminBookingNotifyEmail({
   })
 }
 
+/** Customer — booking cancelled */
+export function buildCancellationEmail({
+  attendeeName,
+  packageName,
+  sessionTime,
+  previousStatus,
+  locale = 'el',
+}) {
+  const isEl = locale === 'el'
+  const wasConfirmed = previousStatus === 'confirmed'
+
+  return posingTemplate({
+    locale,
+    subject: isEl
+      ? 'Move & Pose — η κράτηση ακυρώθηκε'
+      : 'Move & Pose — booking cancelled',
+    preheader: isEl
+      ? `Η κράτησή σου ακυρώθηκε — ${sessionTime}`
+      : `Your booking was cancelled — ${sessionTime}`,
+    title: isEl ? 'Η κράτηση ακυρώθηκε' : 'Booking cancelled',
+    greeting: isEl ? `Γεια σου ${attendeeName},` : `Hi ${attendeeName},`,
+    intro: wasConfirmed
+      ? isEl
+        ? 'Η συνεδρία σου ακυρώθηκε. Το session επέστρεψε στο πακέτο σου.'
+        : 'Your session was cancelled. The session has been returned to your package.'
+      : isEl
+        ? 'Η παραγγελία και η κράτησή σου ακυρώθηκαν.'
+        : 'Your order and booking have been cancelled.',
+    details: [
+      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
+      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
+    ],
+    ctaHref: posingBrand.accountUrl(),
+    ctaLabel: isEl ? 'Ο λογαριασμός μου' : 'My account',
+    badgeLabel: isEl ? 'Ακυρωμένη' : 'Cancelled',
+    badgeBg: posingBrand.colors.badgeCancelled,
+    badgeColor: posingBrand.colors.badgeCancelledText,
+  })
+}
+
+/** Admin — booking cancellation notification */
+export function buildAdminCancellationNotifyEmail({
+  profileName,
+  userEmail,
+  packageName,
+  sessionTime,
+  bookingId,
+  previousStatus,
+  locale = 'el',
+}) {
+  const isEl = locale === 'el'
+  const wasConfirmed = previousStatus === 'confirmed'
+  const previousStatusLabel = wasConfirmed
+    ? isEl
+      ? 'Επιβεβαιωμένη συνεδρία'
+      : 'Confirmed session'
+    : isEl
+      ? 'Εκκρεμής πληρωμή'
+      : 'Pending payment'
+  const cancelledLabel = isEl ? 'Ακυρωμένη' : 'Cancelled'
+
+  return posingTemplate({
+    locale,
+    subject: `Move & Pose cancellation — ${profileName}`,
+    preheader: `${profileName} · ${packageName} · ${sessionTime}`,
+    title: isEl ? 'Ακύρωση κράτησης' : 'Booking cancelled',
+    intro: isEl
+      ? 'Μια κράτηση ακυρώθηκε από τον πελάτη.'
+      : 'A booking was cancelled by the client.',
+    details: [
+      { label: isEl ? 'Πελάτης' : 'Client', value: profileName },
+      { label: 'Email', value: userEmail, isLink: true },
+      { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
+      { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
+      { label: 'Booking ID', value: bookingId },
+      { label: isEl ? 'Προηγ. κατάσταση' : 'Previous status', value: previousStatusLabel },
+    ],
+    badgeLabel: cancelledLabel,
+    badgeBg: posingBrand.colors.badgeCancelled,
+    badgeColor: posingBrand.colors.badgeCancelledText,
+  })
+}
+
 /** Admin — contact form notification */
 export function buildContactAdminEmail({ name, email, message }) {
   const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>')

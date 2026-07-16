@@ -38,6 +38,8 @@ export const posingBrand = {
     badgePendingText: '#fef08a',
     badgeConfirmed: '#14532d',
     badgeConfirmedText: '#bbf7d0',
+    badgeCancelled: '#450a0a',
+    badgeCancelledText: '#fecaca',
   },
 }
 

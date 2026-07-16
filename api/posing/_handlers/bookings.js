@@ -4,6 +4,12 @@ import {
   buildPaymentEmail,
 } from '../../email/templates.js'
 import {
+  fetchBookingCancellationSnapshot,
+  packageNameForLocale,
+  sendCancellationEmails,
+  sessionTimeForLocale,
+} from '../../email/sendCancellationEmails.js'
+import {
   cancelPosingBooking,
   cors,
   createStripeCheckoutUrl,
@@ -63,8 +69,12 @@ export async function handleBookings(req, res) {
       return json(res, 400, { ok: false, error: 'missing_id' })
     }
 
+    const locale = req.query?.locale === 'en' ? 'en' : 'el'
+
     try {
       const supabase = getSupabaseAdmin()
+      const snapshot = await fetchBookingCancellationSnapshot(supabase, bookingId)
+
       const result = await cancelPosingBooking(supabase, {
         bookingId,
         userId: user.id,
@@ -80,6 +90,22 @@ export async function handleBookings(req, res) {
                 ? 409
                 : 500
         return json(res, status, { ok: false, error: result.error })
+      }
+
+      if (!result.already && snapshot) {
+        try {
+          await sendCancellationEmails({
+            bookingId: snapshot.bookingId,
+            locale,
+            previousStatus: snapshot.previousStatus,
+            attendeeName: snapshot.attendeeName,
+            userEmail: snapshot.userEmail,
+            packageName: packageNameForLocale(snapshot, locale),
+            sessionTime: sessionTimeForLocale(snapshot, locale),
+          })
+        } catch (error) {
+          console.error('posing cancellation email error:', error)
+        }
       }
 
       return json(res, 200, { ok: true, already: result.already ?? false })

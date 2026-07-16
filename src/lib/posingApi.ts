@@ -260,8 +260,10 @@ export async function adminDeleteMember(accessToken: string, memberId: string) {
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'delete_member_failed'))
 }
 
-export async function cancelPosingBooking(accessToken: string, bookingId: string) {
-  const res = await fetch(`/api/posing/bookings?id=${encodeURIComponent(bookingId)}`, {
+export async function cancelPosingBooking(accessToken: string, bookingId: string, locale: string) {
+  const res = await fetch(
+    `/api/posing/bookings?id=${encodeURIComponent(bookingId)}&locale=${encodeURIComponent(locale)}`,
+    {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${accessToken}` },
   })

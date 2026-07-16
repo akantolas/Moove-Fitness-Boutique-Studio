@@ -207,7 +207,7 @@ export function PosingAccountPage() {
     setCancelBusy(true)
     setCancelError('')
     try {
-      await cancelPosingBooking(accessToken, cancelTarget.id)
+      await cancelPosingBooking(accessToken, cancelTarget.id, locale)
       setCancelTarget(null)
       await reloadAccountData()
     } catch (err) {
