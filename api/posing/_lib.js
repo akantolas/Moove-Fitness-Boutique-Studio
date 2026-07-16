@@ -131,8 +131,28 @@ export function json(res, status, body) {
 
 export function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS')
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+}
+
+/** Resolve catch-all route key from Vercel query or request URL pathname. */
+export function resolveApiPath(req, basePrefix) {
+  const fromQuery = req.query?.path
+  if (fromQuery !== undefined && fromQuery !== null && fromQuery !== '') {
+    const segments = Array.isArray(fromQuery) ? fromQuery : [fromQuery]
+    const joined = segments.map((s) => String(s).trim()).filter(Boolean).join('/')
+    if (joined) return joined
+  }
+
+  const rawUrl = String(req.url ?? '')
+  const pathname = rawUrl.split('?')[0]
+  const normalizedPrefix = basePrefix.endsWith('/') ? basePrefix : `${basePrefix}/`
+  if (pathname === normalizedPrefix.slice(0, -1)) return ''
+  if (pathname.startsWith(normalizedPrefix)) {
+    return pathname.slice(normalizedPrefix.length).replace(/^\/+|\/+$/g, '')
+  }
+
+  return ''
 }
 
 export async function readJsonBody(req) {
