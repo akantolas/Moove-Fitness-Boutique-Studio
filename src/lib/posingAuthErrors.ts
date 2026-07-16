@@ -29,6 +29,26 @@ export function translateAuthError(error: unknown, t: (key: string) => string) {
     return t('posing.auth.rateLimit')
   }
 
+  if (
+    code === 'same_password' ||
+    message.includes('same password') ||
+    message.includes('should be different')
+  ) {
+    return t('posing.auth.samePassword')
+  }
+
+  if (message.includes('weak') || message.includes('too short')) {
+    return t('posing.auth.weakPassword')
+  }
+
+  if (
+    code === 'otp_expired' ||
+    message.includes('expired') ||
+    (message.includes('invalid') && message.includes('token'))
+  ) {
+    return t('posing.auth.resetLinkInvalid')
+  }
+
   if (authError.message) return authError.message
   return t('posing.auth.errorGeneric')
 }

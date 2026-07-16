@@ -13,7 +13,7 @@ import { ServiceTermsPage } from './pages/ServiceTerms'
 import { TermsOfUsePage } from './pages/TermsOfUse'
 import { PosingPage } from './pages/Posing'
 import { PosingAboutPage } from './pages/PosingAbout'
-import { PosingLoginPage, PosingSignupPage } from './pages/PosingAuth'
+import { PosingForgotPasswordPage, PosingLoginPage, PosingResetPasswordPage, PosingSignupPage } from './pages/PosingAuth'
 import { PosingAccountPage } from './pages/PosingAccount'
 import { PosingAccountSettingsPage } from './pages/PosingAccountSettings'
 import { PosingAdminPage } from './pages/PosingAdmin'
@@ -38,6 +38,8 @@ export default function App() {
             <Route path="/posing/about" element={<PosingAboutPage />} />
             <Route path="/posing/login" element={<PosingLoginPage />} />
             <Route path="/posing/signup" element={<PosingSignupPage />} />
+            <Route path="/posing/forgot-password" element={<PosingForgotPasswordPage />} />
+            <Route path="/posing/reset-password" element={<PosingResetPasswordPage />} />
             <Route path="/posing/account" element={<PosingAccountPage />} />
             <Route path="/posing/account/settings" element={<PosingAccountSettingsPage />} />
             <Route path="/posing/admin" element={<PosingAdminPage />} />

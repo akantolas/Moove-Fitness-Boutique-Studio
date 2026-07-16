@@ -80,6 +80,19 @@ export function PosingLoginPage() {
           onChange={setPassword}
           autoComplete="current-password"
         />
+        <p className="text-right">
+          <Link
+            to={`/posing/forgot-password?redirect=${encodeURIComponent(redirect)}`}
+            className="text-sm font-medium text-fuchsia-200/90 hover:text-fuchsia-100 hover:underline"
+          >
+            {t('posing.auth.forgotPassword')}
+          </Link>
+        </p>
+        {searchParams.get('reset') === 'success' ? (
+          <p className="rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+            {t('posing.auth.resetPasswordSuccess')}
+          </p>
+        ) : null}
         {error ? (
           <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
             {error}
@@ -245,6 +258,245 @@ export function PosingSignupPage() {
           {t('posing.auth.login')}
         </Link>
       </p>
+    </div>
+  )
+}
+
+export function PosingForgotPasswordPage() {
+  const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get('redirect') ?? '/posing/account'
+  const { configured, loading, user, requestPasswordReset } = usePosingAuth()
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!loading && user) {
+      window.location.replace(redirect)
+    }
+  }, [loading, redirect, user])
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    setError('')
+    setSubmitting(true)
+    try {
+      await requestPasswordReset(email)
+      setSuccess(true)
+    } catch (err) {
+      setError(translateAuthError(err, t))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (!configured) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/70">
+        <p>{t('posing.auth.notConfigured')}</p>
+      </div>
+    )
+  }
+
+  if (success) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-semibold text-white">
+          {t('posing.auth.resetEmailSentTitle')}
+        </h1>
+        <p className="mt-4 text-sm leading-relaxed text-white/65">{t('posing.auth.resetEmailSentBody')}</p>
+        <Link
+          to={`/posing/login?redirect=${encodeURIComponent(redirect)}`}
+          className="mt-8 inline-flex rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-7 py-3 text-sm font-semibold text-black"
+        >
+          {t('posing.auth.backToLogin')}
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
+      <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
+        Move & Pose
+      </p>
+      <h1 className="font-display mt-3 text-center text-3xl font-semibold text-white">
+        {t('posing.auth.forgotPasswordTitle')}
+      </h1>
+      <p className="mt-3 text-center text-sm text-white/60">{t('posing.auth.forgotPasswordBody')}</p>
+
+      <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="forgot-email" className="text-xs font-semibold uppercase tracking-[0.22em] text-white/55">
+            {t('common.email')}
+          </label>
+          <input
+            id="forgot-email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        {error ? (
+          <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={submitting || loading}
+          className="w-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-7 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50"
+        >
+          {submitting ? t('posing.auth.sendingResetLink') : t('posing.auth.sendResetLink')}
+        </button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-white/55">
+        <Link
+          to={`/posing/login?redirect=${encodeURIComponent(redirect)}`}
+          className="font-medium text-fuchsia-200 hover:underline"
+        >
+          {t('posing.auth.backToLogin')}
+        </Link>
+      </p>
+    </div>
+  )
+}
+
+export function PosingResetPasswordPage() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { configured, loading, session, passwordRecovery, updatePassword, signOut } = usePosingAuth()
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [recoveryReady, setRecoveryReady] = useState(false)
+  const [linkInvalid, setLinkInvalid] = useState(false)
+
+  useEffect(() => {
+    if (loading) return
+
+    if (passwordRecovery && session) {
+      setRecoveryReady(true)
+      setLinkInvalid(false)
+      return
+    }
+
+    const hasRecoveryHash = window.location.hash.includes('type=recovery')
+    if (hasRecoveryHash) {
+      const timer = window.setTimeout(() => {
+        if (passwordRecovery && session) {
+          setRecoveryReady(true)
+        } else {
+          setLinkInvalid(true)
+        }
+      }, 1500)
+      return () => window.clearTimeout(timer)
+    }
+
+    setLinkInvalid(true)
+  }, [loading, passwordRecovery, session])
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    setError('')
+
+    if (password !== confirmPassword) {
+      setError(t('posing.auth.passwordMismatch'))
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await updatePassword(password)
+      await signOut()
+      navigate('/posing/login?reset=success', { replace: true })
+    } catch (err) {
+      setError(translateAuthError(err, t))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (!configured) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/70">
+        <p>{t('posing.auth.notConfigured')}</p>
+      </div>
+    )
+  }
+
+  if (loading || (!recoveryReady && !linkInvalid)) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/60">
+        <p>{t('posing.account.loading')}</p>
+      </div>
+    )
+  }
+
+  if (linkInvalid) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-semibold text-white">
+          {t('posing.auth.resetPasswordTitle')}
+        </h1>
+        <p className="mt-4 text-sm leading-relaxed text-white/65">{t('posing.auth.resetLinkInvalid')}</p>
+        <Link
+          to="/posing/forgot-password"
+          className="mt-8 inline-flex rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-7 py-3 text-sm font-semibold text-black"
+        >
+          {t('posing.auth.forgotPasswordTitle')}
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
+      <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
+        Move & Pose
+      </p>
+      <h1 className="font-display mt-3 text-center text-3xl font-semibold text-white">
+        {t('posing.auth.resetPasswordTitle')}
+      </h1>
+      <p className="mt-3 text-center text-sm text-white/60">{t('posing.auth.resetPasswordBody')}</p>
+
+      <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
+        <PasswordInput
+          id="reset-password"
+          label={t('posing.auth.password')}
+          value={password}
+          onChange={setPassword}
+          autoComplete="new-password"
+          minLength={8}
+        />
+        <PasswordInput
+          id="reset-confirm-password"
+          label={t('posing.auth.confirmPassword')}
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          autoComplete="new-password"
+          minLength={8}
+        />
+        {error ? (
+          <p className="rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
+            {error}
+          </p>
+        ) : null}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-7 py-3 text-sm font-semibold text-black transition hover:brightness-110 disabled:opacity-50"
+        >
+          {submitting ? t('posing.auth.settingPassword') : t('posing.auth.setNewPassword')}
+        </button>
+      </form>
     </div>
   )
 }
