@@ -232,6 +232,8 @@ export function PosingAdminPage() {
             currentUserId={user.id}
             busy={isBusy}
             onDeleteMember={admin.deleteMember}
+            onSaveMemberPrice={admin.saveMemberPrice}
+            onRemoveMemberPrice={admin.removeMemberPrice}
           />
         )
       ) : null}

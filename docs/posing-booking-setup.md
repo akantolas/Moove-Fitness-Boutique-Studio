@@ -1,6 +1,6 @@
 # Move & Pose — Supabase booking, Stripe & email setup
 
-Ροή: **λογαριασμός → κράτηση slot → email με Stripe Checkout → webhook επιβεβαιώνει πακέτο & κράτηση**.
+Ροή: **λογαριασμός → κράτηση slot → email με τιμή + Stripe/PayPal/Revolut → webhook (Stripe) επιβεβαιώνει πακέτο & κράτηση**.
 
 ## 1. Supabase project
 
@@ -14,6 +14,8 @@
    - `supabase/migrations/001_posing_booking.sql`
    - `supabase/migrations/002_profile_fields.sql` (phone, division, notes στο προφίλ)
    - `supabase/migrations/003_profile_avatar.sql` (avatar_url + bucket `posing-avatars`)
+   - `supabase/migrations/008_july_package_offers.sql` (July Ruby/Diamond x8)
+   - `supabase/migrations/009_profile_plan_prices.sql` (custom per-client prices)
 5. Αντέγραψε:
    - Project URL → `VITE_SUPABASE_URL` + `SUPABASE_URL`
    - anon public key → `VITE_SUPABASE_ANON_KEY`
@@ -47,10 +49,27 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 | Sapphire | `STRIPE_PRICE_SAPPHIRE` |
 | Ruby | `STRIPE_PRICE_RUBY` |
 | Diamond | `STRIPE_PRICE_DIAMOND` |
+| Ruby x8 (July offer) | `STRIPE_PRICE_RUBY_JULY8` |
+| Diamond x8 (July offer) | `STRIPE_PRICE_DIAMOND_JULY8` |
 
 + `STRIPE_SECRET_KEY` (secret key από Dashboard)
 
-Το API δημιουργεί Checkout Session ανά κράτηση με metadata `booking_id` + `user_package_id`.
+Το API δημιουργεί Checkout Session ανά κράτηση με metadata `booking_id` + `user_package_id`. Αν δεν υπάρχει fixed Price ID (π.χ. promo plans) ή ο πελάτης έχει **ειδική τιμή** από admin → dynamic `price_data` με το resolved ποσό.
+
+### PayPal & Revolut
+
+Στο email κράτησης (μετά το booking) στέλνονται links με pre-filled amount:
+
+| Variable | Default |
+|----------|---------|
+| `POSE_PAYPAL_URL` | `https://www.paypal.me/magdalinisamara` |
+| `POSE_REVOLUT_URL` | `https://revolut.me/magdaqsn9` |
+
+Οι τιμές **δεν** εμφανίζονται στο site — μόνο στο email.
+
+### Custom τιμές ανά πελάτη
+
+Στο `/posing/admin` → tab **Μέλη** → expanded member → **Ειδικές τιμές**. Αποθηκεύονται στον πίνακα `profile_plan_prices` (migration `009`).
 
 ### Fallback: static Payment Links
 

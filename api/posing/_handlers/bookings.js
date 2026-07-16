@@ -23,6 +23,12 @@ import {
   readJsonBody,
   sendPosingEmailReliable,
 } from '../_lib.js'
+import {
+  formatPriceEUR,
+  getPayPalUrl,
+  getRevolutUrl,
+  resolvePlanPrice,
+} from '../pricing.js'
 
 async function sendBookingNotify({
   from,
@@ -36,6 +42,10 @@ async function sendBookingNotify({
   bookingId,
   status,
   stripeLink,
+  paypalLink,
+  revolutLink,
+  amountEur,
+  priceSource,
   locale,
 }) {
   const notifyEmail = process.env.POSE_NOTIFY_EMAIL
@@ -52,6 +62,10 @@ async function sendBookingNotify({
     bookingId,
     status,
     stripeLink,
+    paypalLink,
+    revolutLink,
+    amountEur,
+    priceSource,
     locale,
   })
 
@@ -327,6 +341,31 @@ export async function handleBookings(req, res) {
     return json(res, 500, { ok: false, error: bookError?.message ?? 'booking_create_failed' })
   }
 
+  const priceInfo = await resolvePlanPrice(supabase, planKey, user.id)
+  const amountEur = priceInfo.amountEur
+
+  if (amountEur) {
+    const amountPatch = { amount_eur: amountEur, updated_at: new Date().toISOString() }
+    const { error: pkgAmountErr } = await supabase
+      .from('user_packages')
+      .update(amountPatch)
+      .eq('id', userPackage.id)
+    if (pkgAmountErr) {
+      console.error('user_packages amount_eur update skipped:', pkgAmountErr.message)
+    }
+    const { error: bookAmountErr } = await supabase
+      .from('posing_bookings')
+      .update(amountPatch)
+      .eq('id', booking.id)
+    if (bookAmountErr) {
+      console.error('posing_bookings amount_eur update skipped:', bookAmountErr.message)
+    }
+  }
+
+  const paypalLink = amountEur ? getPayPalUrl(amountEur) : ''
+  const revolutLink = amountEur ? getRevolutUrl(amountEur) : ''
+  const useDynamicStripe = priceInfo.source === 'override'
+
   let stripeLink = ''
   try {
     const checkout = await createStripeCheckoutUrl({
@@ -335,6 +374,9 @@ export async function handleBookings(req, res) {
       userPackageId: userPackage.id,
       customerEmail: userEmail,
       locale: bookingLocale,
+      amountEur,
+      packageName,
+      useDynamicPrice: useDynamicStripe,
     })
     stripeLink = checkout.url
     if (checkout.sessionId) {
@@ -353,6 +395,10 @@ export async function handleBookings(req, res) {
       packageName,
       sessionTime,
       stripeLink,
+      paypalLink,
+      revolutLink,
+      amountEur,
+      amountLabel: amountEur ? formatPriceEUR(amountEur, bookingLocale) : null,
       bookingId: booking.id,
       durationMinutes,
       locale: bookingLocale,
@@ -378,6 +424,10 @@ export async function handleBookings(req, res) {
       bookingId: booking.id,
       status: 'pending_payment',
       stripeLink,
+      paypalLink,
+      revolutLink,
+      amountEur,
+      priceSource: priceInfo.source,
       locale: bookingLocale,
     })
 

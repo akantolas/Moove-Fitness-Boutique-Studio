@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { ProfileAvatar } from './ProfileAvatar'
+import { MemberCustomPrices } from './MemberCustomPrices'
 import type { AdminMember } from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { bookingStatusLabel, planKeyLabel } from '../lib/posingLabels'
 import { translateAdminError } from '../hooks/usePosingAdminPanel'
 import { ConfirmDialog } from './ConfirmDialog'
+import type { PosingPlanKey } from '../site'
 
 type AdminMembersListProps = {
   members: AdminMember[]
@@ -13,6 +15,8 @@ type AdminMembersListProps = {
   currentUserId: string
   busy: boolean
   onDeleteMember: (memberId: string) => Promise<void>
+  onSaveMemberPrice: (userId: string, planKey: PosingPlanKey, priceEur: number) => Promise<void>
+  onRemoveMemberPrice: (userId: string, planKey: PosingPlanKey) => Promise<void>
 }
 
 function formatMemberDate(iso: string, locale: Locale) {
@@ -46,6 +50,8 @@ export function AdminMembersList({
   currentUserId,
   busy,
   onDeleteMember,
+  onSaveMemberPrice,
+  onRemoveMemberPrice,
 }: AdminMembersListProps) {
   const { t, dictionary } = useTranslation()
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -199,7 +205,11 @@ export function AdminMembersList({
                                 className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
                               >
                                 <p className="text-white">
-                                  {planKeyLabel(pkg.plan_key, (i) => dictionary.posing.pricing.packages[i]?.name)}
+                                  {planKeyLabel(
+                                    pkg.plan_key,
+                                    (i) => dictionary.posing.pricing.packages[i]?.name,
+                                    t,
+                                  )}
                                 </p>
                                 <p className="mt-0.5 text-xs text-white/50">
                                   {packageStatusLabel(pkg.status, t)} ·{' '}
@@ -231,6 +241,13 @@ export function AdminMembersList({
                         ) : null}
                       </div>
                     </div>
+                    <MemberCustomPrices
+                      memberId={member.id}
+                      planPrices={member.plan_prices ?? []}
+                      busy={busy}
+                      onSave={(planKey, priceEur) => onSaveMemberPrice(member.id, planKey, priceEur)}
+                      onRemove={(planKey) => onRemoveMemberPrice(member.id, planKey)}
+                    />
                   </div>
                 ) : null}
               </div>

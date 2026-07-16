@@ -1,5 +1,5 @@
 import { createSupabaseClient } from './supabase'
-import type { PosingPackageKey } from '../site'
+import type { PosingPlanKey } from '../site'
 
 export type PackagePlan = {
   key: string
@@ -21,7 +21,7 @@ export type PackageQuota = {
   userPackageId: string | null
 }
 
-export async function fetchPackagePlan(planKey: PosingPackageKey): Promise<PackagePlan | null> {
+export async function fetchPackagePlan(planKey: PosingPlanKey): Promise<PackagePlan | null> {
   const supabase = createSupabaseClient()
   const { data, error } = await supabase
     .from('package_plans')
@@ -35,7 +35,7 @@ export async function fetchPackagePlan(planKey: PosingPackageKey): Promise<Packa
 
 export async function fetchUserPackageQuota(
   userId: string,
-  planKey: PosingPackageKey,
+  planKey: PosingPlanKey,
 ): Promise<PackageQuota> {
   const plan = await fetchPackagePlan(planKey)
   const sessionsTotal = plan?.sessions_total ?? 1

@@ -3,8 +3,10 @@ import {
   adminConfirmPayment,
   adminCreateSlot,
   adminDeleteMember,
+  adminDeleteMemberPrice,
   adminDeleteSlot,
   adminUpdateSlot,
+  adminUpsertMemberPrice,
   fetchAdminBookings,
   fetchAdminCalendarSettings,
   fetchAdminMembers,
@@ -372,6 +374,18 @@ export function usePosingAdminPanel({
     }
   }
 
+  async function saveMemberPrice(userId: string, planKey: string, priceEur: number) {
+    if (!accessToken) throw new Error('unauthorized')
+    await adminUpsertMemberPrice(accessToken, userId, planKey, priceEur)
+    await loadMembers()
+  }
+
+  async function removeMemberPrice(userId: string, planKey: string) {
+    if (!accessToken) throw new Error('unauthorized')
+    await adminDeleteMemberPrice(accessToken, userId, planKey)
+    await loadMembers()
+  }
+
   async function confirmPayment(bookingId: string) {
     if (!accessToken) return
     setBusy(true)
@@ -408,6 +422,8 @@ export function usePosingAdminPanel({
     clearDay,
     saveCalendarSettings,
     deleteMember,
+    saveMemberPrice,
+    removeMemberPrice,
     confirmPayment,
   }
 }

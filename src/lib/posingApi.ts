@@ -41,6 +41,15 @@ export type AdminMember = {
   updated_at: string
   user_packages?: AdminMemberPackage[]
   recent_bookings?: AdminMemberBooking[]
+  plan_prices?: AdminMemberPlanPrice[]
+}
+
+export type AdminMemberPlanPrice = {
+  plan_key: string
+  price_eur: number
+  note: string | null
+  catalog_price_eur: number | null
+  updated_at?: string
 }
 
 export type AdminMemberPackage = {
@@ -258,6 +267,42 @@ export async function adminDeleteMember(accessToken: string, memberId: string) {
   })
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'delete_member_failed'))
+}
+
+export async function adminUpsertMemberPrice(
+  accessToken: string,
+  userId: string,
+  planKey: string,
+  priceEur: number,
+  note?: string,
+) {
+  const res = await fetch('/api/posing/admin/members', {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId, plan_key: planKey, price_eur: priceEur, note }),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'price_save_failed'))
+  return data.plan_price as AdminMemberPlanPrice
+}
+
+export async function adminDeleteMemberPrice(
+  accessToken: string,
+  userId: string,
+  planKey: string,
+) {
+  const res = await fetch(
+    `/api/posing/admin/members?id=${encodeURIComponent(userId)}&plan_key=${encodeURIComponent(planKey)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'price_delete_failed'))
 }
 
 export async function cancelPosingBooking(accessToken: string, bookingId: string, locale: string) {

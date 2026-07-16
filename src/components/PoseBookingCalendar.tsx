@@ -9,12 +9,12 @@ import {
 } from '../lib/posingPackages'
 import { translateSlotsError } from '../lib/posingSlotsErrors'
 import { isSupabaseConfigured } from '../lib/supabase'
-import type { PosingPackageKey } from '../site'
+import type { PosingPlanKey } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 
 type PoseBookingCalendarProps = {
-  selectedPackageKey: PosingPackageKey
+  selectedPlanKey: PosingPlanKey
   selectedPackageName: string
   locale: Locale
 }
@@ -81,7 +81,7 @@ function quotaHint(quota: PackageQuota, t: (key: string, vars?: Record<string, s
 }
 
 export function PoseBookingCalendar({
-  selectedPackageKey,
+  selectedPlanKey,
   selectedPackageName,
   locale,
 }: PoseBookingCalendarProps) {
@@ -106,17 +106,17 @@ export function PoseBookingCalendar({
   const loadQuota = useCallback(async () => {
     if (!user?.id) {
       setQuota(null)
-      const plan = await fetchPackagePlan(selectedPackageKey)
+      const plan = await fetchPackagePlan(selectedPlanKey)
       setSessionsTotal(plan?.sessions_total ?? null)
       return
     }
     const [plan, userQuota] = await Promise.all([
-      fetchPackagePlan(selectedPackageKey),
-      fetchUserPackageQuota(user.id, selectedPackageKey),
+      fetchPackagePlan(selectedPlanKey),
+      fetchUserPackageQuota(user.id, selectedPlanKey),
     ])
     setSessionsTotal(plan?.sessions_total ?? userQuota.sessionsTotal)
     setQuota(userQuota)
-  }, [selectedPackageKey, user?.id])
+  }, [selectedPlanKey, user?.id])
 
   const loadSlots = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -183,7 +183,7 @@ export function PoseBookingCalendar({
     try {
       const result = await createPosingBooking(accessToken, {
         slot_id: selectedSlotId,
-        plan_key: selectedPackageKey,
+        plan_key: selectedPlanKey,
         locale,
       })
       const defaultSuccess =
@@ -266,14 +266,14 @@ export function PoseBookingCalendar({
         <div className="mb-6 rounded-xl border border-fuchsia-200/20 bg-fuchsia-500/10 px-4 py-4 text-sm text-fuchsia-100">
           {t('posing.calendar.loginPrompt')}{' '}
           <Link
-            to={`/posing/login?redirect=${encodeURIComponent(`/posing?package=${selectedPackageKey}#booking`)}`}
+            to={`/posing/login?redirect=${encodeURIComponent(`/posing?plan=${selectedPlanKey}#booking`)}`}
             className="font-semibold underline underline-offset-2"
           >
             {t('posing.auth.login')}
           </Link>
           {' · '}
           <Link
-            to={`/posing/signup?redirect=${encodeURIComponent(`/posing?package=${selectedPackageKey}#booking`)}`}
+            to={`/posing/signup?redirect=${encodeURIComponent(`/posing?plan=${selectedPlanKey}#booking`)}`}
             className="font-semibold underline underline-offset-2"
           >
             {t('posing.auth.signup')}

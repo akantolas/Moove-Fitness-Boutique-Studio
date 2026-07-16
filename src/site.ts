@@ -39,7 +39,22 @@ export const site = {
     coachNameEn: 'Magda Samara',
     /** Stable keys for package → Stripe price mapping */
     packageKeys: ['single', 'sapphire', 'ruby', 'diamond'] as const,
+    /** July promo plans (not in carousel) */
+    offerPlanKeys: ['ruby_july8', 'diamond_july8'] as const,
+    /** All bookable plan keys */
+    planKeys: [
+      'single',
+      'sapphire',
+      'ruby',
+      'diamond',
+      'ruby_july8',
+      'diamond_july8',
+    ] as const,
+    paypalUrl: 'https://www.paypal.me/magdalinisamara',
+    revolutUrl: 'https://revolut.me/magdaqsn9',
   },
 } as const
 
 export type PosingPackageKey = (typeof site.posing.packageKeys)[number]
+export type PosingOfferPlanKey = (typeof site.posing.offerPlanKeys)[number]
+export type PosingPlanKey = (typeof site.posing.planKeys)[number]

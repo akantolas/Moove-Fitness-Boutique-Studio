@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
+import { PosingOffersSection } from '../components/PosingOffersSection'
 import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { site, type PosingPackageKey } from '../site'
+import { isJulyOfferActive } from '../lib/posingOffers'
+import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
+import { site, type PosingOfferPlanKey, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 const posingHeroGhostCtaClass =
@@ -14,6 +17,17 @@ function packageIndexFromParam(param: string | null, keys: readonly PosingPackag
   if (!param) return 0
   const idx = keys.indexOf(param as PosingPackageKey)
   return idx >= 0 ? idx : 0
+}
+
+function planKeyFromSearchParams(
+  searchParams: URLSearchParams,
+  packageKeys: readonly PosingPackageKey[],
+): PosingPlanKey {
+  const planParam = searchParams.get('plan')
+  if (planParam && isPosingPlanKey(planParam)) return planParam
+  const packageParam = searchParams.get('package')
+  const idx = packageIndexFromParam(packageParam, packageKeys)
+  return packageKeys[idx] ?? packageKeys[0]
 }
 
 export function PosingPage() {
@@ -29,28 +43,48 @@ export function PosingPage() {
   const [selectedPackageIndex, setSelectedPackageIndex] = useState(() =>
     packageIndexFromParam(searchParams.get('package'), posing.packageKeys),
   )
+  const [selectedPlanKey, setSelectedPlanKey] = useState<PosingPlanKey>(() =>
+    planKeyFromSearchParams(searchParams, posing.packageKeys),
+  )
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
-  const selectedPackage = dictionary.posing.pricing.packages[selectedPackageIndex]?.name ?? ''
-  const selectedPackageKey = useMemo(
-    () => posing.packageKeys[selectedPackageIndex] ?? posing.packageKeys[0],
-    [posing.packageKeys, selectedPackageIndex],
+
+  const selectedPackageName = useMemo(
+    () =>
+      planKeyLabel(selectedPlanKey, (i) => dictionary.posing.pricing.packages[i]?.name, t),
+    [selectedPlanKey, dictionary.posing.pricing.packages, t],
   )
 
   useEffect(() => {
     const param = searchParams.get('package')
     const idx = packageIndexFromParam(param, posing.packageKeys)
     setSelectedPackageIndex(idx)
+
+    const planParam = searchParams.get('plan')
+    if (planParam && isPosingPlanKey(planParam)) {
+      setSelectedPlanKey(planParam)
+    } else if (param) {
+      setSelectedPlanKey(posing.packageKeys[idx] ?? posing.packageKeys[0])
+    }
   }, [searchParams, posing.packageKeys])
 
   useEffect(() => {
     let cancelled = false
-    fetchPackagePlan(selectedPackageKey).then((plan) => {
+    fetchPackagePlan(selectedPlanKey).then((plan) => {
       if (!cancelled) setSessionsTotal(plan?.sessions_total ?? null)
     })
     return () => {
       cancelled = true
     }
-  }, [selectedPackageKey])
+  }, [selectedPlanKey])
+
+  function handleCarouselSelect(index: number) {
+    setSelectedPackageIndex(index)
+    setSelectedPlanKey(posing.packageKeys[index] ?? posing.packageKeys[0])
+  }
+
+  function handleOfferSelect(planKey: PosingOfferPlanKey) {
+    setSelectedPlanKey(planKey)
+  }
 
   return (
     <div className="pose-page bg-[#08080c] text-white">
@@ -92,6 +126,11 @@ export function PosingPage() {
               >
                 {t('posing.hero.viewPackages')}
               </a>
+              {isJulyOfferActive() ? (
+                <a href="#offers" className={posingHeroGhostCtaClass}>
+                  {t('posing.offers.heroCta')}
+                </a>
+              ) : null}
               <a href="#booking" className={posingHeroGhostCtaClass}>
                 {t('posing.hero.book')}
               </a>
@@ -151,7 +190,7 @@ export function PosingPage() {
             packages={dictionary.posing.pricing.packages}
             packageKeys={posing.packageKeys}
             activeIndex={selectedPackageIndex}
-            onSelect={setSelectedPackageIndex}
+            onSelect={handleCarouselSelect}
           />
 
           <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-fuchsia-100/15 bg-white/[0.035] p-4 shadow-[0_24px_70px_-48px_rgba(244,114,182,0.85)] sm:p-5">
@@ -171,6 +210,8 @@ export function PosingPage() {
           </div>
         </div>
       </section>
+
+      <PosingOffersSection onSelectOffer={handleOfferSelect} />
 
       <section className="border-b border-white/10 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -240,7 +281,7 @@ export function PosingPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
                 {t('posing.booking.selectedLabel')}
               </p>
-              <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackage}</p>
+              <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackageName}</p>
               {sessionsTotal != null ? (
                 <p className="mt-1 text-sm text-fuchsia-100/75">
                   {t('posing.booking.sessionsIncluded', { count: sessionsTotal })}
@@ -248,8 +289,8 @@ export function PosingPage() {
               ) : null}
             </div>
             <PoseBookingCalendar
-              selectedPackageKey={selectedPackageKey}
-              selectedPackageName={selectedPackage}
+              selectedPlanKey={selectedPlanKey}
+              selectedPackageName={selectedPackageName}
               locale={locale}
             />
           </div>

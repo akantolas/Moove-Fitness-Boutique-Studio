@@ -3,14 +3,17 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { PLAN_KEYS } from './pricing.js'
 
-export const PACKAGE_KEYS = ['single', 'sapphire', 'ruby', 'diamond']
+export const PACKAGE_KEYS = PLAN_KEYS
 
 const STRIPE_LINK_ENV = {
   single: 'STRIPE_LINK_SINGLE',
   sapphire: 'STRIPE_LINK_SAPPHIRE',
   ruby: 'STRIPE_LINK_RUBY',
   diamond: 'STRIPE_LINK_DIAMOND',
+  ruby_july8: 'STRIPE_LINK_RUBY_JULY8',
+  diamond_july8: 'STRIPE_LINK_DIAMOND_JULY8',
 }
 
 export function getSupabaseAdmin() {
@@ -72,6 +75,8 @@ const STRIPE_PRICE_ENV = {
   sapphire: 'STRIPE_PRICE_SAPPHIRE',
   ruby: 'STRIPE_PRICE_RUBY',
   diamond: 'STRIPE_PRICE_DIAMOND',
+  ruby_july8: 'STRIPE_PRICE_RUBY_JULY8',
+  diamond_july8: 'STRIPE_PRICE_DIAMOND_JULY8',
 }
 
 export async function createStripeCheckoutUrl({
@@ -80,11 +85,17 @@ export async function createStripeCheckoutUrl({
   userPackageId,
   customerEmail,
   locale = 'el',
+  amountEur = null,
+  packageName = 'Move & Pose',
+  useDynamicPrice = false,
 }) {
   const secret = process.env.STRIPE_SECRET_KEY
   const priceEnv = STRIPE_PRICE_ENV[planKey] ?? STRIPE_PRICE_ENV.single
   const priceId = process.env[priceEnv]
-  if (!secret || !priceId) {
+  const resolvedAmount = amountEur != null ? Math.round(Number(amountEur)) : null
+  const needsDynamic = useDynamicPrice || !priceId
+
+  if (!secret || (needsDynamic && (!resolvedAmount || resolvedAmount <= 0))) {
     return { url: stripeLinkForPackage(planKey), sessionId: null }
   }
 
@@ -94,7 +105,15 @@ export async function createStripeCheckoutUrl({
 
   const params = new URLSearchParams()
   params.set('mode', 'payment')
-  params.set('line_items[0][price]', priceId)
+  if (needsDynamic && resolvedAmount) {
+    params.set('line_items[0][price_data][currency]', 'eur')
+    params.set('line_items[0][price_data][unit_amount]', String(resolvedAmount * 100))
+    params.set('line_items[0][price_data][product_data][name]', packageName)
+  } else if (priceId) {
+    params.set('line_items[0][price]', priceId)
+  } else {
+    return { url: stripeLinkForPackage(planKey), sessionId: null }
+  }
   params.set('line_items[0][quantity]', '1')
   params.set('success_url', successUrl)
   params.set('cancel_url', cancelUrl)

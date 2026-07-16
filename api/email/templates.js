@@ -121,6 +121,7 @@ export function buildBookingDetailRows({
   packageName,
   durationMinutes,
   bookingId,
+  amountLabel,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
@@ -129,6 +130,12 @@ export function buildBookingDetailRows({
     { label: isEl ? 'Διάρκεια' : 'Duration', value: formatDurationLabel(durationMinutes, locale) },
     { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
   ]
+  if (amountLabel) {
+    rows.push({
+      label: isEl ? 'Τιμή' : 'Amount',
+      value: amountLabel,
+    })
+  }
   if (bookingId) {
     rows.push({
       label: isEl ? 'Κωδικός κράτησης' : 'Booking ref',
@@ -136,6 +143,74 @@ export function buildBookingDetailRows({
     })
   }
   return rows
+}
+
+function buildPaymentAlternativesBlock({
+  locale,
+  stripeLink,
+  paypalLink,
+  revolutLink,
+  bookingId,
+  amountLabel,
+}) {
+  const isEl = locale === 'el'
+  const colors = posingBrand.colors
+  const hasAnyLink = Boolean(stripeLink || paypalLink || revolutLink)
+  const bookingRef = bookingId ? formatBookingRef(bookingId) : ''
+
+  if (!hasAnyLink && !amountLabel) {
+    const fallback = isEl
+      ? 'Οι σύνδεσμοι πληρωμής δεν είναι ρυθμισμένοι — θα επικοινωνήσουμε σύντομα.'
+      : 'Payment links are not configured yet — we will contact you shortly.'
+    return {
+      bodyHtml: `<p style="margin:16px 0 0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${colors.muted};">${escapeHtml(fallback)}</p>`,
+      bodyText: fallback,
+    }
+  }
+
+  const note = isEl
+    ? `Στην περιγραφή πληρωμής γράψε τον κωδικό κράτησης ${bookingRef}.`
+    : `Include booking ref ${bookingRef} in the payment description.`
+
+  const linkStyle =
+    'display:inline-block;margin:8px 8px 0 0;padding:10px 16px;border-radius:999px;font-family:system-ui,sans-serif;font-size:13px;font-weight:600;text-decoration:none;'
+
+  const links = []
+  if (paypalLink) {
+    links.push(
+      `<a href="${escapeHtml(paypalLink)}" style="${linkStyle}background:${colors.outerBg};color:${colors.text};border:1px solid ${colors.cardBorder};">PayPal</a>`,
+    )
+  }
+  if (revolutLink) {
+    links.push(
+      `<a href="${escapeHtml(revolutLink)}" style="${linkStyle}background:${colors.outerBg};color:${colors.text};border:1px solid ${colors.cardBorder};">Revolut</a>`,
+    )
+  }
+
+  const altTitle = isEl ? 'Εναλλακτικές πληρωμές' : 'Other payment options'
+  const stripeHint = stripeLink
+    ? ''
+    : isEl
+      ? '<p style="margin:8px 0 0;font-size:13px;color:' +
+        colors.muted +
+        ';">Stripe: επικοινώνησε μαζί μας αν χρειάζεσαι βοήθεια.</p>'
+      : ''
+
+  const bodyHtml = `
+    <div style="margin:20px 0 0;padding:16px;background:${colors.outerBg};border:1px solid ${colors.cardBorder};border-radius:12px;">
+      <p style="margin:0 0 8px;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${colors.muted};">${escapeHtml(altTitle)}${amountLabel ? ` · ${escapeHtml(amountLabel)}` : ''}</p>
+      ${links.length ? `<p style="margin:0;">${links.join('')}</p>` : ''}
+      ${stripeHint}
+      <p style="margin:12px 0 0;font-family:system-ui,sans-serif;font-size:13px;line-height:1.5;color:${colors.muted};">${escapeHtml(note)}</p>
+    </div>`
+
+  const bodyTextParts = [altTitle]
+  if (amountLabel) bodyTextParts.push(amountLabel)
+  if (paypalLink) bodyTextParts.push(`PayPal: ${paypalLink}`)
+  if (revolutLink) bodyTextParts.push(`Revolut: ${revolutLink}`)
+  bodyTextParts.push(note)
+
+  return { bodyHtml, bodyText: bodyTextParts.join('\n') }
 }
 
 export function buildPoseSessionInfoBlock({ locale, variant = 'full' }) {
@@ -217,15 +292,26 @@ export function buildPaymentEmail({
   packageName,
   sessionTime,
   stripeLink,
+  paypalLink,
+  revolutLink,
+  amountEur,
+  amountLabel,
   bookingId,
   durationMinutes,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
   const sessionInfo = buildPoseSessionInfoBlock({ locale, variant: 'full' })
-  const paymentFallback = isEl
-    ? 'Ο σύνδεσμος πληρωμής δεν είναι ρυθμισμένος — θα επικοινωνήσουμε σύντομα.'
-    : 'Payment link is not configured yet — we will contact you shortly.'
+  const resolvedAmountLabel =
+    amountLabel ?? (amountEur ? `${Math.round(Number(amountEur))}€` : null)
+  const paymentAlt = buildPaymentAlternativesBlock({
+    locale,
+    stripeLink,
+    paypalLink,
+    revolutLink,
+    bookingId,
+    amountLabel: resolvedAmountLabel,
+  })
 
   return posingTemplate({
     locale,
@@ -245,14 +331,11 @@ export function buildPaymentEmail({
       packageName,
       durationMinutes,
       bookingId,
+      amountLabel: resolvedAmountLabel,
       locale,
     }),
-    bodyHtml: `${sessionInfo.bodyHtml}${
-      !stripeLink
-        ? `<p style="margin:16px 0 0;font-family:system-ui,sans-serif;font-size:14px;line-height:1.6;color:${posingBrand.colors.muted};">${escapeHtml(paymentFallback)}</p>`
-        : ''
-    }`,
-    bodyText: `${sessionInfo.bodyText}${!stripeLink ? `\n\n${paymentFallback}` : ''}`,
+    bodyHtml: `${sessionInfo.bodyHtml}${paymentAlt.bodyHtml}`,
+    bodyText: `${sessionInfo.bodyText}\n\n${paymentAlt.bodyText}`,
     ctaHref: stripeLink || undefined,
     ctaLabel: stripeLink
       ? isEl
@@ -365,6 +448,10 @@ export function buildAdminBookingNotifyEmail({
   bookingId,
   status,
   stripeLink,
+  paypalLink,
+  revolutLink,
+  amountEur,
+  priceSource,
   locale = 'el',
 }) {
   const isEl = locale === 'el'
@@ -376,6 +463,8 @@ export function buildAdminBookingNotifyEmail({
     : isEl
       ? 'Επιβεβαιωμένη'
       : 'Confirmed'
+
+  const amountLabel = amountEur ? `${Math.round(Number(amountEur))}€` : null
 
   const details = [
     ...buildAdminClientDetailRows({
@@ -392,12 +481,38 @@ export function buildAdminBookingNotifyEmail({
     { label: isEl ? 'Κατάσταση' : 'Status', value: statusLabel },
   ]
 
+  if (amountLabel) {
+    details.push({
+      label: isEl ? 'Τιμή' : 'Amount',
+      value:
+        priceSource === 'override'
+          ? `${amountLabel} (${isEl ? 'ειδική τιμή πελάτη' : 'custom client price'})`
+          : amountLabel,
+    })
+  }
+
   if (isPending && stripeLink) {
     details.push({
       label: isEl ? 'Πληρωμή Stripe' : 'Stripe payment',
       value: isEl ? 'Άνοιγμα συνδέσμου' : 'Open link',
       isLink: true,
       href: stripeLink,
+    })
+  }
+  if (isPending && paypalLink) {
+    details.push({
+      label: 'PayPal',
+      value: isEl ? 'Άνοιγμα συνδέσμου' : 'Open link',
+      isLink: true,
+      href: paypalLink,
+    })
+  }
+  if (isPending && revolutLink) {
+    details.push({
+      label: 'Revolut',
+      value: isEl ? 'Άνοιγμα συνδέσμου' : 'Open link',
+      isLink: true,
+      href: revolutLink,
     })
   }
 
