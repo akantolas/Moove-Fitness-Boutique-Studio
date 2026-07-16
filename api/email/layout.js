@@ -19,12 +19,14 @@ function renderCta({ href, label, bg, color, border }) {
     </table>`
 }
 
-function renderDetailRow({ label, value, colors, isLink = false, href }) {
+function renderDetailRow({ label, value, valueHtml, colors, isLink = false, href }) {
   const safeLabel = escapeHtml(label)
   const linkHref = href ?? (isLink && String(value).includes('@') ? `mailto:${value}` : value)
-  const safeValue = isLink
-    ? `<a href="${escapeHtml(linkHref)}" style="color:${colors.accent};text-decoration:none;">${escapeHtml(value)}</a>`
-    : escapeHtml(value)
+  const safeValue = valueHtml
+    ? valueHtml
+    : isLink
+      ? `<a href="${escapeHtml(linkHref)}" style="color:${colors.accent};text-decoration:none;">${escapeHtml(value)}</a>`
+      : escapeHtml(value)
 
   return `
     <tr>

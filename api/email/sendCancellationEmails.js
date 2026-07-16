@@ -13,6 +13,9 @@ export async function sendCancellationEmails({
   previousStatus,
   attendeeName,
   userEmail,
+  phone,
+  division,
+  notes,
   packageName,
   sessionTime,
 }) {
@@ -46,6 +49,9 @@ export async function sendCancellationEmails({
   const adminEmail = buildAdminCancellationNotifyEmail({
     profileName: attendeeName,
     userEmail,
+    phone,
+    division,
+    notes,
     packageName,
     sessionTime,
     bookingId,
@@ -90,7 +96,7 @@ export async function fetchBookingCancellationSnapshot(supabase, bookingId) {
       .maybeSingle(),
     supabase
       .from('profiles')
-      .select('full_name, email')
+      .select('full_name, email, phone, division, notes')
       .eq('id', booking.user_id)
       .maybeSingle(),
     supabase.auth.admin.getUserById(booking.user_id),
@@ -110,6 +116,9 @@ export async function fetchBookingCancellationSnapshot(supabase, bookingId) {
     previousStatus: booking.status,
     attendeeName,
     userEmail,
+    phone: profile?.phone ?? null,
+    division: profile?.division ?? null,
+    notes: profile?.notes ?? null,
     packageNameEl: plan?.name_el ?? booking.plan_key,
     packageNameEn: plan?.name_en ?? booking.plan_key,
     sessionStartAt: slot.start_at,

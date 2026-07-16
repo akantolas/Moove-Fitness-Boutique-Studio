@@ -87,6 +87,51 @@ function mooveTemplate({
   return { subject, html, text }
 }
 
+export function formatProfileField(value, locale = 'el') {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  if (trimmed) return trimmed
+  return locale === 'el' ? '—' : 'Not provided'
+}
+
+export function buildAdminClientDetailRows({
+  profileName,
+  userEmail,
+  phone,
+  division,
+  notes,
+  locale = 'el',
+}) {
+  const isEl = locale === 'el'
+  const phoneValue = formatProfileField(phone, locale)
+  const phoneTrimmed = typeof phone === 'string' ? phone.trim() : ''
+  const notesTrimmed = typeof notes === 'string' ? notes.trim() : ''
+  const notesValue = formatProfileField(notes, locale)
+
+  const rows = [
+    { label: isEl ? 'Πελάτης' : 'Client', value: profileName },
+    { label: 'Email', value: userEmail, isLink: true },
+    {
+      label: isEl ? 'Τηλέφωνο' : 'Phone',
+      value: phoneValue,
+      isLink: Boolean(phoneTrimmed),
+      href: phoneTrimmed ? `tel:${phoneTrimmed.replace(/\s/g, '')}` : undefined,
+    },
+    {
+      label: isEl ? 'Division / κατηγορία' : 'Division / category',
+      value: formatProfileField(division, locale),
+    },
+    {
+      label: isEl ? 'Σημειώσεις' : 'Notes',
+      value: notesValue,
+      valueHtml: notesTrimmed
+        ? escapeHtml(notesTrimmed).replace(/\n/g, '<br/>')
+        : undefined,
+    },
+  ]
+
+  return rows
+}
+
 /** Customer — new booking pending payment */
 export function buildPaymentEmail({ attendeeName, packageName, sessionTime, stripeLink, locale = 'el' }) {
   const isEl = locale === 'el'
@@ -187,6 +232,9 @@ export function buildPaidConfirmationEmail({ attendeeName, packageName, sessionT
 export function buildAdminBookingNotifyEmail({
   profileName,
   userEmail,
+  phone,
+  division,
+  notes,
   packageName,
   sessionTime,
   bookingId,
@@ -212,8 +260,14 @@ export function buildAdminBookingNotifyEmail({
       ? 'Νέα κράτηση καταχωρήθηκε στο σύστημα.'
       : 'A new booking has been registered.',
     details: [
-      { label: isEl ? 'Πελάτης' : 'Client', value: profileName },
-      { label: 'Email', value: userEmail, isLink: true },
+      ...buildAdminClientDetailRows({
+        profileName,
+        userEmail,
+        phone,
+        division,
+        notes,
+        locale,
+      }),
       { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
       { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
       { label: 'Booking ID', value: bookingId },
@@ -269,6 +323,9 @@ export function buildCancellationEmail({
 export function buildAdminCancellationNotifyEmail({
   profileName,
   userEmail,
+  phone,
+  division,
+  notes,
   packageName,
   sessionTime,
   bookingId,
@@ -295,8 +352,14 @@ export function buildAdminCancellationNotifyEmail({
       ? 'Μια κράτηση ακυρώθηκε από τον πελάτη.'
       : 'A booking was cancelled by the client.',
     details: [
-      { label: isEl ? 'Πελάτης' : 'Client', value: profileName },
-      { label: 'Email', value: userEmail, isLink: true },
+      ...buildAdminClientDetailRows({
+        profileName,
+        userEmail,
+        phone,
+        division,
+        notes,
+        locale,
+      }),
       { label: isEl ? 'Πακέτο' : 'Package', value: packageName },
       { label: isEl ? 'Ώρα' : 'Time', value: sessionTime },
       { label: 'Booking ID', value: bookingId },

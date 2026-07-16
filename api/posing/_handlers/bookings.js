@@ -27,6 +27,9 @@ async function sendBookingNotify({
   from,
   profileName,
   userEmail,
+  phone,
+  division,
+  notes,
   packageName,
   sessionTime,
   bookingId,
@@ -39,6 +42,9 @@ async function sendBookingNotify({
   const { subject, html, text } = buildAdminBookingNotifyEmail({
     profileName,
     userEmail,
+    phone,
+    division,
+    notes,
     packageName,
     sessionTime,
     bookingId,
@@ -100,6 +106,9 @@ export async function handleBookings(req, res) {
             previousStatus: snapshot.previousStatus,
             attendeeName: snapshot.attendeeName,
             userEmail: snapshot.userEmail,
+            phone: snapshot.phone,
+            division: snapshot.division,
+            notes: snapshot.notes,
             packageName: packageNameForLocale(snapshot, locale),
             sessionTime: sessionTimeForLocale(snapshot, locale),
           })
@@ -163,8 +172,21 @@ export async function handleBookings(req, res) {
 
   if (!plan) return json(res, 400, { ok: false, error: 'invalid_plan' })
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, email, phone, division, notes')
+    .eq('id', user.id)
+    .maybeSingle()
+
   const profileName =
-    user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
+    profile?.full_name ??
+    user.user_metadata?.full_name ??
+    user.email?.split('@')[0] ??
+    'there'
+  const userEmail = profile?.email ?? user.email
+  const profilePhone = profile?.phone ?? null
+  const profileDivision = profile?.division ?? null
+  const profileNotes = profile?.notes ?? null
   const packageName = locale === 'el' ? plan.name_el : plan.name_en
   const sessionTime = formatSessionTime(slot.start_at, locale)
   const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
@@ -216,7 +238,7 @@ export async function handleBookings(req, res) {
 
       await sendPosingEmail({
         from,
-        to: [user.email],
+        to: [userEmail],
         subject: confirmation.subject,
         html: confirmation.html,
         text: confirmation.text,
@@ -225,7 +247,10 @@ export async function handleBookings(req, res) {
       await sendBookingNotify({
         from,
         profileName,
-        userEmail: user.email,
+        userEmail,
+        phone: profilePhone,
+        division: profileDivision,
+        notes: profileNotes,
         packageName,
         sessionTime,
         bookingId: booking.id,
@@ -294,7 +319,7 @@ export async function handleBookings(req, res) {
       planKey,
       bookingId: booking.id,
       userPackageId: userPackage.id,
-      customerEmail: user.email,
+      customerEmail: userEmail,
     })
     stripeLink = checkout.url
     if (checkout.sessionId) {
@@ -318,7 +343,7 @@ export async function handleBookings(req, res) {
 
     await sendPosingEmail({
       from,
-      to: [user.email],
+      to: [userEmail],
       subject: payment.subject,
       html: payment.html,
       text: payment.text,
@@ -327,7 +352,10 @@ export async function handleBookings(req, res) {
     await sendBookingNotify({
       from,
       profileName,
-      userEmail: user.email,
+      userEmail,
+      phone: profilePhone,
+      division: profileDivision,
+      notes: profileNotes,
       packageName,
       sessionTime,
       bookingId: booking.id,
