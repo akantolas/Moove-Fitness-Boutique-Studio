@@ -247,6 +247,16 @@ export async function sendPosingEmail({ from, to, subject, html, text, idempoten
   throw new Error('missing_email_config')
 }
 
+export async function sendPosingEmailReliable(payload) {
+  try {
+    return await sendPosingEmail(payload)
+  } catch (error) {
+    if (!payload.text) throw error
+    const { text: _text, ...withoutText } = payload
+    return await sendPosingEmail(withoutText)
+  }
+}
+
 export { buildConfirmationEmail, buildPaymentEmail } from '../email/templates.js'
 
 export async function findBookablePackage(supabase, userId, planKey) {

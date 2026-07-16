@@ -7,14 +7,15 @@ import {
   hasEmailTransportConfig,
   json,
   readJsonBody,
-  sendPosingEmail,
+  sendPosingEmailReliable,
 } from './posing/_lib.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_NAME = 120
 const MAX_EMAIL = 254
 const MAX_MESSAGE = 4000
-const DEFAULT_FROM = 'noreply@moovefitness.gr'
+const DEFAULT_FROM = 'Moove <noreply@moovefitness.gr>'
+const DEFAULT_REPLY_FROM = 'Moove <info@moovefitness.gr>'
 const DEFAULT_NOTIFY = 'info@moovefitness.gr'
 
 function trimField(value, maxLen) {
@@ -45,11 +46,23 @@ function getContactFromEmail() {
   return DEFAULT_FROM
 }
 
+function getContactReplyFromEmail() {
+  return envOrFallback('CONTACT_REPLY_FROM', DEFAULT_REPLY_FROM)
+}
+
 function getContactNotifyEmail() {
   return envOrFallback(
     'CONTACT_NOTIFY_EMAIL',
     envOrFallback('POSE_NOTIFY_EMAIL', DEFAULT_NOTIFY),
   )
+}
+
+function logEmailError(label, error) {
+  const detail = error instanceof Error ? error.message : String(error)
+  console.error(`${label}:`, detail)
+  if (error instanceof Error && error.stack) {
+    console.error(error.stack)
+  }
 }
 
 export default async function handler(req, res) {
@@ -82,42 +95,48 @@ export default async function handler(req, res) {
 
     const notifyEmail = getContactNotifyEmail()
     const fromEmail = getContactFromEmail()
+    const replyFromEmail = getContactReplyFromEmail()
 
     if (!EMAIL_RE.test(notifyEmail)) {
       console.error('contact email error: invalid notify address', notifyEmail)
       return json(res, 500, { ok: false, error: 'send_failed' })
     }
 
-    console.info('contact email send', { from: fromEmail, to: notifyEmail })
+    console.info('contact email send', { from: fromEmail, replyFrom: replyFromEmail, to: notifyEmail })
 
     const adminEmail = buildContactAdminEmail({ name, email, message })
     const autoReply = buildContactAutoReplyEmail({ name })
 
-    await sendPosingEmail({
-      from: fromEmail,
-      to: [notifyEmail],
-      replyTo: email,
-      subject: adminEmail.subject,
-      html: adminEmail.html,
-      text: adminEmail.text,
-    })
+    try {
+      await sendPosingEmailReliable({
+        from: fromEmail,
+        to: [notifyEmail],
+        replyTo: email,
+        subject: adminEmail.subject,
+        html: adminEmail.html,
+        text: adminEmail.text,
+      })
+    } catch (error) {
+      logEmailError('contact admin email error', error)
+      return json(res, 500, { ok: false, error: 'send_failed' })
+    }
 
-    await sendPosingEmail({
-      from: fromEmail,
-      to: [email],
-      replyTo: notifyEmail,
-      subject: autoReply.subject,
-      html: autoReply.html,
-      text: autoReply.text,
-    })
+    try {
+      await sendPosingEmailReliable({
+        from: replyFromEmail,
+        to: [email],
+        replyTo: notifyEmail,
+        subject: autoReply.subject,
+        html: autoReply.html,
+        text: autoReply.text,
+      })
+    } catch (error) {
+      logEmailError('contact auto-reply error', error)
+    }
 
     return json(res, 200, { ok: true })
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error)
-    console.error('contact email error:', detail)
-    if (error instanceof Error && error.stack) {
-      console.error(error.stack)
-    }
+    logEmailError('contact handler error', error)
     return json(res, 500, { ok: false, error: 'send_failed' })
   }
 }
