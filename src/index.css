@@ -234,6 +234,94 @@
     animation: pose-nav-stagger 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
+  @keyframes pose-offers-modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.94) translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .animate-pose-offers-modal-in {
+    animation: pose-offers-modal-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes pose-offers-card-in {
+    from {
+      opacity: 0;
+      transform: translateY(1.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-pose-offers-card-in {
+    animation: pose-offers-card-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes pose-sparkle-pulse {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.85);
+    }
+    50% {
+      opacity: 0.9;
+      transform: scale(1.1);
+    }
+  }
+
+  .animate-pose-sparkle {
+    animation: pose-sparkle-pulse 3.5s ease-in-out infinite;
+  }
+
+  @keyframes pose-offers-shimmer {
+    0% {
+      background-position: 200% center;
+    }
+    100% {
+      background-position: -200% center;
+    }
+  }
+
+  .pose-offers-shimmer-border {
+    background: linear-gradient(
+      90deg,
+      rgba(244, 114, 182, 0.15) 0%,
+      rgba(251, 191, 36, 0.45) 25%,
+      rgba(244, 114, 182, 0.65) 50%,
+      rgba(34, 211, 238, 0.35) 75%,
+      rgba(244, 114, 182, 0.15) 100%
+    );
+    background-size: 200% auto;
+    animation: pose-offers-shimmer 6s linear infinite;
+  }
+
+  .text-gradient-pose-offer {
+    background: linear-gradient(
+      120deg,
+      #fda4af 0%,
+      #f9a8d4 35%,
+      #fef08a 70%,
+      #f0abfc 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-pose-script {
+    background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 45%, #e9d5ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   .text-gradient-lime {
     background: linear-gradient(
       135deg,

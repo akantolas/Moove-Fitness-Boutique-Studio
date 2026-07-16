@@ -6,7 +6,11 @@ import {
   scrollToPosingBooking,
 } from '../lib/posingOffers'
 import type { PosingOfferPlanKey } from '../site'
-import { OffersSectionHeader, PosingOfferCards } from './posingOffersShared'
+import {
+  OffersModalBackdrop,
+  OffersSectionHeader,
+  PosingOfferCards,
+} from './posingOffersShared'
 
 type PosingOffersModalProps = {
   open: boolean
@@ -59,40 +63,57 @@ export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffers
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/75 backdrop-blur-md"
+        className="animate-pose-overlay-fade absolute inset-0 bg-[#050508]/82 backdrop-blur-xl"
         aria-label={t('posing.offers.modalDismiss')}
         onClick={dismiss}
-      />
+      >
+        <OffersModalBackdrop />
+      </button>
+
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-fuchsia-200/25 bg-[#0a0a10] shadow-[0_32px_100px_-24px_rgba(244,114,182,0.55)] outline-none ring-1 ring-fuchsia-300/15"
+        className="animate-pose-offers-modal-in relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] bg-[#08080f] shadow-[0_40px_120px_-30px_rgba(244,114,182,0.45)] outline-none"
       >
+        <div className="pose-offers-shimmer-border h-[2px] w-full shrink-0" aria-hidden />
         <div
-          className="pointer-events-none absolute -inset-px rounded-3xl opacity-70"
+          className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -inset-px rounded-[1.75rem] opacity-80"
           style={{
             backgroundImage:
-              'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(192, 38, 211, 0.18) 0%, transparent 60%)',
+              'radial-gradient(ellipse 80% 45% at 50% -5%, rgba(192, 38, 211, 0.2) 0%, transparent 55%), radial-gradient(circle at 100% 100%, rgba(251, 191, 36, 0.08) 0%, transparent 40%)',
           }}
           aria-hidden
         />
+
         <button
           type="button"
           onClick={dismiss}
           aria-label={t('posing.offers.modalCloseAria')}
-          className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/40 text-lg text-white/70 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+          className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-black/50 text-xl leading-none text-white/65 shadow-lg backdrop-blur-md transition hover:border-fuchsia-200/30 hover:bg-white/10 hover:text-white"
         >
           ×
         </button>
 
-        <div className="overflow-y-auto px-5 pb-5 pt-8 sm:px-8 sm:pb-8 sm:pt-10">
-          <OffersSectionHeader titleId="posing-offers-modal-title" />
-          <PosingOfferCards onSelect={handleSelect} compact className="mt-8" />
-          <div className="mt-6 flex justify-center">
+        <div className="overflow-y-auto px-5 pb-6 pt-7 sm:px-10 sm:pb-8 sm:pt-9">
+          <OffersSectionHeader
+            titleId="posing-offers-modal-title"
+            variant="modal"
+            showLogo
+          />
+          <div
+            className="mx-auto mt-6 h-px max-w-xs bg-gradient-to-r from-transparent via-fuchsia-300/35 to-transparent sm:mt-8"
+            aria-hidden
+          />
+          <PosingOfferCards onSelect={handleSelect} compact className="mt-6 sm:mt-8" />
+          <div className="mt-7 flex justify-center sm:mt-8">
             <button
               type="button"
               onClick={dismiss}
-              className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white/60 transition hover:border-white/25 hover:bg-white/5 hover:text-white/80"
+              className="rounded-full border border-white/12 bg-white/[0.03] px-6 py-2.5 text-sm font-semibold text-white/55 backdrop-blur-sm transition hover:border-white/22 hover:bg-white/[0.06] hover:text-white/85"
             >
               {t('posing.offers.modalDismiss')}
             </button>
