@@ -71,14 +71,42 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 ### PayPal & Revolut
 
-Στο email κράτησης (μετά το booking) στέλνονται links με pre-filled amount:
+Στο email κράτησης (μετά το booking) στέλνονται links με pre-filled amount (whole EUR):
+
+| Provider | URL format | Παράδειγμα (240€) |
+|----------|----------|-------------------|
+| PayPal | `{POSE_PAYPAL_URL}/{amount}EUR` | `.../magdalinisamara/240EUR` |
+| Revolut | `{POSE_REVOLUT_URL}/eur{amount}` | `.../magdaqsn9/eur240` |
 
 | Variable | Default |
 |----------|---------|
 | `POSE_PAYPAL_URL` | `https://www.paypal.me/magdalinisamara` |
 | `POSE_REVOLUT_URL` | `https://revolut.me/magdaqsn9` |
 
+**Σημαντικό:** Μην χρησιμοποιείς Revolut query params (`?amount=`) — το Revolut τα ερμηνεύει ως λεπτά (240 → 2,40€).
+
 Οι τιμές **δεν** εμφανίζονται στο site — μόνο στο email.
+
+### Έλεγχος Stripe Price IDs (manual)
+
+Αν έχεις ορίσει `STRIPE_PRICE_*` στο Vercel, το ποσό στο Stripe Checkout έρχεται από το **Stripe Dashboard**, όχι από τον catalog κώδικα. Επιβεβαίωσε ότι ταιριάζουν:
+
+| Plan | Catalog (€) | Stripe env var |
+|------|-------------|----------------|
+| single | 70 | `STRIPE_PRICE_SINGLE` |
+| sapphire | 80 | `STRIPE_PRICE_SAPPHIRE` |
+| ruby | 140 | `STRIPE_PRICE_RUBY` |
+| diamond | 160 | `STRIPE_PRICE_DIAMOND` |
+| ruby_july8 | 240 | `STRIPE_PRICE_RUBY_JULY8` |
+| diamond_july8 | 270 | `STRIPE_PRICE_DIAMOND_JULY8` |
+
+Αν λείπει Price ID για promo/custom τιμή, το API χρησιμοποιεί dynamic `price_data` με `unit_amount = amount_eur × 100` (σωστά).
+
+**Test checklist μετά από αλλαγές:**
+1. Κράτηση `ruby_july8` → email label `240€`
+2. PayPal link → `.../240EUR`
+3. Revolut link → `.../eur240`
+4. Stripe checkout → 240,00 €
 
 ### Custom τιμές ανά πελάτη
 

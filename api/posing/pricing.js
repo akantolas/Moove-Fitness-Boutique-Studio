@@ -59,10 +59,7 @@ export function getRevolutUrl(amountEur) {
   const base = getRevolutBaseUrl()
   const amount = Math.round(Number(amountEur))
   if (!amount || Number.isNaN(amount)) return base
-  const url = new URL(base)
-  url.searchParams.set('currency', 'EUR')
-  url.searchParams.set('amount', String(amount))
-  return url.toString()
+  return `${base}/eur${amount}`
 }
 
 /**
