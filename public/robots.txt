@@ -1,0 +1,17 @@
+# https://www.moovefitness.gr
+User-agent: *
+Allow: /
+
+# Auth, account, and admin (no SEO value)
+Disallow: /posing/login
+Disallow: /posing/signup
+Disallow: /posing/forgot-password
+Disallow: /posing/reset-password
+Disallow: /posing/account
+Disallow: /posing/admin
+Disallow: /posing/auth/
+
+# Serverless API
+Disallow: /api/
+
+Sitemap: https://www.moovefitness.gr/sitemap.xml
