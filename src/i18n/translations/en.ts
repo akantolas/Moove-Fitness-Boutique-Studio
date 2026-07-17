@@ -297,10 +297,6 @@ export const en = {
           body: 'Tailored to your division, music, and level — from first-time competitors to the stage.',
         },
         {
-          title: 'Federations',
-          body: 'IFBB · NPC · WNBF · WABBA · FMG',
-        },
-        {
           title: 'Custom Bikinis',
           body: 'Competition bikini design and tailoring built around your physique and division.',
         },
@@ -313,6 +309,11 @@ export const en = {
           body: 'Custom heels for Wellness, Bikini, and related divisions — comfort, stability, and the right height on stage.',
         },
       ],
+      federations: {
+        eyebrow: 'Federations',
+        title: 'Prep for the major federations',
+        names: ['IFBB', 'NPC', 'WNBF', 'WABBA', 'FMG'],
+      },
     },
     how: {
       title: 'How it works',

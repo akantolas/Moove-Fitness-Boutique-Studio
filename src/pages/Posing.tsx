@@ -246,6 +246,35 @@ export function PosingPage() {
               </article>
             ))}
           </div>
+
+          <div className="relative mt-10 overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.03] px-6 py-8 sm:px-10 sm:py-10">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-80"
+              style={{
+                backgroundImage:
+                  'radial-gradient(ellipse 70% 80% at 50% 0%, rgba(192, 38, 211, 0.16) 0%, transparent 55%)',
+              }}
+              aria-hidden
+            />
+            <div className="relative text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
+                {dictionary.posing.service.federations.eyebrow}
+              </p>
+              <h3 className="font-display mt-3 text-xl font-semibold text-white sm:text-2xl">
+                {dictionary.posing.service.federations.title}
+              </h3>
+              <ul className="mt-7 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+                {dictionary.posing.service.federations.names.map((name) => (
+                  <li
+                    key={name}
+                    className="rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 font-display text-xs font-semibold tracking-[0.18em] text-white/85 transition hover:border-fuchsia-300/40 hover:text-fuchsia-100 sm:px-5 sm:text-sm"
+                  >
+                    {name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 

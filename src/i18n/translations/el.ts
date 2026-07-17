@@ -296,10 +296,6 @@ export const el = {
           body: 'Προσαρμογή στο division, το music και το level σας — από πρώτη φορά μέχρι πλάτφορμα.',
         },
         {
-          title: 'Federations',
-          body: 'IFBB · NPC · WNBF · WABBA · FMG',
-        },
-        {
           title: 'Custom Bikinis',
           body: 'Σχεδιασμός και κατασκευή competition bikini προσαρμοσμένο στο σώμα και το division σας.',
         },
@@ -312,6 +308,11 @@ export const el = {
           body: 'Custom heels για Wellness, Bikini και σχετικές κατηγορίες — άνεση, σταθερότητα και σωστό ύψος για το stage.',
         },
       ],
+      federations: {
+        eyebrow: 'Federations',
+        title: 'Προετοιμασία για τις μεγαλύτερες ομοσπονδίες',
+        names: ['IFBB', 'NPC', 'WNBF', 'WABBA', 'FMG'],
+      },
     },
     how: {
       title: 'Πώς λειτουργεί',
