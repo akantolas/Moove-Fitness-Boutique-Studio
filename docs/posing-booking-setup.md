@@ -145,6 +145,20 @@ POSE_ADMIN_EMAILS=info@moovefitness.gr
 
 Tests: `npm run test:calendar`
 
+### Admin email σε νέο account
+
+Όταν δημιουργείται νέο `profiles` row (email signup ή Google OAuth), στέλνεται email στο `POSE_NOTIFY_EMAIL`.
+
+**Setup (μία φορά):**
+
+1. Vercel env: `POSE_SIGNUP_WEBHOOK_SECRET` = τυχαίο ισχυρό string → **Redeploy**
+2. Supabase → **Database** → **Webhooks** → Create
+3. Table: `public.profiles`, Events: **INSERT**
+4. URL: `https://www.moovefitness.gr/api/posing/signup-notify`
+5. HTTP Headers: `Authorization` = `Bearer <POSE_SIGNUP_WEBHOOK_SECRET>`
+
+Endpoint: `POST /api/posing/signup-notify` (μέσα στο υπάρχον posing catch-all — δεν αυξάνει Vercel function count).
+
 ## 4. Vercel environment variables
 
 Αντέγραψε από `.env.example` και συμπλήρωσε όλα τα Move & Pose vars.
@@ -157,6 +171,8 @@ Tests: `npm run test:calendar`
 | `SUPABASE_SERVICE_ROLE_KEY` | Ναι — legacy `service_role` JWT |
 | `VITE_SUPABASE_URL` | Frontend build μόνο |
 | `VITE_SUPABASE_ANON_KEY` | Frontend build μόνο |
+| `POSE_NOTIFY_EMAIL` | Admin notify (κρατήσεις + νέα accounts) |
+| `POSE_SIGNUP_WEBHOOK_SECRET` | Auth για signup-notify webhook |
 
 Μετά από αλλαγή env: **Redeploy** (όχι μόνο Save).
 
@@ -194,6 +210,7 @@ Tests: `npm run test:calendar`
 | `GET /api/posing/bookings?id=&format=ics` | Λήψη `.ics` (auth, confirmed only) |
 | `GET /api/posing/health` | Έλεγχος Vercel env (hasUrl, hasServiceKey) |
 | `POST /api/posing/account/delete` | Διαγραφή λογαριασμού (password + Bearer JWT) |
+| `POST /api/posing/signup-notify` | Admin email σε νέο account (Supabase webhook) |
 | `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη (legacy API) |
 | `POST /api/posing/admin/slots` | Προσθήκη slot |
 | `DELETE /api/posing/admin/slots?id=` | Διαγραφή ελεύθερου slot |
@@ -206,14 +223,15 @@ Tests: `npm run test:calendar`
 
 1. Τρέξε migration στο Supabase
 2. `vercel dev` με env vars
-3. Signup → login → `/posing/account` (κενό dashboard)
+3. Signup → login → `/posing/account` (κενό dashboard) + admin email «νέος λογαριασμός»
 4. Admin login → `/posing/admin` → πρόσθεσε slot
 5. Client κλείνει slot → `pending_payment` + email (**χωρίς** calendar)
 6. Stripe test payment → webhook → `confirmed` + active package + calendar emails (customer + admin)
 7. Included session (ενεργό πακέτο) → `confirmed` + calendar emails
 8. Ακύρωση confirmed → cancel `.ics` στο email
-9. `npm run build` περνάει
-10. `npm run test:calendar` περνάει
+9. Επαναλαμβανόμενο login υπάρχοντος χρήστη → **χωρίς** νέο signup email
+10. `npm run build` περνάει
+11. `npm run test:calendar` περνάει
 
 ## 8. Timezone
 

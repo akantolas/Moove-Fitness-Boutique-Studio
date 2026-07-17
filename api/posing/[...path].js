@@ -3,6 +3,7 @@ import { handleAccountDelete } from './_handlers/accountDelete.js'
 import { handleBookings } from './_handlers/bookings.js'
 import { handleHealth } from './_handlers/health.js'
 import { handleMe } from './_handlers/me.js'
+import { handleSignupNotify } from './_handlers/signupNotify.js'
 import { handleSlots } from './_handlers/slots.js'
 
 const BASE_PREFIX = '/api/posing/'
@@ -13,6 +14,7 @@ const routes = {
   slots: handleSlots,
   bookings: handleBookings,
   'account/delete': handleAccountDelete,
+  'signup-notify': handleSignupNotify,
 }
 
 export default async function handler(req, res) {
