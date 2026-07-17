@@ -296,6 +296,10 @@ export const el = {
           body: 'Προσαρμογή στο division, το music και το level σας — από πρώτη φορά μέχρι πλάτφορμα.',
         },
         {
+          title: 'Federations',
+          body: 'IFBB · NPC · WNBF · WABBA · FMG',
+        },
+        {
           title: 'Custom Bikinis',
           body: 'Σχεδιασμός και κατασκευή competition bikini προσαρμοσμένο στο σώμα και το division σας.',
         },

@@ -297,6 +297,10 @@ export const en = {
           body: 'Tailored to your division, music, and level — from first-time competitors to the stage.',
         },
         {
+          title: 'Federations',
+          body: 'IFBB · NPC · WNBF · WABBA · FMG',
+        },
+        {
           title: 'Custom Bikinis',
           body: 'Competition bikini design and tailoring built around your physique and division.',
         },
