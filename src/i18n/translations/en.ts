@@ -14,6 +14,7 @@ export const en = {
     classes: 'Classes',
     about: 'About',
     contact: 'Contact',
+    programs: 'Programs',
     packages: 'Packages',
     main: 'Main navigation',
     mobile: 'Mobile navigation',
@@ -205,6 +206,97 @@ export const en = {
         desc: 'Targeted glute and core training — strength, stability, and technique control in dynamic sessions.',
       },
     ],
+  },
+  programs: {
+    eyebrow: 'Ready-made programs',
+    title: 'Workout programs',
+    description:
+      'Buy a ready-made program online — you will receive an email with payment links (Stripe, PayPal, Revolut). After payment, an email with your access link — no account required.',
+    durationLabel: 'Duration',
+    priceLabel: 'Price',
+    levels: {
+      beginner: 'Beginners',
+      intermediate: 'Intermediate',
+      allLevels: 'All levels',
+    },
+    durations: {
+      weeks4: '4 weeks',
+      weeks6: '6 weeks',
+      weeks4x3: '4 weeks · 3x/week',
+    },
+    items: {
+      peach_start: {
+        title: 'Peach Collection – 1. Peach Start',
+        desc: '4-week glute program — goblet squat, hip thrust, RDL, lunges, and activation work. Build strength with proper technique.',
+      },
+      peach_workout_b: {
+        title: 'Peach Collection – 2. Workout B',
+        desc: '4-week glute program — leg press, Bulgarian split squats, dumbbell RDL, cable kickbacks, and standing abduction. Part of the Peach Collection.',
+      },
+      peach_workout_c: {
+        title: 'Peach Collection – 3. Workout C',
+        desc: '4-week glute program — hip thrust, sumo squat, step-up, cable pull through, and seated abduction. Glute Shape program from the Peach Collection.',
+      },
+      peach_build_wa_heavy: {
+        title: 'Peach Build – WA Heavy Glutes',
+        desc: '6-week intensive — heavy hip thrusts, high bar squat, RDL, and seated abduction. Finisher superset: Frog Pumps + banded abduction.',
+      },
+      peach_build_wb: {
+        title: 'Peach Build – Workout B: Glute & Unilateral Strength',
+        desc: '6-week program — lunges, Bulgarian split squats, step-ups, single-leg hip thrust, and cable abduction. Finisher: weighted reverse lunges.',
+      },
+      peach_build_wc: {
+        title: 'Peach Build – Workout C: Posterior Chain',
+        desc: '6-week program — RDL, back extension, pull through, leg press high stance, and cable abduction. Finisher: abduction machine 80–100 reps.',
+      },
+      peach_build_wd: {
+        title: 'Peach Build – Workout D: Glute Volume & Pump',
+        desc: '6-week program — hip thrust, Smith reverse lunge, leg press wide stance, cable kickback, and seated abduction. Finisher: Frog Pumps + banded hold.',
+      },
+    },
+    order: {
+      emailLabel: 'Email to receive your link',
+      emailPlaceholder: 'your-email@example.com',
+      hint: 'You will receive an email with Stripe, PayPal, and Revolut. After payment, a second email with your private link.',
+      cta: 'Buy',
+      submitting: 'Sending…',
+      successTitle: 'Check your email',
+      successBody: 'We sent payment links. After payment you will receive your access link.',
+      refLabel: 'Order ref',
+      invalidEmail: 'Enter a valid email.',
+      errors: {
+        order_failed: 'Order failed. Please try again.',
+        rate_limit: 'Too many orders — try again later.',
+        invalid_email: 'Invalid email.',
+        invalid_program: 'Invalid program.',
+      },
+    },
+    paymentSuccess: {
+      title: 'Payment completed',
+      body: 'You will receive an email with your program access link shortly.',
+      paid: 'Payment confirmed — check your email for the access link.',
+    },
+    access: {
+      eyebrow: 'Your program',
+      loading: 'Loading…',
+      notFoundTitle: 'Access not found',
+      notFoundBody: 'This link is invalid or payment has not been completed.',
+      privateNote: 'Personal use — do not share this link.',
+      sets: 'Sets',
+      loadVideo: 'Play video',
+      metaDuration: 'Duration',
+      metaGoal: 'Goal',
+      metaProgress: 'Progress note',
+    },
+    admin: {
+      pendingTitle: 'Pending program payments',
+      noPending: 'No pending program payments.',
+      recentPaidTitle: 'Recent paid orders',
+      noPaid: 'No recent paid orders.',
+      confirmBody: 'Confirm payment (PayPal/Revolut) — an access email will be sent.',
+      resendAccess: 'Resend access email',
+      resending: 'Sending…',
+    },
   },
   schedule: {
     prevDay: 'Previous day',
@@ -600,6 +692,7 @@ export const en = {
       tabCalendar: 'Calendar',
       tabMembers: 'Members',
       tabPayments: 'Payments',
+      tabPrograms: 'Moove Programs',
       tabBookings: 'Bookings',
       accountSettings: 'Account settings',
       statMembers: 'Members',
@@ -877,7 +970,7 @@ export const en = {
         },
         {
           title: 'Data we collect',
-          body: 'We may process: contact details (name, email, message) from the contact form; technical visit data (IP, browser, device) via hosting/analytics; site preferences (language, cookies). Class bookings are handled on an external platform (members.moovefitness.gr). Move & Pose bookings are handled through Cal.com and online payments through Stripe, each with their own privacy policies.',
+          body: 'We may process: contact details (name, email, message) from the contact form; email for ready-made workout program purchases; technical visit data (IP, browser, device) via hosting/analytics; site preferences (language, cookies). Class bookings are handled on an external platform (members.moovefitness.gr). Move & Pose bookings and Moove program purchases are handled on this site with online payments (Stripe, PayPal, Revolut), each with their own privacy policies where applicable.',
         },
         {
           title: 'Purpose of processing',
@@ -889,7 +982,7 @@ export const en = {
         },
         {
           title: 'Recipients and third parties',
-          body: 'We use Vercel (hosting, optional analytics), Google Places API (public reviews), Cal.com (appointment bookings), Stripe (online payments), and external booking platforms. Providers process data as processors or independent controllers under their own policies.',
+          body: 'We use Vercel (hosting, optional analytics), Google Places API (public reviews), Stripe, PayPal, and Revolut (online payments for programs and Move & Pose), and external booking platforms. Providers process data as processors or independent controllers under their own policies.',
         },
         {
           title: 'Retention',
@@ -970,6 +1063,10 @@ export const en = {
         {
           title: 'Bookings',
           body: 'Class bookings are made through the online platform at {{bookingUrl}}. Platform rules, prices, and policies apply as stated at the time of booking.',
+        },
+        {
+          title: 'Ready-made programs (digital)',
+          body: 'Ready-made workout programs are purchased online through this site. After payment (Stripe, PayPal, or Revolut) you receive an email with a link to a private page (exercise plan, videos). Content is for personal use only; redistribution or public sharing is not permitted.',
         },
         {
           title: 'Cancellations & no-shows',

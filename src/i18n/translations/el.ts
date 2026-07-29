@@ -14,6 +14,7 @@ export const el = {
     classes: 'Μαθήματα',
     about: 'Σχετικά',
     contact: 'Επικοινωνία',
+    programs: 'Προγράμματα',
     packages: 'Πακέτα',
     main: 'Κύρια πλοήγηση',
     mobile: 'Κινητή πλοήγηση',
@@ -204,6 +205,97 @@ export const el = {
         desc: 'Στοχευμένη προπόνηση γλουτών και κοιλιακών — δύναμη, σταθερότητα και έλεγχος τεχνικής σε δυναμικά μαθήματα.',
       },
     ],
+  },
+  programs: {
+    eyebrow: 'Έτοιμα προγράμματα',
+    title: 'Προγράμματα γυμναστικής',
+    description:
+      'Αγόρασε έτοιμο πρόγραμμα online — θα λάβεις email με συνδέσμους πληρωμής (Stripe, PayPal, Revolut). Μετά την πληρωμή, email με link πρόσβασης — χωρίς λογαριασμό.',
+    durationLabel: 'Διάρκεια',
+    priceLabel: 'Τιμή',
+    levels: {
+      beginner: 'Αρχάριοι',
+      intermediate: 'Μεσαίο',
+      allLevels: 'Όλα τα επίπεδα',
+    },
+    durations: {
+      weeks4: '4 εβδομάδες',
+      weeks6: '6 εβδομάδες',
+      weeks4x3: '4 εβδομάδες · 3x/εβδομάδα',
+    },
+    items: {
+      peach_start: {
+        title: 'Peach Collection – 1. Peach Start',
+        desc: '4 εβδομάδες γλουτοί — goblet squat, hip thrust, RDL, lunges και ενεργοποίηση. Ιδανικό για χτίσιμο δύναμης με σωστή τεχνική.',
+      },
+      peach_workout_b: {
+        title: 'Peach Collection – 2. Workout B',
+        desc: '4 εβδομάδες γλουτοί — leg press, βουλγάρικα, dumbbell RDL, cable kickback και standing abduction. Συμπληρωματικό πρόγραμμα της Peach Collection.',
+      },
+      peach_workout_c: {
+        title: 'Peach Collection – 3. Workout C',
+        desc: '4 εβδομάδες γλουτοί — hip thrust, sumo squat, step-up, cable pull through και seated abduction. Glute Shape πρόγραμμα της Peach Collection.',
+      },
+      peach_build_wa_heavy: {
+        title: 'Peach Build – WA Heavy Glutes',
+        desc: '6 εβδομάδες intensive — βαριά hip thrusts, high bar squat, RDL και seated abduction. Finisher superset Frog Pumps + banded abduction.',
+      },
+      peach_build_wb: {
+        title: 'Peach Build – Workout B: Glute & Unilateral Strength',
+        desc: '6 εβδομάδες — lunges, βουλγάρικα, step-ups, single-leg hip thrust και cable abduction. Finisher weighted reverse lunges.',
+      },
+      peach_build_wc: {
+        title: 'Peach Build – Workout C: Posterior Chain',
+        desc: '6 εβδομάδες — RDL, back extension, pull through, leg press high stance και cable abduction. Finisher abduction machine 80–100 reps.',
+      },
+      peach_build_wd: {
+        title: 'Peach Build – Workout D: Glute Volume & Pump',
+        desc: '6 εβδομάδες — hip thrust, Smith reverse lunge, leg press wide stance, cable kickback και seated abduction. Finisher Frog Pumps + banded hold.',
+      },
+    },
+    order: {
+      emailLabel: 'Email για παραλαβή link',
+      emailPlaceholder: 'το-email@example.com',
+      hint: 'Θα λάβεις email με Stripe, PayPal και Revolut. Μετά την πληρωμή, δεύτερο email με το private link.',
+      cta: 'Αγορά',
+      submitting: 'Αποστολή…',
+      successTitle: 'Έλεγξε το email',
+      successBody: 'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις link πρόσβασης.',
+      refLabel: 'Κωδικός παραγγελίας',
+      invalidEmail: 'Βάλε έγκυρο email.',
+      errors: {
+        order_failed: 'Η παραγγελία απέτυχε. Δοκίμασε ξανά.',
+        rate_limit: 'Πολλές παραγγελίες — δοκίμασε αργότερα.',
+        invalid_email: 'Μη έγκυρο email.',
+        invalid_program: 'Μη έγκυρο πρόγραμμα.',
+      },
+    },
+    paymentSuccess: {
+      title: 'Η πληρωμή ολοκληρώθηκε',
+      body: 'Θα λάβεις email με το link πρόσβασης στο πρόγραμμα σύντομα.',
+      paid: 'Η πληρωμή επιβεβαιώθηκε — έλεγξε το email για το link πρόσβασης.',
+    },
+    access: {
+      eyebrow: 'Το πρόγραμμά σου',
+      loading: 'Φόρτωση…',
+      notFoundTitle: 'Δεν βρέθηκε πρόσβαση',
+      notFoundBody: 'Το link είναι άκυρο ή η πληρωμή δεν έχει ολοκληρωθεί.',
+      privateNote: 'Προσωπική χρήση — μην μοιράζεσαι αυτό το link.',
+      sets: 'Σετ',
+      loadVideo: 'Παίξε video',
+      metaDuration: 'Διάρκεια',
+      metaGoal: 'Στόχος',
+      metaProgress: 'Σημείωση προόδου',
+    },
+    admin: {
+      pendingTitle: 'Εκκρεμείς πληρωμές προγραμμάτων',
+      noPending: 'Δεν υπάρχουν εκκρεμείς πληρωμές προγραμμάτων.',
+      recentPaidTitle: 'Πρόσφατες πληρωμένες παραγγελίες',
+      noPaid: 'Δεν υπάρχουν πρόσφατες πληρωμένες παραγγελίες.',
+      confirmBody: 'Επιβεβαίωση πληρωμής (PayPal/Revolut) — θα σταλεί email με link πρόσβασης.',
+      resendAccess: 'Επανάληψη email πρόσβασης',
+      resending: 'Αποστολή…',
+    },
   },
   schedule: {
     prevDay: 'Προηγούμενη ημέρα',
@@ -599,6 +691,7 @@ export const el = {
       tabCalendar: 'Ημερολόγιο',
       tabMembers: 'Μέλη',
       tabPayments: 'Πληρωμές',
+      tabPrograms: 'Moove Προγράμματα',
       tabBookings: 'Κρατήσεις',
       accountSettings: 'Ρυθμίσεις λογαριασμού',
       statMembers: 'Μέλη',
@@ -878,7 +971,7 @@ export const el = {
         },
         {
           title: 'Ποια δεδομένα συλλέγουμε',
-          body: 'Μπορεί να επεξεργαζόμαστε: στοιχεία επικοινωνίας (όνομα, email, μήνυμα) από τη φόρμα επικοινωνίας· τεχνικά δεδομένα επίσκεψης (IP, browser, συσκευή) μέσω hosting/analytics· προτιμήσεις site (γλώσσα, cookies). Κρατήσεις μαθημάτων γίνονται σε εξωτερική πλατφόρμα (members.moovefitness.gr). Κρατήσεις Move & Pose γίνονται μέσω Cal.com και οι online πληρωμές μέσω Stripe, με δικές τους πολιτικές απορρήτου.',
+          body: 'Μπορεί να επεξεργαζόμαστε: στοιχεία επικοινωνίας (όνομα, email, μήνυμα) από τη φόρμα επικοινωνίας· email για αγορά έτοιμων προγραμμάτων γυμναστικής· τεχνικά δεδομένα επίσκεψης (IP, browser, συσκευή) μέσω hosting/analytics· προτιμήσεις site (γλώσσα, cookies). Κρατήσεις μαθημάτων γίνονται σε εξωτερική πλατφόρμα (members.moovefitness.gr). Κρατήσεις Move & Pose και αγορές προγραμμάτων Moove γίνονται μέσω του site με online πληρωμές (Stripe, PayPal, Revolut), με δικές τους πολιτικές απορρήτου όπου ισχύουν.',
         },
         {
           title: 'Σκοπός επεξεργασίας',
@@ -890,7 +983,7 @@ export const el = {
         },
         {
           title: 'Αποδέκτες και τρίτα μέρη',
-          body: 'Χρησιμοποιούμε Vercel (hosting, προαιρετικά analytics), Google Places API (δημόσιες κριτικές), Cal.com (κρατήσεις ραντεβού), Stripe (online πληρωμές) και εξωτερικές πλατφόρμες κρατήσεων. Οι πάροχοι επεξεργάζονται δεδομένα ως εκτελούντες την επεξεργασία ή ανεξάρτητοι υπεύθυνοι, σύμφωνα με τις δικές τους πολιτικές.',
+          body: 'Χρησιμοποιούμε Vercel (hosting, προαιρετικά analytics), Google Places API (δημόσιες κριτικές), Stripe, PayPal και Revolut (online πληρωμές προγραμμάτων και Move & Pose) και εξωτερικές πλατφόρμες κρατήσεων. Οι πάροχοι επεξεργάζονται δεδομένα ως εκτελούντες την επεξεργασία ή ανεξάρτητοι υπεύθυνοι, σύμφωνα με τις δικές τους πολιτικές.',
         },
         {
           title: 'Διάρκεια διατήρησης',
@@ -972,6 +1065,10 @@ export const el = {
         {
           title: 'Κρατήσεις',
           body: 'Οι κρατήσεις μαθημάτων γίνονται μέσω της online πλατφόρμας {{bookingUrl}}. Ισχύουν οι κανόνες, οι τιμές και οι πολιτικές της πλατφόρμας, όπως ισχύουν κάθε φορά.',
+        },
+        {
+          title: 'Έτοιμα προγράμματα (digital)',
+          body: 'Η αγορά έτοιμων προγραμμάτων γυμναστικής γίνεται online μέσω του site. Μετά την πληρωμή (Stripe, PayPal ή Revolut) λαμβάνετε email με link πρόσβασης σε προσωπική σελίδα (ασκησιολόγιο, videos). Το περιεχόμενο είναι για προσωπική χρήση· δεν επιτρέπεται αναδιανομή ή δημόσια κοινοποίηση.',
         },
         {
           title: 'Ακυρώσεις & απουσίες',

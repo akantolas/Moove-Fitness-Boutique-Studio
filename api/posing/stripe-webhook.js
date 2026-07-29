@@ -1,5 +1,10 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { sendPaidConfirmationEmail } from '../../lib/email/sendPaidConfirmation.js'
+import {
+  activateProgramPurchase,
+  normalizeBookingLocale,
+  sendProgramAccessFlowEmail,
+} from '../programs/_lib.js'
 import { activatePackagePayment, getSupabaseAdmin, json, readRawBody } from './_lib.js'
 
 export const config = {
@@ -30,6 +35,44 @@ function verifyStripeSignature(payload, signatureHeader, secret) {
   }
 }
 
+async function handleMooveProgramCheckout(supabase, session) {
+  const purchaseId = session?.metadata?.purchase_id
+  if (!purchaseId) {
+    return { handled: false, reason: 'missing_purchase_id' }
+  }
+
+  const locale = normalizeBookingLocale(session?.metadata?.locale)
+  const result = await activateProgramPurchase(supabase, {
+    purchaseId,
+    paymentRef: session.id,
+    paymentMethod: 'stripe',
+  })
+
+  if (!result.ok) {
+    return { handled: true, ok: false, error: result.error }
+  }
+
+  if (!result.already && result.purchase) {
+    try {
+      await sendProgramAccessFlowEmail(result.purchase, locale)
+      await supabase
+        .from('moove_program_purchases')
+        .update({
+          access_email_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', purchaseId)
+    } catch (error) {
+      console.error('stripe webhook program access email failed:', {
+        purchaseId,
+        error: error instanceof Error ? error.message : error,
+      })
+    }
+  }
+
+  return { handled: true, ok: true, already: result.already ?? false }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
@@ -53,6 +96,22 @@ export default async function handler(req, res) {
   }
 
   const session = event.data?.object
+  const supabase = getSupabaseAdmin()
+
+  if (session?.metadata?.product_type === 'moove_program') {
+    const programResult = await handleMooveProgramCheckout(supabase, session)
+    if (programResult.handled) {
+      if (!programResult.ok) {
+        return json(res, 500, { ok: false, error: programResult.error })
+      }
+      return json(res, 200, {
+        ok: true,
+        type: 'moove_program',
+        already: programResult.already ?? false,
+      })
+    }
+  }
+
   const bookingId = session?.metadata?.booking_id
   const userPackageId = session?.metadata?.user_package_id
 
@@ -60,7 +119,6 @@ export default async function handler(req, res) {
     return json(res, 200, { ok: true, skipped: true, reason: 'missing_metadata' })
   }
 
-  const supabase = getSupabaseAdmin()
   const result = await activatePackagePayment(supabase, {
     bookingId,
     userPackageId,

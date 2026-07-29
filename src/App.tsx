@@ -11,6 +11,8 @@ import { CookiesPage } from './pages/Cookies'
 import { PrivacyPage } from './pages/Privacy'
 import { ServiceTermsPage } from './pages/ServiceTerms'
 import { TermsOfUsePage } from './pages/TermsOfUse'
+import { ProgramsPage } from './pages/Programs'
+import { ProgramAccessPage } from './pages/ProgramAccess'
 import { PosingPage } from './pages/Posing'
 import { PosingAboutPage } from './pages/PosingAbout'
 import { PosingForgotPasswordPage, PosingLoginPage, PosingResetPasswordPage, PosingSignupPage } from './pages/PosingAuth'
@@ -36,6 +38,8 @@ export default function App() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsOfUsePage />} />
             <Route path="/service-terms" element={<ServiceTermsPage />} />
+            <Route path="/programmata" element={<ProgramsPage />} />
+            <Route path="/programmata/access/:token" element={<ProgramAccessPage />} />
             <Route path="/posing" element={<PosingPage />} />
             <Route path="/posing/about" element={<PosingAboutPage />} />
             <Route path="/posing/login" element={<PosingLoginPage />} />
