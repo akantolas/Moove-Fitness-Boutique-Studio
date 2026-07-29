@@ -65,6 +65,7 @@ export async function createProgramOrder(payload: {
     purchaseId: string
     purchaseRef: string
     status: string
+    checkoutUrl: string
   }
 }
 

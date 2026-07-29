@@ -207,21 +207,145 @@ export const el = {
     ],
   },
   programs: {
-    eyebrow: 'Έτοιμα προγράμματα',
-    title: 'Προγράμματα γυμναστικής',
+    eyebrow: 'Peach training system',
+    title: 'Χτίσε γλουτούς με πρόγραμμα. Όχι στην τύχη.',
     description:
-      'Αγόρασε έτοιμο πρόγραμμα online — θα λάβεις email με συνδέσμους πληρωμής (Stripe, PayPal, Revolut). Μετά την πληρωμή, email με link πρόσβασης — χωρίς λογαριασμό.',
+      'Δομημένα προγράμματα γλουτών, σχεδιασμένα για να ξέρεις ακριβώς τι κάνεις σε κάθε προπόνηση — από την ενεργοποίηση μέχρι το finisher.',
+    heroBadge: 'Εξατομικευμένη δομή · On-demand πρόσβαση',
+    heroCta: 'Δες τα προγράμματα',
+    heroImageAlt: 'Preview του Peach training program',
+    proof: {
+      structured: 'Πλάνο ανά προπόνηση',
+      coach: 'Από τη Μάγδα Σαμαρά',
+      access: 'Private πρόσβαση μετά την πληρωμή',
+    },
+    purchase: {
+      eyebrow: 'Ξεκίνα εδώ',
+      title: 'Ασφαλές checkout',
+      body: 'Βάλε το email σου και ολοκλήρωσε με ασφάλεια την πληρωμή στο Stripe.',
+      paymentMethod: 'Ασφαλής πληρωμή με κάρτα μέσω Stripe',
+    },
+    collections: {
+      collection: {
+        eyebrow: 'Peach Collection',
+        title: 'Η βάση για να ξεκινήσεις σωστά',
+        body: 'Τρία focused workouts για τεχνική, έλεγχο και σταδιακή πρόοδο.',
+      },
+      build: {
+        eyebrow: 'Peach Build',
+        title: 'Για ένταση, όγκο και δύναμη',
+        body: 'Ένα 6-week intensive split για πιο απαιτητική προπόνηση γλουτών.',
+      },
+      sculpt: {
+        eyebrow: 'Peach Sculpt',
+        title: 'Shape · Definition · Symmetry',
+        body: '8 εβδομάδες με υψηλότερο volume, supersets και στοχευμένο glute pump για ορισμό χωρίς απώλεια δύναμης.',
+      },
+    },
+    benefits: {
+      foundation: 'Βάση δύναμης & τεχνικής',
+      shape: 'Σχήμα & σταθερότητα',
+      sculpt: 'Glute shape & activation',
+      definition: 'Definition & symmetry',
+      symmetry: 'Pump & symmetry',
+      strength: 'Heavy glute strength',
+      unilateral: 'Unilateral control',
+      posterior: 'Posterior-chain focus',
+      volume: 'Volume & pump',
+      conditioning: 'Conditioning & burn',
+    },
+    outcomes: {
+      foundation: 'Χτίσε σωστή τεχνική και δύναμη στα βασικά patterns.',
+      shape: 'Δούλεψε έλεγχο, σταθερότητα και καθαρή εκτέλεση.',
+      sculpt: 'Δώσε έμφαση σε activation και ολοκληρωμένο glute work.',
+      definition: 'Μέγιστος ορισμός γλουτών με supersets, unilateral work και pump sessions.',
+      symmetry: 'Αύξησε ενεργοποίηση και συμμετρία με unilateral pump work.',
+      strength: 'Ανέβασε ένταση με structured heavy glute training.',
+      unilateral: 'Χτίσε δύναμη και έλεγχο σε κάθε πλευρά ξεχωριστά.',
+      posterior: 'Δούλεψε οπίσθια αλυσίδα με στόχο πραγματική πρόοδο.',
+      volume: 'Πρόσθεσε όγκο και pump με πιο υψηλό training volume.',
+      conditioning: 'Αύξησε conditioning και θερμιδική κατανάλωση με μεταβολικούς κύκλους και high-rep glute work.',
+    },
+    featured: 'Δημοφιλής επιλογή',
+    includes: {
+      eyebrow: 'Μέσα στο πρόγραμμα',
+      title: 'Ξεκάθαρη καθοδήγηση σε κάθε session',
+      items: [
+        'Προθέρμανση και activation πριν από τα βασικά sets',
+        'Ασκήσεις, σετ, επαναλήψεις και πρακτικές σημειώσεις',
+        'Load plan για προοδευτική επιβάρυνση',
+        'Αποθεραπεία με δομημένες διατάσεις σε κάθε προπόνηση',
+      ],
+    },
+    delivery: {
+      eyebrow: 'Πώς λειτουργεί',
+      title: 'Από την επιλογή στην προπόνηση',
+      steps: [
+        { title: 'Διάλεξε πρόγραμμα', body: 'Σύγκρινε στόχο, επίπεδο και διάρκεια.' },
+        { title: 'Ολοκλήρωσε πληρωμή', body: 'Θα λάβεις ασφαλείς επιλογές πληρωμής στο email σου.' },
+        { title: 'Προπονήσου', body: 'Μετά την επιβεβαίωση σού στέλνουμε το προσωπικό σου link.' },
+      ],
+    },
+    sculptGuidelines: {
+      eyebrow: 'Διάβασε πριν προπονηθείς',
+      title: 'Γενικές οδηγίες προγράμματος',
+      methodsTitle: 'Μέθοδοι προπόνησης',
+      applicationLabel: 'Στο Peach Sculpt',
+      methods: [
+        {
+          title: 'Supersets',
+          body: 'Μέθοδος που συνδυάζει δύο ασκήσεις τη μία μετά την άλλη, με ελάχιστη ή καθόλου ξεκούραση ανάμεσά τους. Αυξάνει την ένταση, την αντοχή και τον όγκο προπόνησης σε λιγότερο χρόνο.',
+          application:
+            'Στο Peach Sculpt, τα supersets χρησιμοποιούνται στρατηγικά για αύξηση μεταβολικού stress και καλύτερη ενεργοποίηση γλουτών, διατηρώντας την ποιότητα της προπόνησης.',
+        },
+        {
+          title: 'Drop Sets',
+          body: 'Προχωρημένη τεχνική έντασης: μείωση βάρους αμέσως μετά τις επιθυμητές επαναλήψεις και συνέχιση της άσκησης χωρίς διάλειμμα. Επεκτείνει το σετ πέρα από την κανονική κόπωση και αυξάνει την ενεργοποίηση ινών και το μεταβολικό stress.',
+          application:
+            'Στο Peach Sculpt, τα drop sets προορίζονται για το τελευταίο σετ επιλεγμένων ασκήσεων απομόνωσης, για μέγιστο ορισμό με ελάχιστο stress στις αρθρώσεις.',
+        },
+      ],
+      whyTitle: 'Γιατί χρησιμοποιούμε αυτές τις μεθόδους',
+      whyBody:
+        'Το Peach Sculpt σχεδιάστηκε για μέγιστο ορισμό γλουτών διατηρώντας τη μυϊκή μάζα. Supersets και drop sets αυξάνουν την πυκνότητα προπόνησης, βελτιώνουν την αντοχή και διεγείρουν μυϊκή ανάπτυξη χωρίς να μεγαλώνουν άσκοπα τη διάρκεια. Προορίζονται για intermediate–advanced αθλητές με σωστή τεχνική.',
+      techniquesTitle: 'Τεχνικές αναφοράς',
+      exampleLabel: 'Παράδειγμα',
+      noteLabel: 'Σημείωση',
+      techniques: [
+        {
+          title: 'Ξεκούραση',
+          body: 'Η ξεκούραση είναι ο χρόνος ανάκαμψης πριν το επόμενο σετ ή την επόμενη άσκηση.',
+          example: 'Rest: 30″ = ξεκούραση 30 δευτερόλεπτα πριν συνεχίσεις.',
+        },
+        {
+          title: 'Rest-Pause',
+          body: 'Προχωρημένη τεχνική έντασης: αφού φτάσεις τις επιθυμητές επαναλήψεις, ξεκουράσου σύντομα και συνέχισε με το ίδιο βάρος για λίγες ακόμη επαναλήψεις.',
+          example:
+            'Παράδειγμα — Barbell Hip Thrust:\n80 kg × 10 επαναλήψεις\nΞεκούραση 15″ → 3–4 επιπλέον επαναλήψεις\nΞεκούραση 15″ → 2–3 επιπλέον επαναλήψεις',
+          note: 'Ολόκληρη η ακολουθία μετράει ως ένα σετ.',
+        },
+        {
+          title: 'Drop Set',
+          body: 'Προχωρημένη μέθοδος: αμέσως μετά τις προβλεπόμενες επαναλήψεις μείωσε το βάρος και συνέχισε την άσκηση χωρίς διάλειμμα.',
+          example:
+            'Παράδειγμα — Seated Hip Abduction:\n20 επαναλήψεις × 60 kg\nΜείωση σε 45 kg → 12 επαναλήψεις\nΜείωση σε 30 kg → όσες ποιοτικές επαναλήψεις μπορείς',
+          note: 'Ολόκληρη η ακολουθία μετράει ως ένα drop set.',
+        },
+      ],
+    },
     durationLabel: 'Διάρκεια',
     priceLabel: 'Τιμή',
     levels: {
       beginner: 'Αρχάριοι',
       intermediate: 'Μεσαίο',
+      intermediateAdvanced: 'Μεσαίο / Προχωρημένο',
       allLevels: 'Όλα τα επίπεδα',
     },
     durations: {
       weeks4: '4 εβδομάδες',
       weeks6: '6 εβδομάδες',
       weeks4x3: '4 εβδομάδες · 3x/εβδομάδα',
+      weeks8x45: '8 εβδομάδες · 4–5x/εβδομάδα',
     },
     items: {
       peach_start: {
@@ -235,6 +359,26 @@ export const el = {
       peach_workout_c: {
         title: 'Peach Collection – 3. Workout C',
         desc: '4 εβδομάδες γλουτοί — hip thrust, sumo squat, step-up, cable pull through και seated abduction. Glute Shape πρόγραμμα της Peach Collection.',
+      },
+      peach_sculpt_a: {
+        title: 'Peach Sculpt – Workout A',
+        desc: '8 εβδομάδες — hip thrust, βουλγάρικα, Smith lunges, cable kickbacks και finisher circuit. Shape, definition και symmetry με progressive load plan.',
+      },
+      peach_sculpt_b: {
+        title: 'Peach Sculpt – Workout B: Glute Pump Symmetry',
+        desc: '8 εβδομάδες — B-stance hip thrust, cable kickbacks, back extensions, abduction supersets, burnout και finisher circuit. Στόχος pump και συμμετρία.',
+      },
+      peach_sculpt_c: {
+        title: 'Peach Sculpt – Workout C: Posterior Chain',
+        desc: '8 εβδομάδες — RDL main lift, single-leg RDL, leg curls, pull-throughs, hyperextensions και finisher circuit. Εστίαση στην οπίσθια αλυσίδα.',
+      },
+      peach_sculpt_d: {
+        title: 'Peach Sculpt – Workout D: Leg Volume & Pump',
+        desc: '8 εβδομάδες — elevated split squats, hack squat supersets, leg extensions, abductions και finisher circuit. Στόχος leg volume και pump.',
+      },
+      peach_sculpt_e: {
+        title: 'Peach Sculpt – Workout E: Conditioning & Burn',
+        desc: '8 εβδομάδες — conditioning circuit, glute pump superset, burnout circuit και προτεινόμενη καρδιοαναπνευστική. Μεταβολικό conditioning και γράμμωση γλουτών.',
       },
       peach_build_wa_heavy: {
         title: 'Peach Build – WA Heavy Glutes',
@@ -256,9 +400,9 @@ export const el = {
     order: {
       emailLabel: 'Email για παραλαβή link',
       emailPlaceholder: 'το-email@example.com',
-      hint: 'Θα λάβεις email με Stripe, PayPal και Revolut. Μετά την πληρωμή, δεύτερο email με το private link.',
-      cta: 'Αγορά',
-      submitting: 'Αποστολή…',
+      hint: 'Μετά την επιβεβαίωση της πληρωμής θα λάβεις email με το private link του προγράμματός σου. Δεν χρειάζεται λογαριασμός.',
+      cta: 'Συνέχισε σε ασφαλή πληρωμή',
+      submitting: 'Μετάβαση στο Stripe…',
       successTitle: 'Έλεγξε το email',
       successBody: 'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις link πρόσβασης.',
       refLabel: 'Κωδικός παραγγελίας',
@@ -268,6 +412,7 @@ export const el = {
         rate_limit: 'Πολλές παραγγελίες — δοκίμασε αργότερα.',
         invalid_email: 'Μη έγκυρο email.',
         invalid_program: 'Μη έγκυρο πρόγραμμα.',
+        stripe_unavailable: 'Η ασφαλής πληρωμή δεν είναι διαθέσιμη αυτή τη στιγμή. Δοκίμασε ξανά αργότερα.',
       },
     },
     paymentSuccess: {
@@ -280,12 +425,37 @@ export const el = {
       loading: 'Φόρτωση…',
       notFoundTitle: 'Δεν βρέθηκε πρόσβαση',
       notFoundBody: 'Το link είναι άκυρο ή η πληρωμή δεν έχει ολοκληρωθεί.',
+      errorSupport: 'Χρειάζεσαι βοήθεια; Επικοινώνησε με το Moove Fitness',
       privateNote: 'Προσωπική χρήση — μην μοιράζεσαι αυτό το link.',
+      privateAccess: 'Ιδιωτική πρόσβαση',
       sets: 'Σετ',
       loadVideo: 'Παίξε video',
       metaDuration: 'Διάρκεια',
       metaGoal: 'Στόχος',
       metaProgress: 'Σημείωση προόδου',
+      overview: 'Επισκόπηση προγράμματος',
+      programPlan: 'Ο χάρτης της προπόνησής σου',
+      workout: 'Προπόνηση',
+      todaysPlan: 'Το σημερινό πλάνο',
+      sections: 'ενότητες',
+      exercises: 'ασκήσεις',
+      startProgram: 'Ξεκίνα προπόνηση',
+      sectionNavigation: 'Πλοήγηση ενοτήτων προγράμματος',
+      openSection: 'Άνοιγμα ενότητας',
+      closeSection: 'Κλείσιμο ενότητας',
+      exercise: 'Άσκηση',
+      instruction: 'Οδηγία',
+      prescription: {
+        repetitions: 'Επαναλήψεις',
+        setsRepetitions: 'Σετ × επαναλήψεις',
+        sets: 'Σετ',
+        time: 'Χρόνος',
+        distance: 'Απόσταση',
+        steps: 'Βήματα',
+        effort: 'Εκτέλεση',
+        perLeg: 'πόδι',
+        perSide: 'πλευρά',
+      },
     },
     admin: {
       pendingTitle: 'Εκκρεμείς πληρωμές προγραμμάτων',

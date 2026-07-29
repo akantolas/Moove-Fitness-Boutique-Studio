@@ -6,14 +6,11 @@ import {
   findRecentPendingPurchase,
   formatPurchaseRef,
   getCatalogPriceEur,
-  getPayPalUrl,
   getProgramName,
-  getRevolutUrl,
   getSupabaseAdmin,
   isValidProgramKey,
   json,
   normalizeBookingLocale,
-  sendProgramPaymentFlowEmails,
 } from './_lib.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -85,30 +82,16 @@ export async function handleOrder(req, res) {
         .eq('id', purchase.id)
     }
 
-    const paypalLink = getPayPalUrl(amountEur)
-    const revolutLink = getRevolutUrl(amountEur)
-
-    await sendProgramPaymentFlowEmails({
-      purchase,
-      stripeLink: checkout.url,
-      paypalLink,
-      revolutLink,
-      locale,
-    })
-
-    await supabase
-      .from('moove_program_purchases')
-      .update({
-        payment_email_sent_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', purchase.id)
+    if (!checkout.url) {
+      return json(res, 503, { ok: false, error: 'stripe_unavailable' })
+    }
 
     return json(res, 200, {
       ok: true,
       purchaseId: purchase.id,
       purchaseRef: formatPurchaseRef(purchase.id),
       status: purchase.status,
+      checkoutUrl: checkout.url,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'server_error'

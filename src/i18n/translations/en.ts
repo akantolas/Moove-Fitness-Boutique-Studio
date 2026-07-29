@@ -208,21 +208,145 @@ export const en = {
     ],
   },
   programs: {
-    eyebrow: 'Ready-made programs',
-    title: 'Workout programs',
+    eyebrow: 'Peach training system',
+    title: 'Build your glutes with a plan. Not guesswork.',
     description:
-      'Buy a ready-made program online — you will receive an email with payment links (Stripe, PayPal, Revolut). After payment, an email with your access link — no account required.',
+      'Structured glute programs that tell you exactly what to do in every session — from activation through to the finisher.',
+    heroBadge: 'Structured training · On-demand access',
+    heroCta: 'Explore the programs',
+    heroImageAlt: 'Preview of the Peach training program',
+    proof: {
+      structured: 'A plan for every workout',
+      coach: 'Created by Magda Samara',
+      access: 'Private access after payment',
+    },
+    purchase: {
+      eyebrow: 'Start here',
+      title: 'Secure checkout',
+      body: 'Enter your email, then complete payment securely with Stripe.',
+      paymentMethod: 'Secure card payment via Stripe',
+    },
+    collections: {
+      collection: {
+        eyebrow: 'Peach Collection',
+        title: 'The right foundation to start strong',
+        body: 'Three focused workouts for technique, control, and steady progress.',
+      },
+      build: {
+        eyebrow: 'Peach Build',
+        title: 'For intensity, volume, and strength',
+        body: 'A 6-week intensive split for more demanding glute training.',
+      },
+      sculpt: {
+        eyebrow: 'Peach Sculpt',
+        title: 'Shape · Definition · Symmetry',
+        body: '8 weeks of higher volume, supersets, and targeted glute pump work for definition without losing strength.',
+      },
+    },
+    benefits: {
+      foundation: 'Strength & technique foundation',
+      shape: 'Shape & stability',
+      sculpt: 'Glute shape & activation',
+      definition: 'Definition & symmetry',
+      symmetry: 'Pump & symmetry',
+      strength: 'Heavy glute strength',
+      unilateral: 'Unilateral control',
+      posterior: 'Posterior-chain focus',
+      volume: 'Volume & pump',
+      conditioning: 'Conditioning & burn',
+    },
+    outcomes: {
+      foundation: 'Build confident technique and strength in the fundamentals.',
+      shape: 'Train control, stability, and clean execution.',
+      sculpt: 'Prioritise activation and complete glute-focused work.',
+      definition: 'Maximise glute definition with supersets, unilateral work, and pump sessions.',
+      symmetry: 'Boost activation and glute symmetry with unilateral pump work.',
+      strength: 'Raise intensity with structured heavy glute training.',
+      unilateral: 'Build strength and control on each side independently.',
+      posterior: 'Train your posterior chain for meaningful progression.',
+      volume: 'Add volume and pump through higher training volume.',
+      conditioning: 'Boost conditioning and calorie burn with metabolic circuits and high-rep glute work.',
+    },
+    featured: 'Popular choice',
+    includes: {
+      eyebrow: 'Inside your program',
+      title: 'Clear coaching for every session',
+      items: [
+        'Warm-up and activation before your main working sets',
+        'Exercises, sets, reps, and practical notes',
+        'A load plan for progressive overload',
+        'Structured cool-down stretches after every session',
+      ],
+    },
+    delivery: {
+      eyebrow: 'How it works',
+      title: 'From selection to training',
+      steps: [
+        { title: 'Choose your program', body: 'Compare the goal, level, and duration.' },
+        { title: 'Complete payment', body: 'You will receive secure payment options by email.' },
+        { title: 'Start training', body: 'After confirmation, we send your private access link.' },
+      ],
+    },
+    sculptGuidelines: {
+      eyebrow: 'Read before you train',
+      title: 'General program guidelines',
+      methodsTitle: 'Training methods',
+      applicationLabel: 'In Peach Sculpt',
+      methods: [
+        {
+          title: 'Supersets',
+          body: 'A training method that combines two exercises performed back-to-back with little or no rest between them. Used to increase workout intensity, improve muscular endurance, and maximize training volume in less time.',
+          application:
+            'In Peach Sculpt, supersets are used strategically to increase metabolic stress and enhance glute activation while maintaining training quality.',
+        },
+        {
+          title: 'Drop Sets',
+          body: 'An advanced intensity technique performed by reducing the weight immediately after reaching the target repetitions and continuing the exercise without resting. This extends the set beyond normal fatigue and increases muscle fiber recruitment and metabolic stress.',
+          application:
+            'In Peach Sculpt, drop sets are reserved for the final set of selected isolation exercises to maximize muscle definition while minimizing joint stress.',
+        },
+      ],
+      whyTitle: 'Why we use these methods',
+      whyBody:
+        'Peach Sculpt is designed to maximize glute definition while preserving muscle mass. Supersets and drop sets are strategically implemented to increase training density, improve muscular endurance, and stimulate muscle growth without unnecessarily increasing workout duration. These methods are intended for intermediate to advanced trainees who have already mastered proper exercise technique.',
+      techniquesTitle: 'Technique reference',
+      exampleLabel: 'Example',
+      noteLabel: 'Note',
+      techniques: [
+        {
+          title: 'Rest',
+          body: 'Rest is the recovery time before your next set or exercise.',
+          example: 'Rest: 30″ = rest for 30 seconds before continuing.',
+        },
+        {
+          title: 'Rest-Pause',
+          body: 'An advanced intensity technique: after you reach your target reps, rest briefly, then continue with the same weight for a few more reps.',
+          example:
+            'Example — Barbell Hip Thrust:\n80 kg × 10 reps\nRest 15″ → 3–4 additional reps\nRest 15″ → 2–3 additional reps',
+          note: 'This entire sequence counts as one set.',
+        },
+        {
+          title: 'Drop Set',
+          body: 'An advanced training method: after completing the prescribed reps, reduce the weight immediately and continue the exercise without resting.',
+          example:
+            'Example — Seated Hip Abduction:\n20 reps × 60 kg\nDrop to 45 kg → 12 reps\nDrop to 30 kg → as many quality reps as possible',
+          note: 'This entire sequence counts as one drop set.',
+        },
+      ],
+    },
     durationLabel: 'Duration',
     priceLabel: 'Price',
     levels: {
       beginner: 'Beginners',
       intermediate: 'Intermediate',
+      intermediateAdvanced: 'Intermediate / Advanced',
       allLevels: 'All levels',
     },
     durations: {
       weeks4: '4 weeks',
       weeks6: '6 weeks',
       weeks4x3: '4 weeks · 3x/week',
+      weeks8x45: '8 weeks · 4–5x/week',
     },
     items: {
       peach_start: {
@@ -236,6 +360,26 @@ export const en = {
       peach_workout_c: {
         title: 'Peach Collection – 3. Workout C',
         desc: '4-week glute program — hip thrust, sumo squat, step-up, cable pull through, and seated abduction. Glute Shape program from the Peach Collection.',
+      },
+      peach_sculpt_a: {
+        title: 'Peach Sculpt – Workout A',
+        desc: '8-week program — hip thrust, Bulgarian split squats, Smith lunges, cable kickbacks, and finisher circuit. Shape, definition, and symmetry with progressive load plan.',
+      },
+      peach_sculpt_b: {
+        title: 'Peach Sculpt – Workout B: Glute Pump Symmetry',
+        desc: '8-week program — B-stance hip thrust, cable kickbacks, back extensions, abduction supersets, burnout, and finisher circuit. Pump and symmetry focus.',
+      },
+      peach_sculpt_c: {
+        title: 'Peach Sculpt – Workout C: Posterior Chain',
+        desc: '8-week program — RDL main lift, single-leg RDL, leg curls, pull-throughs, hyperextensions, and finisher circuit. Posterior chain focus.',
+      },
+      peach_sculpt_d: {
+        title: 'Peach Sculpt – Workout D: Leg Volume & Pump',
+        desc: '8-week program — elevated split squats, hack squat supersets, leg extensions, abductions, and finisher circuit. Leg volume and pump focus.',
+      },
+      peach_sculpt_e: {
+        title: 'Peach Sculpt – Workout E: Conditioning & Burn',
+        desc: '8-week program — conditioning circuit, glute pump superset, burnout circuit, and recommended cardio. Metabolic conditioning and glute definition.',
       },
       peach_build_wa_heavy: {
         title: 'Peach Build – WA Heavy Glutes',
@@ -257,9 +401,9 @@ export const en = {
     order: {
       emailLabel: 'Email to receive your link',
       emailPlaceholder: 'your-email@example.com',
-      hint: 'You will receive an email with Stripe, PayPal, and Revolut. After payment, a second email with your private link.',
-      cta: 'Buy',
-      submitting: 'Sending…',
+      hint: 'After your payment is confirmed, you will receive an email with your private program link. No account required.',
+      cta: 'Continue to secure payment',
+      submitting: 'Opening Stripe…',
       successTitle: 'Check your email',
       successBody: 'We sent payment links. After payment you will receive your access link.',
       refLabel: 'Order ref',
@@ -269,6 +413,7 @@ export const en = {
         rate_limit: 'Too many orders — try again later.',
         invalid_email: 'Invalid email.',
         invalid_program: 'Invalid program.',
+        stripe_unavailable: 'Secure payment is temporarily unavailable. Please try again later.',
       },
     },
     paymentSuccess: {
@@ -281,12 +426,37 @@ export const en = {
       loading: 'Loading…',
       notFoundTitle: 'Access not found',
       notFoundBody: 'This link is invalid or payment has not been completed.',
+      errorSupport: 'Need help? Contact Moove Fitness',
       privateNote: 'Personal use — do not share this link.',
+      privateAccess: 'Private access',
       sets: 'Sets',
       loadVideo: 'Play video',
       metaDuration: 'Duration',
       metaGoal: 'Goal',
       metaProgress: 'Progress note',
+      overview: 'Program overview',
+      programPlan: 'Your training roadmap',
+      workout: 'Training session',
+      todaysPlan: "Today's plan",
+      sections: 'sections',
+      exercises: 'exercises',
+      startProgram: 'Start training',
+      sectionNavigation: 'Program section navigation',
+      openSection: 'Open section',
+      closeSection: 'Close section',
+      exercise: 'Exercise',
+      instruction: 'Instruction',
+      prescription: {
+        repetitions: 'Repetitions',
+        setsRepetitions: 'Sets × repetitions',
+        sets: 'Sets',
+        time: 'Time',
+        distance: 'Distance',
+        steps: 'Steps',
+        effort: 'Execution',
+        perLeg: 'leg',
+        perSide: 'side',
+      },
     },
     admin: {
       pendingTitle: 'Pending program payments',
