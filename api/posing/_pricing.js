@@ -50,9 +50,10 @@ export function getRevolutBaseUrl() {
 
 export function getPayPalUrl(amountEur) {
   const base = getPayPalBaseUrl()
-  const amount = Math.round(Number(amountEur))
-  if (!amount || Number.isNaN(amount)) return base
-  return `${base}/${amount}EUR`
+  const amount = Number(amountEur)
+  if (!Number.isFinite(amount) || amount <= 0) return base
+  const amountLabel = Number.isInteger(amount) ? String(amount) : amount.toFixed(2)
+  return `${base}/${amountLabel}EUR`
 }
 
 export function getRevolutUrl() {

@@ -16,6 +16,7 @@ import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { AccountHistoryItem, AccountHistoryModal } from '../components/AccountHistoryModal'
 import { AccountProfileHero } from '../components/AccountProfileHero'
+import { SiteContainer } from '../components/SiteContainer'
 import { AccountProfileSection } from '../components/AccountProfileSection'
 import { AccountSecuritySection } from '../components/AccountSecuritySection'
 import { AccountQuickStats } from '../components/AccountQuickStats'
@@ -362,22 +363,22 @@ export function PosingAccountPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-white/70">
-        {t('posing.auth.notConfigured')}
-      </div>
+      <SiteContainer variant="app" className="py-16 text-center">
+        <div className="text-white/70">{t('posing.auth.notConfigured')}</div>
+      </SiteContainer>
     )
   }
 
   if (!pageReady) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-white/60">
-        {t('posing.account.loading')}
-      </div>
+      <SiteContainer variant="app" className="py-16 text-center">
+        <div className="text-white/60">{t('posing.account.loading')}</div>
+      </SiteContainer>
     )
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:py-16">
+    <SiteContainer variant="app" className="py-12 sm:py-16">
       <AccountProfileHero
         fullName={profile?.full_name ?? fullName}
         email={displayEmail}
@@ -700,6 +701,6 @@ export function PosingAccountPage() {
           ) : null}
         </section>
       ) : null}
-    </div>
+    </SiteContainer>
   )
 }

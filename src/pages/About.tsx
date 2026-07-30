@@ -1,4 +1,5 @@
 import { PageHeader } from '../components/PageHeader'
+import { SiteContainer } from '../components/SiteContainer'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -14,7 +15,7 @@ export function AboutPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+    <SiteContainer className="py-14 sm:py-20">
       <PageHeader
         eyebrow={t('about.eyebrow')}
         title={site.ownerName}
@@ -81,6 +82,6 @@ export function AboutPage() {
           </div>
         ))}
       </div>
-    </div>
+    </SiteContainer>
   )
 }

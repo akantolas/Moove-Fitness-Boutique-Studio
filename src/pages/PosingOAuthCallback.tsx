@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
+import { SiteContainer } from '../components/SiteContainer'
 import { useTranslation } from '../i18n/useTranslation'
 import { createSupabaseClient, isSupabaseConfigured } from '../lib/supabase'
 import { sanitizeAuthRedirect } from '../lib/posingAuthErrors'
@@ -30,9 +31,11 @@ export function PosingOAuthCallbackPage() {
   }, [loading, navigate, oauthError, redirect, user])
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 text-center text-white/60">
-      <p>{t('posing.account.loading')}</p>
-    </div>
+    <SiteContainer className="py-16 text-center">
+      <div className="mx-auto max-w-md text-white/60">
+        <p>{t('posing.account.loading')}</p>
+      </div>
+    </SiteContainer>
   )
 }
 

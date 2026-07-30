@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
+import { SiteContainer } from '../components/SiteContainer'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
 
@@ -54,7 +55,7 @@ export function ContactPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+    <SiteContainer className="py-14 sm:py-20">
       <PageHeader
         eyebrow={t('contact.eyebrow')}
         title={t('contact.title')}
@@ -205,6 +206,6 @@ export function ContactPage() {
           )}
         </section>
       </div>
-    </div>
+    </SiteContainer>
   )
 }
