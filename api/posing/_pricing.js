@@ -55,11 +55,8 @@ export function getPayPalUrl(amountEur) {
   return `${base}/${amount}EUR`
 }
 
-export function getRevolutUrl(amountEur) {
-  const base = getRevolutBaseUrl()
-  const amount = Math.round(Number(amountEur))
-  if (!amount || Number.isNaN(amount)) return base
-  return `${base}/eur${amount}`
+export function getRevolutUrl() {
+  return getRevolutBaseUrl()
 }
 
 /**
