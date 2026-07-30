@@ -15,7 +15,6 @@ export type MooveProgramCatalogItem = {
   outcomeKey: string
   workoutCount: number
   imagePath: string
-  imagePosition?: string
   featured?: boolean
 }
 
@@ -28,8 +27,7 @@ export const mooveProgramCatalog: MooveProgramCatalogItem[] = [
     benefitKey: 'foundation',
     outcomeKey: 'foundation',
     workoutCount: 3,
-    imagePath: '/programs/peach-start-cover.png',
-    imagePosition: 'center center',
+    imagePath: '/programs/peach-start-card.jpg',
   },
   {
     key: 'peach_build',
@@ -39,8 +37,7 @@ export const mooveProgramCatalog: MooveProgramCatalogItem[] = [
     benefitKey: 'strength',
     outcomeKey: 'strength',
     workoutCount: 4,
-    imagePath: '/programs/peach-workout-b-cover.png',
-    imagePosition: 'center 30%',
+    imagePath: '/programs/peach-build-card.jpg',
   },
   {
     key: 'peach_sculpt',
@@ -50,8 +47,7 @@ export const mooveProgramCatalog: MooveProgramCatalogItem[] = [
     benefitKey: 'definition',
     outcomeKey: 'definition',
     workoutCount: 5,
-    imagePath: '/image1.jpeg',
-    imagePosition: 'center 52%',
+    imagePath: '/programs/peach-sculpt-card.jpg',
   },
   {
     key: 'peach_complete',
@@ -61,8 +57,7 @@ export const mooveProgramCatalog: MooveProgramCatalogItem[] = [
     benefitKey: 'complete',
     outcomeKey: 'complete',
     workoutCount: 12,
-    imagePath: '/image4.jpeg',
-    imagePosition: 'center 42%',
+    imagePath: '/programs/peach-complete-card.jpg',
     featured: true,
   },
 ]
