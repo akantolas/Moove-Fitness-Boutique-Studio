@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { site } from '../site'
 import { ButtonLink } from './Links'
+import { SiteContainer } from './SiteContainer'
 import { useTranslation } from '../i18n/useTranslation'
 
 type ReviewItem = {
@@ -65,7 +66,7 @@ export function GoogleReviews() {
 
   return (
     <section className="border-b border-moove-border/80 bg-gradient-to-b from-moove-elevated/40 to-moove-bg moove-section-pad">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <SiteContainer>
         <div className="mx-auto max-w-2xl text-center">
           <p className="moove-eyebrow">{t('reviews.eyebrow')}</p>
           <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
@@ -191,7 +192,7 @@ export function GoogleReviews() {
             </ButtonLink>
           </div>
         </div>
-      </div>
+      </SiteContainer>
     </section>
   )
 }

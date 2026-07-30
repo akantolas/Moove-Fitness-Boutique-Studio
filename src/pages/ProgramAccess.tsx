@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { fetchProgramAccess, type ProgramAccessContent } from '../lib/programsApi'
 import { useTranslation } from '../i18n/useTranslation'
 import { PeachSculptGuidelines } from '../components/PeachSculptGuidelines'
+import { SiteContainer } from '../components/SiteContainer'
 import { mooveProgramCatalog } from '../data/moovePrograms'
 import {
   formatProgramPrescription,
@@ -150,14 +151,14 @@ export function ProgramAccessPage() {
   if (loading) {
     return (
       <div className="program-portal-shell px-4 py-10 sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-6xl animate-pulse">
+        <SiteContainer variant="app" className="animate-pulse">
           <div className="h-[26rem] rounded-[2rem] bg-moove-espresso/15 sm:h-[30rem]" />
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <div className="h-40 rounded-2xl bg-moove-espresso/[0.07]" />
             <div className="h-40 rounded-2xl bg-moove-espresso/[0.07]" />
           </div>
           <p className="mt-6 text-center text-sm font-medium text-moove-muted">{t('programs.access.loading')}</p>
-        </div>
+        </SiteContainer>
       </div>
     )
   }
@@ -206,7 +207,7 @@ export function ProgramAccessPage() {
 
   return (
     <div className="program-portal-shell pb-20">
-      <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-8">
+      <SiteContainer variant="app" className="pt-5 sm:pt-8">
         <section className="program-portal-hero relative min-h-[28rem] overflow-hidden rounded-[2rem] border border-white/20 shadow-moove-soft sm:min-h-[32rem]">
           <img
             src={heroImage}
@@ -331,10 +332,10 @@ export function ProgramAccessPage() {
             {t('programs.access.todaysPlan')}
           </h2>
         </section>
-      </div>
+      </SiteContainer>
 
       <nav className="sticky top-[4.4rem] z-30 mt-6 border-y border-moove-border/70 bg-moove-bg/90 py-3 backdrop-blur-xl" aria-label={t('programs.access.sectionNavigation')}>
-        <div className="program-section-nav mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 sm:px-6">
+        <SiteContainer variant="app" className="program-section-nav flex gap-2 overflow-x-auto">
           {content.sections.map((section, index) => (
             <button
               key={`${section.title}-${index}`}
@@ -351,10 +352,10 @@ export function ProgramAccessPage() {
               {section.title}
             </button>
           ))}
-        </div>
+        </SiteContainer>
       </nav>
 
-      <div className="mx-auto mt-6 max-w-6xl space-y-4 px-4 sm:px-6">
+      <SiteContainer variant="app" className="mt-6 space-y-4">
         {content.sections.map((section, sectionIndex) => {
           const isOpen = expandedSections.has(sectionIndex)
           const panelId = `program-section-panel-${sectionIndex}`
@@ -484,7 +485,7 @@ export function ProgramAccessPage() {
             </section>
           )
         })}
-      </div>
+      </SiteContainer>
     </div>
   )
 }

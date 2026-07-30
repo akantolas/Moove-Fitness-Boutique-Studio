@@ -5,6 +5,7 @@ import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminPaymentsQueue } from '../components/AdminPaymentsQueue'
 import { AdminProgramPaymentsQueue } from '../components/AdminProgramPaymentsQueue'
 import { AdminShell, AdminPanelSkeleton, AdminStatCard, AdminStatsSkeleton } from '../components/AdminShell'
+import { SiteContainer } from '../components/SiteContainer'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPosingIsAdmin } from '../lib/posingAccount'
@@ -90,20 +91,22 @@ export function PosingAdminPage() {
 
   if (loading || authorized === null) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center text-white/60">
-        {t('posing.account.loading')}
-      </div>
+      <SiteContainer variant="admin" className="py-16 text-center">
+        <div className="text-white/60">{t('posing.account.loading')}</div>
+      </SiteContainer>
     )
   }
 
   if (!authorized) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-semibold text-white">{t('posing.admin.forbidden')}</h1>
-        <Link to="/posing" className="mt-6 inline-block text-fuchsia-200 hover:underline">
-          {t('nav.home')}
-        </Link>
-      </div>
+      <SiteContainer variant="admin" className="py-16 text-center">
+        <div className="mx-auto max-w-md">
+          <h1 className="font-display text-2xl font-semibold text-white">{t('posing.admin.forbidden')}</h1>
+          <Link to="/posing" className="mt-6 inline-block text-fuchsia-200 hover:underline">
+            {t('nav.home')}
+          </Link>
+        </div>
+      </SiteContainer>
     )
   }
 

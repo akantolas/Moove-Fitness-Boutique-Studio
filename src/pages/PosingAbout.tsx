@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ZoomableImage } from '../components/ZoomableImage'
+import { SiteContainer } from '../components/SiteContainer'
 import { site } from '../site'
 import { posingBookingHref, posingPackagesHref } from '../hooks/useIsPosingRoute'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -11,16 +12,8 @@ export function PosingAboutPage() {
   const about = dictionary.posing.about
 
   return (
-    <div className="pose-page bg-[#08080c] text-white">
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-80"
-          style={{
-            backgroundImage:
-              'radial-gradient(ellipse 80% 60% at 20% 0%, rgba(192, 38, 211, 0.22) 0%, transparent 55%), radial-gradient(circle at 85% 20%, rgba(34, 211, 238, 0.15) 0%, transparent 45%)',
-          }}
-          aria-hidden
-        />
+    <div className="bg-[#08080c] text-white">
+      <section className="pose-hero-gradient relative overflow-hidden border-b border-white/10">
         <div className="relative mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
             {t('posing.about.eyebrow')}
@@ -35,7 +28,7 @@ export function PosingAboutPage() {
       </section>
 
       <section className="border-b border-white/10 py-16 sm:py-20">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+        <SiteContainer className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center xl:gap-16">
           <div className="space-y-6">
             {about.paragraphs.map((paragraph) => (
               <p key={paragraph} className="text-base leading-relaxed text-white/68 sm:text-lg">
@@ -86,7 +79,7 @@ export function PosingAboutPage() {
               </div>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
       <section className="py-14 sm:py-16">

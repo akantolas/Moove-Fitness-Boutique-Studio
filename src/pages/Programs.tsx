@@ -6,6 +6,7 @@ import {
   type MooveProgramKey,
 } from '../data/moovePrograms'
 import { createProgramOrder, fetchProgramOrderStatus } from '../lib/programsApi'
+import { SiteContainer } from '../components/SiteContainer'
 import { useTranslation } from '../i18n/useTranslation'
 
 type OrderState = 'idle' | 'submitting' | 'error'
@@ -89,7 +90,7 @@ export function ProgramsPage() {
       <section className="relative overflow-hidden border-b border-moove-border/80">
         <div className="programs-hero-grid pointer-events-none absolute inset-0" aria-hidden />
         <div className="pointer-events-none absolute -right-20 top-8 h-72 w-72 rounded-full bg-moove-lime/15 blur-3xl" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:py-24">
+        <SiteContainer className="relative grid gap-12 py-16 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:py-24 xl:gap-20">
           <div className="animate-fade-up">
             <p className="moove-eyebrow">{t('programs.eyebrow')}</p>
             <h1 className="font-display mt-5 max-w-2xl text-4xl font-semibold leading-[1.06] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.5rem]">
@@ -115,7 +116,7 @@ export function ProgramsPage() {
             </ul>
           </div>
 
-          <div className="animate-fade-up relative mx-auto w-full max-w-md [animation-delay:120ms] lg:max-w-none">
+          <div className="moove-hero-breakout animate-fade-up relative mx-auto w-full max-w-md [animation-delay:120ms] lg:max-w-none">
             <div className="programs-cover relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-white/40 shadow-moove-soft">
               <img
                 src="/image4.jpeg"
@@ -131,10 +132,10 @@ export function ProgramsPage() {
               </div>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
-      <main className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+      <SiteContainer as="main" className="py-14 sm:py-20">
         {paymentSuccess ? (
           <div className="rounded-2xl border border-moove-lime/30 bg-moove-lime/10 p-6">
             <p className="font-display text-lg font-semibold text-moove-silver">{t('programs.paymentSuccess.title')}</p>
@@ -152,7 +153,7 @@ export function ProgramsPage() {
             </h2>
             <p className="mt-3 text-moove-muted">{t('programs.catalog.body')}</p>
           </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
+          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:gap-8">
             {mooveProgramCatalog.map((program) => {
               const item = dictionary.programs.items[program.key]
               const title = item?.title ?? program.key
@@ -234,7 +235,7 @@ export function ProgramsPage() {
           </div>
         </section>
 
-        <section className="mt-20 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className="mt-20 grid gap-5 lg:grid-cols-[1.2fr_0.8fr] xl:gap-8">
           <div className="rounded-[1.75rem] border border-moove-border/80 bg-moove-elevated/50 p-7 sm:p-9">
             <p className="moove-eyebrow">{t('programs.includes.eyebrow')}</p>
             <h2 className="font-display mt-3 text-3xl font-semibold text-moove-silver">{t('programs.includes.title')}</h2>
@@ -263,7 +264,7 @@ export function ProgramsPage() {
             </ol>
           </div>
         </section>
-      </main>
+      </SiteContainer>
 
       {checkoutProgram ? (
         <div

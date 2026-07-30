@@ -73,7 +73,7 @@ export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffers
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="animate-pose-offers-modal-in relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] bg-[#08080f] shadow-[0_40px_120px_-30px_rgba(244,114,182,0.45)] outline-none"
+        className="animate-pose-offers-modal-in relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[1.75rem] bg-[#08080f] shadow-[0_40px_120px_-30px_rgba(244,114,182,0.45)] outline-none"
       >
         <div className="pose-offers-shimmer-border h-[2px] w-full shrink-0" aria-hidden />
         <div

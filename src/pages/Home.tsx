@@ -1,6 +1,7 @@
 import { GhostLink, ButtonLink } from '../components/Links'
 import { GoogleReviews } from '../components/GoogleReviews'
 import { PosePromoBubble } from '../components/PosePromoBubble'
+import { SiteContainer } from '../components/SiteContainer'
 import { ZoomableImage } from '../components/ZoomableImage'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
@@ -26,7 +27,7 @@ export function HomePage() {
           aria-hidden
         />
 
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24">
+        <SiteContainer className="relative grid gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24 xl:gap-20">
           <div className="animate-fade-up flex flex-col items-center text-center lg:items-start lg:text-left">
             <p className="moove-eyebrow">{site.tagline}</p>
             <h1 className="font-display mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.35rem]">
@@ -64,7 +65,7 @@ export function HomePage() {
             </dl>
           </div>
 
-          <div className="animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none [animation-delay:120ms]">
+          <div className="moove-hero-breakout animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none [animation-delay:120ms]">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-moove-soft ring-1 ring-moove-border/40">
               <ZoomableImage
                 src="/image03.jpeg"
@@ -85,11 +86,11 @@ export function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
       <section className="border-b border-moove-border/80 bg-moove-espresso/[0.03] moove-section-pad">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SiteContainer>
           <div className="mx-auto max-w-2xl text-center">
             <p className="moove-eyebrow">{t('home.approach.eyebrow')}</p>
             <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
@@ -99,7 +100,7 @@ export function HomePage() {
             <div className="moove-rule mx-auto mt-6" aria-hidden />
           </div>
 
-          <div className="mt-14 grid gap-5 md:grid-cols-3">
+          <div className="mt-14 grid gap-5 md:grid-cols-3 xl:gap-8">
             {dictionary.home.approach.items.map((item, i) => (
               <article
                 key={item.title}
@@ -115,17 +116,17 @@ export function HomePage() {
               </article>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="border-b border-moove-border/80 py-12 sm:py-14">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <PosePromoBubble variant="home" />
-        </div>
+        </SiteContainer>
       </section>
 
       <section className="border-b border-moove-border/80 moove-section-pad">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center">
+        <SiteContainer>
+          <PosePromoBubble variant="home" />
+        </SiteContainer>
+      </section>
+
+      <section className="border-b border-moove-border/80 moove-section-pad">
+        <SiteContainer className="grid gap-12 lg:grid-cols-2 lg:items-center xl:gap-16">
           <div className="relative order-2 lg:order-1">
             <div className="grid grid-cols-2 gap-3">
               <ZoomableImage
@@ -168,13 +169,13 @@ export function HomePage() {
               <GhostLink to="/mathimata">{t('home.classes.viewProgram')}</GhostLink>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
       <GoogleReviews />
 
       <section className="moove-section-pad">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SiteContainer>
           <div className="relative overflow-hidden rounded-[2rem] border border-moove-lime/25 bg-gradient-to-br from-moove-espresso via-[#3a322c] to-moove-espresso px-6 py-14 text-center shadow-moove-soft sm:px-12 sm:py-16">
             <div
               className="pointer-events-none absolute inset-0 opacity-40"
@@ -203,7 +204,7 @@ export function HomePage() {
               </div>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
     </>
   )

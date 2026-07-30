@@ -257,7 +257,7 @@ export function PosingPackagesCarousel({
         {/* hidden sizer for card width */}
         <div
           ref={measureRef}
-          className="pointer-events-none absolute w-[76vw] max-w-[18rem] opacity-0 sm:w-[22rem] lg:w-[24rem]"
+          className="pointer-events-none absolute w-[76vw] max-w-[20rem] opacity-0 sm:w-[24rem] lg:w-[28rem]"
           aria-hidden
         >
           <div className="min-h-[22rem] sm:min-h-[28rem]" />
@@ -283,7 +283,7 @@ export function PosingPackagesCarousel({
               <article
                 key={pack.name}
                 aria-hidden={!isActive}
-                className={`absolute left-1/2 top-1/2 flex min-h-[22rem] w-[76vw] max-w-[18rem] overflow-hidden rounded-[1.75rem] border bg-black shadow-[0_28px_80px_-36px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.12)] sm:min-h-[28rem] sm:w-[22rem] lg:w-[24rem] ${
+                className={`absolute left-1/2 top-1/2 flex min-h-[22rem] w-[76vw] max-w-[20rem] overflow-hidden rounded-[1.75rem] border bg-black shadow-[0_28px_80px_-36px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.12)] sm:min-h-[28rem] sm:w-[24rem] lg:w-[28rem] ${
                   isActive
                     ? `border-white/20 ring-2 ${accent.ring}`
                     : 'border-white/8'

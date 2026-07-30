@@ -194,7 +194,7 @@ export function Header() {
         </>
       ) : null}
       <div
-        className={`relative mx-auto flex items-center px-4 sm:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'h-[4.75rem] max-w-7xl lg:h-14 lg:gap-8' : 'h-14 max-w-6xl lg:gap-6'}`}
+        className={`relative moove-site-container-wide flex items-center lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'h-[4.75rem] lg:h-14 lg:gap-8' : 'h-14 lg:gap-6'}`}
       >
         {posing ? (
           <div className="relative flex min-w-0 flex-1 items-center justify-center lg:hidden">

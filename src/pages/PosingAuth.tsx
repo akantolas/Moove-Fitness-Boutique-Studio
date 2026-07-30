@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { PasswordInput } from '../components/PasswordInput'
 import { PosingOAuthButtons } from '../components/PosingOAuthButtons'
+import { AuthPageShell, SiteContainer } from '../components/SiteContainer'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { sanitizeAuthRedirect, translateAuthError } from '../lib/posingAuthErrors'
 import { useTranslation } from '../i18n/useTranslation'
@@ -40,17 +41,19 @@ export function PosingLoginPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/70">
-        <p>{t('posing.auth.notConfigured')}</p>
-        <Link to="/posing" className="mt-4 inline-block text-fuchsia-300 hover:underline">
-          {t('posing.about.backToPosing')}
-        </Link>
-      </div>
+      <SiteContainer className="py-16 text-center">
+        <div className="mx-auto max-w-md text-white/70">
+          <p>{t('posing.auth.notConfigured')}</p>
+          <Link to="/posing" className="mt-4 inline-block text-fuchsia-300 hover:underline">
+            {t('posing.about.backToPosing')}
+          </Link>
+        </div>
+      </SiteContainer>
     )
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
+    <AuthPageShell>
       <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
         Move & Pose
       </p>
@@ -121,7 +124,7 @@ export function PosingLoginPage() {
           {t('posing.auth.signup')}
         </Link>
       </p>
-    </div>
+    </AuthPageShell>
   )
 }
 
@@ -165,16 +168,18 @@ export function PosingSignupPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/70">
-        <p>{t('posing.auth.notConfigured')}</p>
-      </div>
+      <SiteContainer className="py-16 text-center">
+        <div className="mx-auto max-w-md text-white/70">
+          <p>{t('posing.auth.notConfigured')}</p>
+        </div>
+      </SiteContainer>
     )
   }
 
   if (success) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-semibold text-white">{t('posing.auth.signupSuccessTitle')}</h1>
+      <AuthPageShell>
+        <h1 className="font-display text-center text-2xl font-semibold text-white">{t('posing.auth.signupSuccessTitle')}</h1>
         <p className="mt-4 text-sm leading-relaxed text-white/65">{t('posing.auth.signupSuccessBody')}</p>
         <Link
           to={`/posing/login?redirect=${encodeURIComponent(redirect)}`}
@@ -182,12 +187,12 @@ export function PosingSignupPage() {
         >
           {t('posing.auth.login')}
         </Link>
-      </div>
+      </AuthPageShell>
     )
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
+    <AuthPageShell>
       <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
         Move & Pose
       </p>
@@ -267,7 +272,7 @@ export function PosingSignupPage() {
           {t('posing.auth.login')}
         </Link>
       </p>
-    </div>
+    </AuthPageShell>
   )
 }
 
@@ -303,31 +308,33 @@ export function PosingForgotPasswordPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/70">
-        <p>{t('posing.auth.notConfigured')}</p>
-      </div>
+      <SiteContainer className="py-16 text-center">
+        <div className="mx-auto max-w-md text-white/70">
+          <p>{t('posing.auth.notConfigured')}</p>
+        </div>
+      </SiteContainer>
     )
   }
 
   if (success) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-semibold text-white">
+      <AuthPageShell>
+        <h1 className="font-display text-center text-2xl font-semibold text-white">
           {t('posing.auth.resetEmailSentTitle')}
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-white/65">{t('posing.auth.resetEmailSentBody')}</p>
+        <p className="mt-4 text-center text-sm leading-relaxed text-white/65">{t('posing.auth.resetEmailSentBody')}</p>
         <Link
           to={`/posing/login?redirect=${encodeURIComponent(redirect)}`}
           className="mt-8 inline-flex rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-7 py-3 text-sm font-semibold text-black"
         >
           {t('posing.auth.backToLogin')}
         </Link>
-      </div>
+      </AuthPageShell>
     )
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
+    <AuthPageShell>
       <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
         Move & Pose
       </p>
@@ -373,7 +380,7 @@ export function PosingForgotPasswordPage() {
           {t('posing.auth.backToLogin')}
         </Link>
       </p>
-    </div>
+    </AuthPageShell>
   )
 }
 
@@ -435,24 +442,28 @@ export function PosingResetPasswordPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/70">
-        <p>{t('posing.auth.notConfigured')}</p>
-      </div>
+      <SiteContainer className="py-16 text-center">
+        <div className="mx-auto max-w-md text-white/70">
+          <p>{t('posing.auth.notConfigured')}</p>
+        </div>
+      </SiteContainer>
     )
   }
 
   if (loading || (!recoveryReady && !linkInvalid)) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-white/60">
-        <p>{t('posing.account.loading')}</p>
-      </div>
+      <SiteContainer className="py-16 text-center">
+        <div className="mx-auto max-w-md text-white/60">
+          <p>{t('posing.account.loading')}</p>
+        </div>
+      </SiteContainer>
     )
   }
 
   if (linkInvalid) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-semibold text-white">
+      <AuthPageShell>
+        <h1 className="font-display text-center text-2xl font-semibold text-white">
           {t('posing.auth.resetPasswordTitle')}
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-white/65">{t('posing.auth.resetLinkInvalid')}</p>
@@ -462,12 +473,12 @@ export function PosingResetPasswordPage() {
         >
           {t('posing.auth.forgotPasswordTitle')}
         </Link>
-      </div>
+      </AuthPageShell>
     )
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-16 sm:py-20">
+    <AuthPageShell>
       <p className="text-center text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
         Move & Pose
       </p>
@@ -506,6 +517,6 @@ export function PosingResetPasswordPage() {
           {submitting ? t('posing.auth.settingPassword') : t('posing.auth.setNewPassword')}
         </button>
       </form>
-    </div>
+    </AuthPageShell>
   )
 }
