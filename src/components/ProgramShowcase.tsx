@@ -71,6 +71,71 @@ export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseP
         {activeTitle}
       </p>
 
+      <div className="mb-5 rounded-[1.5rem] border border-moove-border/80 bg-moove-elevated/40 p-4 sm:p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-moove-silver">{t('programs.catalog.selectorLabel')}</p>
+            <p className="mt-1 text-xs text-moove-muted">{t('programs.catalog.selectorHint')}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => selectRelative(-1)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-moove-border bg-white/70 text-lg text-moove-silver transition hover:border-moove-lime-deep/40 hover:bg-moove-lime/10"
+              aria-label={t('posing.pricing.prevPackage')}
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={() => selectRelative(1)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-moove-border bg-white/70 text-lg text-moove-silver transition hover:border-moove-lime-deep/40 hover:bg-moove-lime/10"
+              aria-label={t('posing.pricing.nextPackage')}
+            >
+              →
+            </button>
+          </div>
+        </div>
+
+        <div
+          className="mt-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4"
+          role="tablist"
+          aria-label={t('programs.catalog.selectorLabel')}
+        >
+          {programs.map((program, index) => {
+            const title = copy[program.key]?.title ?? program.key
+            const active = index === activeIndex
+            return (
+              <button
+                key={program.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveIndex(index)}
+                className={`flex min-w-0 items-center gap-2.5 rounded-xl border p-2 text-left transition sm:p-2.5 ${
+                  active
+                    ? 'border-moove-lime-deep/60 bg-moove-lime/15 shadow-sm ring-1 ring-moove-lime-deep/15'
+                    : 'border-moove-border/80 bg-moove-surface/85 hover:border-moove-accent/35'
+                }`}
+              >
+                <img
+                  src={program.imagePath}
+                  alt=""
+                  className="h-14 w-10 shrink-0 rounded-md object-cover"
+                  style={{ objectPosition: program.imagePosition ?? 'center' }}
+                />
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold text-moove-silver sm:text-sm">{title}</span>
+                  <span className="mt-0.5 block text-[11px] font-medium text-moove-muted">
+                    {formatProgramPrice(program.priceCents, locale)}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <article className="relative overflow-hidden rounded-[2rem] border border-moove-border/80 bg-moove-surface shadow-moove-soft">
         <div className="programs-hero-grid pointer-events-none absolute inset-0 opacity-45" aria-hidden />
         <div className="relative grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -136,65 +201,9 @@ export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseP
               </button>
             </div>
 
-            <div className="mt-8 hidden items-center gap-3 lg:flex">
-              <button
-                type="button"
-                onClick={() => selectRelative(-1)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-moove-border bg-white/60 text-xl text-moove-silver transition hover:border-moove-lime-deep/40 hover:bg-moove-lime/10"
-                aria-label={t('posing.pricing.prevPackage')}
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                onClick={() => selectRelative(1)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-moove-border bg-white/60 text-xl text-moove-silver transition hover:border-moove-lime-deep/40 hover:bg-moove-lime/10"
-                aria-label={t('posing.pricing.nextPackage')}
-              >
-                →
-              </button>
-            </div>
           </div>
         </div>
       </article>
-
-      <div
-        className="program-section-nav mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2"
-        role="tablist"
-        aria-label={t('programs.catalog.title')}
-      >
-        {programs.map((program, index) => {
-          const title = copy[program.key]?.title ?? program.key
-          const active = index === activeIndex
-          return (
-            <button
-              key={program.key}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setActiveIndex(index)}
-              className={`flex min-w-[12rem] snap-start items-center gap-3 rounded-2xl border p-2.5 text-left transition sm:min-w-[14rem] ${
-                active
-                  ? 'border-moove-lime-deep/50 bg-moove-lime/12 shadow-moove-lift'
-                  : 'border-moove-border/80 bg-moove-surface/80 hover:border-moove-accent/35'
-              }`}
-            >
-              <img
-                src={program.imagePath}
-                alt=""
-                className="h-16 w-12 shrink-0 rounded-lg object-cover"
-                style={{ objectPosition: program.imagePosition ?? 'center' }}
-              />
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold text-moove-silver">{title}</span>
-                <span className="mt-1 block text-xs font-medium text-moove-muted">
-                  {formatProgramPrice(program.priceCents, locale)}
-                </span>
-              </span>
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }

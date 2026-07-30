@@ -230,6 +230,8 @@ export const en = {
       eyebrow: 'Choose your plan',
       title: 'Four options. One clear goal.',
       body: 'Every purchase includes all workouts in that program and one private access link.',
+      selectorLabel: 'Choose a package',
+      selectorHint: 'There are 4 packages available — select one to see its details.',
     },
     collections: {
       collection: {
