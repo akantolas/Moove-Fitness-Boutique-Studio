@@ -17,6 +17,7 @@ import { fetchPosingIsAdmin } from '../lib/posingAccount'
 const studioNav = [
   { to: '/', labelKey: 'nav.home', end: true },
   { to: '/mathimata', labelKey: 'nav.classes' },
+  { to: '/programmata', labelKey: 'nav.programs' },
   { to: '/sxetika', labelKey: 'nav.about' },
   { to: '/epikoinonia', labelKey: 'nav.contact' },
 ] as const
