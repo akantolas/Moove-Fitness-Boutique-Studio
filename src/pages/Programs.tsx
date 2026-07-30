@@ -6,6 +6,7 @@ import {
   type MooveProgramKey,
 } from '../data/moovePrograms'
 import { createProgramOrder, fetchProgramOrderStatus } from '../lib/programsApi'
+import { ProgramShowcase } from '../components/ProgramShowcase'
 import { SiteContainer } from '../components/SiteContainer'
 import { useTranslation } from '../i18n/useTranslation'
 
@@ -153,87 +154,11 @@ export function ProgramsPage() {
             </h2>
             <p className="mt-3 text-moove-muted">{t('programs.catalog.body')}</p>
           </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:gap-8">
-            {mooveProgramCatalog.map((program) => {
-              const item = dictionary.programs.items[program.key]
-              const title = item?.title ?? program.key
-
-              return (
-                <article
-                  key={program.key}
-                  className={`group programs-card relative flex flex-col overflow-hidden rounded-[1.5rem] border transition duration-300 hover:-translate-y-1 hover:shadow-moove-soft ${
-                    program.featured
-                      ? 'border-moove-lime/60 bg-moove-espresso text-white'
-                      : 'border-moove-border/80 bg-moove-surface'
-                  }`}
-                >
-                  <div className="relative aspect-[3/4] overflow-hidden">
-                    <img
-                      src={program.imagePath}
-                      alt=""
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                      style={{ objectPosition: program.imagePosition ?? 'center center' }}
-                    />
-                    <div className={`absolute inset-0 ${program.featured ? 'bg-moove-espresso/45' : 'bg-moove-espresso/20'}`} />
-                    {program.featured ? (
-                      <span className="absolute left-5 top-5 rounded-full bg-moove-lime px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-moove-espresso">
-                        {t('programs.featured')}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="flex flex-1 flex-col p-6 sm:p-7">
-                    <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${program.featured ? 'text-moove-lime' : 'text-moove-accent'}`}>
-                      {t(`programs.benefits.${program.benefitKey}`)}
-                    </p>
-                    <h3 className={`font-display mt-3 text-2xl font-semibold leading-[1.13] ${program.featured ? 'text-white' : 'text-moove-silver'}`}>
-                      {title}
-                    </h3>
-                    <p className={`mt-3 flex-1 text-sm leading-relaxed ${program.featured ? 'text-moove-glow/90' : 'text-moove-muted'}`}>
-                      {item?.desc ?? t(`programs.outcomes.${program.outcomeKey}`)}
-                    </p>
-
-                    <div className="mt-7 flex flex-wrap gap-2">
-                      <span className={`rounded-full border px-3 py-1.5 text-xs font-medium ${program.featured ? 'border-white/20 text-white/90' : 'border-moove-border/80 text-moove-silver'}`}>
-                        {program.workoutCount} {t('programs.workoutsLabel')}
-                      </span>
-                      <span className={`rounded-full border px-3 py-1.5 text-xs font-medium ${program.featured ? 'border-white/20 text-white/90' : 'border-moove-border/80 text-moove-silver'}`}>
-                        {t(`programs.levels.${program.levelKey}`)}
-                      </span>
-                      <span className={`rounded-full border px-3 py-1.5 text-xs font-medium ${program.featured ? 'border-white/20 text-white/90' : 'border-moove-border/80 text-moove-silver'}`}>
-                        {t(`programs.durations.${program.durationKey}`)}
-                      </span>
-                    </div>
-
-                    <div className={`mt-6 flex items-end justify-between gap-4 border-t pt-5 ${program.featured ? 'border-white/15' : 'border-moove-border/80'}`}>
-                      <div>
-                        <p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${program.featured ? 'text-white/50' : 'text-moove-muted/70'}`}>
-                          {t('programs.priceLabel')}
-                        </p>
-                        <p className={`mt-1 font-display text-2xl font-semibold ${program.featured ? 'text-moove-lime' : 'text-moove-silver'}`}>
-                          {formatProgramPrice(program.priceCents, locale)}
-                        </p>
-                        <p className={`mt-1 text-[10px] ${program.featured ? 'text-white/60' : 'text-moove-muted'}`}>
-                          {t('programs.vatIncluded')}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => openCheckout(program)}
-                        className={`rounded-full px-4 py-2.5 text-xs font-semibold transition ${
-                          program.featured
-                            ? 'bg-moove-lime text-moove-espresso hover:bg-moove-lime-hover'
-                            : 'border border-moove-espresso bg-moove-espresso text-moove-lime hover:brightness-110'
-                        }`}
-                      >
-                        {t('programs.order.cta')}
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
+          <ProgramShowcase
+            programs={mooveProgramCatalog}
+            copy={dictionary.programs.items}
+            onPurchase={openCheckout}
+          />
         </section>
 
         <section className="mt-20 grid gap-5 lg:grid-cols-[1.2fr_0.8fr] xl:gap-8">
