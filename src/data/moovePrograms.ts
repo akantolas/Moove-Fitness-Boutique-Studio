@@ -39,7 +39,7 @@ export const mooveProgramCatalog: MooveProgramCatalogItem[] = [
     benefitKey: 'strength',
     outcomeKey: 'strength',
     workoutCount: 4,
-    imagePath: '/image2.jpeg',
+    imagePath: '/programs/peach-workout-b-cover.png',
     imagePosition: 'center 30%',
   },
   {
