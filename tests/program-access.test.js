@@ -3,6 +3,21 @@ import { describe, it } from 'node:test'
 import { buildProgramAccessPayload } from '../api/programs/_handlers/access.js'
 
 describe('program bundle access payload', () => {
+  for (const [programKey, workoutCount] of [
+    ['peach_start_bundle', 3],
+    ['peach_build', 4],
+    ['peach_sculpt', 5],
+    ['peach_complete', 12],
+  ]) {
+    it(`returns all ${programKey} workouts`, () => {
+      const result = buildProgramAccessPayload(programKey, 'en')
+
+      assert.equal(result.status, 200)
+      assert.equal(result.payload?.workouts.length, workoutCount)
+      assert.equal(result.payload?.activeWorkoutKey, result.payload?.workouts[0].key)
+    })
+  }
+
   it('returns the complete manifest and requested workout', () => {
     const result = buildProgramAccessPayload('peach_complete', 'el', 'peach_sculpt_b')
 
