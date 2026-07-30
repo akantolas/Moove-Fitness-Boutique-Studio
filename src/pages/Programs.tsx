@@ -167,11 +167,12 @@ export function ProgramsPage() {
                       : 'border-moove-border/80 bg-moove-surface'
                   }`}
                 >
-                  <div className="relative aspect-[2/1] overflow-hidden">
+                  <div className="relative aspect-[3/4] overflow-hidden">
                     <img
                       src={program.imagePath}
                       alt=""
-                      className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                      style={{ objectPosition: program.imagePosition ?? 'center center' }}
                     />
                     <div className={`absolute inset-0 ${program.featured ? 'bg-moove-espresso/45' : 'bg-moove-espresso/20'}`} />
                     {program.featured ? (

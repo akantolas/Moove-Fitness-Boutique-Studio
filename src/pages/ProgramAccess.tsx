@@ -183,7 +183,8 @@ export function ProgramAccessPage() {
   }
 
   const catalogProgram = mooveProgramCatalog.find((program) => program.key === content.programKey)
-  const heroImage = catalogProgram?.imagePath ?? '/programs/peach-complete-card.jpg'
+  const heroImage = catalogProgram?.imagePath ?? '/programs/peach-workout-c-cover.png'
+  const heroPosition = catalogProgram?.imagePosition ?? 'center 40%'
   const levelLabel = catalogProgram ? t(`programs.levels.${catalogProgram.levelKey}`) : null
   const prescriptionLabels: PrescriptionLabels = {
     repetitions: t('programs.access.prescription.repetitions'),
@@ -212,7 +213,8 @@ export function ProgramAccessPage() {
           <img
             src={heroImage}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover object-center"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: heroPosition }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-moove-ink via-moove-espresso/65 to-moove-espresso/10" />
           <div className="relative flex min-h-[28rem] flex-col justify-between p-6 sm:min-h-[32rem] sm:p-10 lg:p-12">
