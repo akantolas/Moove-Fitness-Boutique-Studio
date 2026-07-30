@@ -88,7 +88,6 @@ export function ProgramAccessPage() {
 
     let active = true
     const requestedWorkout = searchParams.get('workout') ?? undefined
-    setLoading(true)
 
     fetchProgramAccess(token, locale, requestedWorkout)
       .then((data) => {
