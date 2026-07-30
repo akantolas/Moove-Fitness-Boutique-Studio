@@ -2,7 +2,8 @@
 
 Ροή: **email στο `/programmata` → payment email (Stripe/PayPal/Revolut) → πληρωμή → access email με private link** — χωρίς login στο members site.
 
-Setup DB: migration `supabase/migrations/010_moove_program_purchases.sql`.
+Setup DB: migrations `010_moove_program_purchases.sql` και
+`011_moove_program_decimal_prices.sql` (με αυτή τη σειρά).
 
 ## URLs
 
@@ -44,7 +45,16 @@ MOOVE_PROGRAM_SUCCESS_URL=https://moovefitness.gr/programmata?payment=success
 MOOVE_PROGRAM_CANCEL_URL=https://moovefitness.gr/programmata
 ```
 
-Optional: `STRIPE_PRICE_PROGRAM_*` per SKU (χωρίς αυτά δουλεύει dynamic `price_data` από catalog).
+Optional Stripe Price IDs για τα 4 προϊόντα:
+
+```text
+STRIPE_PRICE_PROGRAM_PEACH_START_BUNDLE
+STRIPE_PRICE_PROGRAM_PEACH_BUILD
+STRIPE_PRICE_PROGRAM_PEACH_SCULPT
+STRIPE_PRICE_PROGRAM_PEACH_COMPLETE
+```
+
+Χωρίς αυτά δουλεύει dynamic `price_data` με ακριβή ποσά σε cents.
 
 ## Τοπικό test — catalog
 
@@ -71,14 +81,15 @@ Supabase → SQL Editor:
 insert into moove_program_purchases (
   program_key, email, amount_eur, locale, status, access_token
 ) values (
-  'peach_build_wd', 'test@example.com', 45, 'el', 'paid',
+  'peach_complete', 'test@example.com', 99.90, 'el', 'paid',
   'testtoken1234567890'
 );
 ```
 
 Άνοιξε: `http://localhost:3000/programmata/access/testtoken1234567890`
 
-Token ≥ 16 χαρακτήρες. Άλλαξε `program_key` για άλλο SKU (π.χ. `peach_start`, `peach_build_wa_heavy`).
+Token ≥ 16 χαρακτήρες. Άλλαξε `program_key` σε `peach_start_bundle`,
+`peach_build`, `peach_sculpt` ή `peach_complete`.
 
 ### C — API smoke test
 
@@ -86,7 +97,12 @@ Token ≥ 16 χαρακτήρες. Άλλαξε `program_key` για άλλο SK
 curl "http://localhost:3000/api/programs/access/testtoken1234567890?locale=el"
 ```
 
-Αναμενόμενο: `ok: true`, `sections` array, `meta` με load plan.
+Αναμενόμενο: `ok: true`, `workouts` manifest, `activeWorkoutKey`, `sections`
+και `meta`. Για συγκεκριμένη προπόνηση:
+
+```bash
+curl "http://localhost:3000/api/programs/access/testtoken1234567890?locale=el&workout=peach_sculpt_b"
+```
 
 ## Production test
 
@@ -98,7 +114,8 @@ curl "http://localhost:3000/api/programs/access/testtoken1234567890?locale=el"
 ## Τι ελέγχεις στο access page
 
 - Meta: διάρκεια, στόχος, load plan (`progressNote`)
-- Peach Build SKUs: πρώτο section **Προθέρμανση (κοινό Peach Build)**
+- Bundle selector: 3 Start / 4 Build / 5 Sculpt / 12 Complete workouts
+- Peach Build workouts: πρώτο section **Προθέρμανση (κοινό Peach Build)**
 - Sections ανά workout + finisher
 - EL/EN — content από `api/programs/_catalog.js`
 
@@ -107,7 +124,7 @@ curl "http://localhost:3000/api/programs/access/testtoken1234567890?locale=el"
 | Σύμπτωμα | Αιτία |
 |----------|--------|
 | Buy → error | `vercel dev` όχι τρέχει, ή missing Supabase/Stripe env |
-| Access → not found | `status` ≠ `paid`, λάθος token, migration 010 όχι applied |
+| Access → not found | `status` ≠ `paid`, λάθος token, migrations 010/011 όχι applied |
 | Catalog OK, access fail | Μόνο API/DB issue |
 | Email δεν έρχεται | Resend/SMTP env ή spam |
 
@@ -115,9 +132,11 @@ curl "http://localhost:3000/api/programs/access/testtoken1234567890?locale=el"
 
 | Key | Προϊόν |
 |-----|--------|
-| `peach_start` | Peach Collection – Start (45€) |
-| `peach_workout_b` / `peach_workout_c` | Peach Collection B/C (45€) |
-| `peach_build_wa_heavy` | Peach Build WA Heavy (60€) |
-| `peach_build_wb` / `peach_build_wc` / `peach_build_wd` | Peach Build B/C/D (45€) |
+| `peach_start_bundle` | Peach Start — 3 workouts (34,90€, ΦΠΑ included) |
+| `peach_build` | Peach Build — 4 workouts (49,90€, ΦΠΑ included) |
+| `peach_sculpt` | Peach Sculpt — 5 workouts (59,90€, ΦΠΑ included) |
+| `peach_complete` | Complete Collection — 12 workouts (99,90€, ΦΠΑ included) |
 
-Τιμές & names: `api/programs/_pricing.js`. Περιεχόμενο: `api/programs/_catalog.js`.
+Τιμές & bundle mapping: `api/programs/_pricing.js`. Περιεχόμενο workouts:
+`api/programs/_catalog.js`. Τα legacy workout keys παραμένουν access-only για
+παλιές αγορές.

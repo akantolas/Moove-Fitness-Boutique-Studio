@@ -5,6 +5,7 @@ import {
   createProgramStripeCheckout,
   findRecentPendingPurchase,
   formatPurchaseRef,
+  getCatalogPriceCents,
   getCatalogPriceEur,
   getProgramName,
   getSupabaseAdmin,
@@ -33,8 +34,11 @@ export async function handleOrder(req, res) {
       return json(res, 400, { ok: false, error: 'invalid_email' })
     }
 
+    const amountCents = getCatalogPriceCents(programKey)
     const amountEur = getCatalogPriceEur(programKey)
-    if (!amountEur) return json(res, 400, { ok: false, error: 'invalid_program' })
+    if (!amountCents || !amountEur) {
+      return json(res, 400, { ok: false, error: 'invalid_program' })
+    }
 
     const supabase = getSupabaseAdmin()
     const recentCount = await countRecentOrders(supabase, email)
@@ -68,7 +72,7 @@ export async function handleOrder(req, res) {
       programKey,
       customerEmail: email,
       locale,
-      amountEur,
+      amountCents,
       programName,
     })
 

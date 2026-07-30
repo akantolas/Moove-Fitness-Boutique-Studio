@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { fetchProgramAccess, type ProgramAccessContent } from '../lib/programsApi'
 import { useTranslation } from '../i18n/useTranslation'
 import { PeachSculptGuidelines } from '../components/PeachSculptGuidelines'
@@ -75,6 +75,7 @@ function VideoEmbed({ videoId, title }: { videoId: string; title: string }) {
 
 export function ProgramAccessPage() {
   const { token } = useParams<{ token: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { t, locale } = useTranslation()
   const [content, setContent] = useState<ProgramAccessContent | null>(null)
   const [error, setError] = useState('')
@@ -86,16 +87,13 @@ export function ProgramAccessPage() {
     if (!token) return
 
     let active = true
+    const requestedWorkout = searchParams.get('workout') ?? undefined
+    setLoading(true)
 
-    fetchProgramAccess(token, locale)
+    fetchProgramAccess(token, locale, requestedWorkout)
       .then((data) => {
         if (!active) return
-        setContent({
-          title: data.title,
-          programKey: data.programKey,
-          meta: data.meta,
-          sections: data.sections,
-        })
+        setContent(data)
         setError('')
         setExpandedSections(new Set([0]))
         setActiveSection(0)
@@ -111,7 +109,7 @@ export function ProgramAccessPage() {
     return () => {
       active = false
     }
-  }, [token, locale])
+  }, [token, locale, searchParams])
 
   function toggleSection(index: number) {
     setActiveSection(index)
@@ -199,6 +197,14 @@ export function ProgramAccessPage() {
     perLeg: t('programs.access.prescription.perLeg'),
     perSide: t('programs.access.prescription.perSide'),
   }
+  const workoutGroups = content.workouts.reduce<
+    Array<{ group: (typeof content.workouts)[number]['group']; workouts: typeof content.workouts }>
+  >((groups, workout) => {
+    const existing = groups.find((entry) => entry.group === workout.group)
+    if (existing) existing.workouts.push(workout)
+    else groups.push({ group: workout.group, workouts: [workout] })
+    return groups
+  }, [])
 
   return (
     <div className="program-portal-shell pb-20">
@@ -229,6 +235,9 @@ export function ProgramAccessPage() {
               <h1 className="font-display mt-4 text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
                 {content.title}
               </h1>
+              <p className="font-display mt-3 text-xl font-semibold text-moove-lime sm:text-2xl">
+                {content.workoutTitle}
+              </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {content.meta?.duration ? (
                   <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur">
@@ -257,6 +266,41 @@ export function ProgramAccessPage() {
           </div>
         </section>
 
+        {content.workouts.length > 1 ? (
+          <section className="mt-6 rounded-[1.5rem] border border-moove-border/80 bg-moove-surface p-5 shadow-moove-lift sm:p-7">
+            <p className="moove-eyebrow">{t('programs.access.includedWorkouts')}</p>
+            <h2 className="font-display mt-2 text-2xl font-semibold text-moove-silver">
+              {t('programs.access.chooseWorkout')}
+            </h2>
+            <div className="mt-5 space-y-5">
+              {workoutGroups.map((group) => (
+                <div key={group.group}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-moove-muted">
+                    {t(`programs.access.groups.${group.group}`)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {group.workouts.map((workout, index) => (
+                      <button
+                        key={workout.key}
+                        type="button"
+                        onClick={() => setSearchParams({ workout: workout.key })}
+                        className={`rounded-full border px-4 py-2.5 text-left text-xs font-semibold transition ${
+                          content.activeWorkoutKey === workout.key
+                            ? 'border-moove-espresso bg-moove-espresso text-moove-lime'
+                            : 'border-moove-border/80 bg-moove-bg text-moove-silver hover:border-moove-lime-deep/50'
+                        }`}
+                        aria-current={content.activeWorkoutKey === workout.key ? 'page' : undefined}
+                      >
+                        {String(index + 1).padStart(2, '0')} · {workout.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {content.meta ? (
           <section className="mt-6" aria-labelledby="program-overview-title">
             <p className="moove-eyebrow">{t('programs.access.overview')}</p>
@@ -280,7 +324,7 @@ export function ProgramAccessPage() {
           </section>
         ) : null}
 
-        {content.programKey.startsWith('peach_sculpt_') ? (
+        {content.activeWorkoutKey.startsWith('peach_sculpt_') ? (
           <PeachSculptGuidelines variant="access" />
         ) : null}
 

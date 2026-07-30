@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { buildPaymentEmail } from '../lib/email/templates.js'
+import {
+  buildMooveProgramPaymentEmail,
+  buildPaymentEmail,
+} from '../lib/email/templates.js'
 
 const REVOLUT_URL = 'https://revolut.me/magdaqsn9'
 
@@ -50,5 +53,19 @@ describe('Revolut payment email instructions', () => {
 
     assert.doesNotMatch(email.text, /undefined|null/)
     assert.doesNotMatch(email.text, /For Revolut/)
+  })
+
+  it('preserves decimal pricing in Moove program payment instructions', () => {
+    const email = buildMooveProgramPaymentEmail({
+      programName: 'Peach Start',
+      purchaseId: 'abcd1234-5678-90ab-cdef',
+      amountEur: 34.9,
+      revolutLink: REVOLUT_URL,
+      locale: 'el',
+    })
+
+    assert.match(email.text, /34,90\s*€/)
+    assert.match(email.text, /κωδικό παραγγελίας ABCD1234/)
+    assert.ok(email.html.includes(REVOLUT_URL))
   })
 })

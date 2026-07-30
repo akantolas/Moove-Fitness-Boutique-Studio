@@ -1,11 +1,44 @@
 import {
   cors,
+  getIncludedWorkoutKeys,
   getProgramContentForApi,
   getProgramName,
   getSupabaseAdmin,
+  getWorkoutGroup,
   json,
   normalizeBookingLocale,
 } from '../_lib.js'
+
+export function buildProgramAccessPayload(programKey, locale, requestedWorkout = '') {
+  const workoutKeys = getIncludedWorkoutKeys(programKey)
+  if (!workoutKeys.length) {
+    return { status: 404, error: 'content_not_found' }
+  }
+  if (requestedWorkout && !workoutKeys.includes(requestedWorkout)) {
+    return { status: 403, error: 'workout_not_in_purchase' }
+  }
+
+  const activeWorkoutKey = requestedWorkout || workoutKeys[0]
+  const content = getProgramContentForApi(activeWorkoutKey, locale)
+  if (!content) return { status: 404, error: 'content_not_found' }
+
+  return {
+    status: 200,
+    payload: {
+      title: getProgramName(programKey, locale),
+      programKey,
+      workouts: workoutKeys.map((workoutKey) => ({
+        key: workoutKey,
+        title: getProgramName(workoutKey, locale),
+        group: getWorkoutGroup(workoutKey),
+      })),
+      activeWorkoutKey,
+      workoutTitle: getProgramName(activeWorkoutKey, locale),
+      meta: content.meta ?? undefined,
+      sections: content.sections,
+    },
+  }
+}
 
 export async function handleAccess(req, res, tokenFromPath) {
   cors(res)
@@ -31,14 +64,18 @@ export async function handleAccess(req, res, tokenFromPath) {
   }
 
   const contentLocale = locale || purchase.locale || 'el'
-  const content = getProgramContentForApi(purchase.program_key, contentLocale)
-  if (!content) return json(res, 404, { ok: false, error: 'content_not_found' })
+  const requestedWorkout = String(req.query?.workout ?? '').trim()
+  const access = buildProgramAccessPayload(
+    purchase.program_key,
+    contentLocale,
+    requestedWorkout,
+  )
+  if (!access.payload) {
+    return json(res, access.status, { ok: false, error: access.error })
+  }
 
   return json(res, 200, {
     ok: true,
-    title: getProgramName(purchase.program_key, contentLocale),
-    programKey: purchase.program_key,
-    meta: content.meta ?? undefined,
-    sections: content.sections,
+    ...access.payload,
   })
 }

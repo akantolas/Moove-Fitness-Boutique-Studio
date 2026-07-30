@@ -1,8 +1,6 @@
-/**
- * Moove program catalog pricing (server-only). Amounts in whole EUR.
- */
+/** Moove program products and workout access (server-only). */
 
-export const PROGRAM_KEYS = [
+export const LEGACY_PROGRAM_KEYS = [
   'peach_start',
   'peach_workout_b',
   'peach_workout_c',
@@ -17,24 +15,65 @@ export const PROGRAM_KEYS = [
   'peach_build_wd',
 ]
 
+export const PROGRAM_KEYS = [
+  'peach_start_bundle',
+  'peach_build',
+  'peach_sculpt',
+  'peach_complete',
+]
+
+export const PROGRAM_WORKOUTS = {
+  peach_start_bundle: ['peach_start', 'peach_workout_b', 'peach_workout_c'],
+  peach_build: ['peach_build_wa_heavy', 'peach_build_wb', 'peach_build_wc', 'peach_build_wd'],
+  peach_sculpt: [
+    'peach_sculpt_a',
+    'peach_sculpt_b',
+    'peach_sculpt_c',
+    'peach_sculpt_d',
+    'peach_sculpt_e',
+  ],
+  peach_complete: [
+    'peach_start',
+    'peach_workout_b',
+    'peach_workout_c',
+    'peach_build_wa_heavy',
+    'peach_build_wb',
+    'peach_build_wc',
+    'peach_build_wd',
+    'peach_sculpt_a',
+    'peach_sculpt_b',
+    'peach_sculpt_c',
+    'peach_sculpt_d',
+    'peach_sculpt_e',
+  ],
+}
+
 /** @type {Record<string, number>} */
-export const CATALOG_PRICES_EUR = {
-  peach_start: 45,
-  peach_workout_b: 45,
-  peach_workout_c: 45,
-  peach_sculpt_a: 60,
-  peach_sculpt_b: 60,
-  peach_sculpt_c: 60,
-  peach_sculpt_d: 60,
-  peach_sculpt_e: 60,
-  peach_build_wa_heavy: 60,
-  peach_build_wb: 45,
-  peach_build_wc: 45,
-  peach_build_wd: 45,
+export const CATALOG_PRICES_CENTS = {
+  peach_start_bundle: 3490,
+  peach_build: 4990,
+  peach_sculpt: 5990,
+  peach_complete: 9990,
 }
 
 /** @type {Record<string, { el: string; en: string }>} */
 export const PROGRAM_NAMES = {
+  peach_start_bundle: {
+    el: 'Peach Start',
+    en: 'Peach Start',
+  },
+  peach_build: {
+    el: 'Peach Build',
+    en: 'Peach Build',
+  },
+  peach_sculpt: {
+    el: 'Peach Sculpt',
+    en: 'Peach Sculpt',
+  },
+  peach_complete: {
+    el: 'Complete Collection',
+    en: 'Complete Collection',
+  },
   peach_start: {
     el: 'Peach Collection – 1. Peach Start',
     en: 'Peach Collection – 1. Peach Start',
@@ -86,22 +125,19 @@ export const PROGRAM_NAMES = {
 }
 
 const STRIPE_PRICE_ENV = {
-  peach_start: 'STRIPE_PRICE_PROGRAM_PEACH_START',
-  peach_workout_b: 'STRIPE_PRICE_PROGRAM_PEACH_WORKOUT_B',
-  peach_workout_c: 'STRIPE_PRICE_PROGRAM_PEACH_WORKOUT_C',
-  peach_sculpt_a: 'STRIPE_PRICE_PROGRAM_PEACH_SCULPT_A',
-  peach_sculpt_b: 'STRIPE_PRICE_PROGRAM_PEACH_SCULPT_B',
-  peach_sculpt_c: 'STRIPE_PRICE_PROGRAM_PEACH_SCULPT_C',
-  peach_sculpt_d: 'STRIPE_PRICE_PROGRAM_PEACH_SCULPT_D',
-  peach_sculpt_e: 'STRIPE_PRICE_PROGRAM_PEACH_SCULPT_E',
-  peach_build_wa_heavy: 'STRIPE_PRICE_PROGRAM_PEACH_BUILD_WA_HEAVY',
-  peach_build_wb: 'STRIPE_PRICE_PROGRAM_PEACH_BUILD_WB',
-  peach_build_wc: 'STRIPE_PRICE_PROGRAM_PEACH_BUILD_WC',
-  peach_build_wd: 'STRIPE_PRICE_PROGRAM_PEACH_BUILD_WD',
+  peach_start_bundle: 'STRIPE_PRICE_PROGRAM_PEACH_START_BUNDLE',
+  peach_build: 'STRIPE_PRICE_PROGRAM_PEACH_BUILD',
+  peach_sculpt: 'STRIPE_PRICE_PROGRAM_PEACH_SCULPT',
+  peach_complete: 'STRIPE_PRICE_PROGRAM_PEACH_COMPLETE',
+}
+
+export function getCatalogPriceCents(programKey) {
+  return CATALOG_PRICES_CENTS[programKey] ?? null
 }
 
 export function getCatalogPriceEur(programKey) {
-  return CATALOG_PRICES_EUR[programKey] ?? null
+  const cents = getCatalogPriceCents(programKey)
+  return cents === null ? null : cents / 100
 }
 
 export function getProgramName(programKey, locale = 'el') {
@@ -112,6 +148,19 @@ export function getProgramName(programKey, locale = 'el') {
 
 export function isValidProgramKey(programKey) {
   return PROGRAM_KEYS.includes(programKey)
+}
+
+export function getIncludedWorkoutKeys(programKey) {
+  if (PROGRAM_WORKOUTS[programKey]) return [...PROGRAM_WORKOUTS[programKey]]
+  if (LEGACY_PROGRAM_KEYS.includes(programKey)) return [programKey]
+  return []
+}
+
+export function getWorkoutGroup(workoutKey) {
+  if (workoutKey === 'peach_start' || workoutKey.startsWith('peach_workout_')) return 'start'
+  if (workoutKey.startsWith('peach_build_')) return 'build'
+  if (workoutKey.startsWith('peach_sculpt_')) return 'sculpt'
+  return 'other'
 }
 
 export function getStripePriceEnvKey(programKey) {

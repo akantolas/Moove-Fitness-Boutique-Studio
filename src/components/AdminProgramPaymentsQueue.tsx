@@ -24,6 +24,14 @@ function formatDateTime(iso: string, locale: Locale) {
   }).format(new Date(iso))
 }
 
+function formatPrice(amountEur: number, locale: Locale) {
+  return new Intl.NumberFormat(locale === 'el' ? 'el-GR' : 'en-IE', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+  }).format(amountEur)
+}
+
 export function AdminProgramPaymentsQueue({
   payments,
   paidPurchases,
@@ -89,7 +97,7 @@ export function AdminProgramPaymentsQueue({
                     <p className="font-medium text-white">{payment.email}</p>
                     <p className="mt-1 text-sm text-white/70">{payment.program_name}</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/60">
-                      <span>{payment.amount_eur}€</span>
+                      <span>{formatPrice(payment.amount_eur, locale)}</span>
                       <span>· {formatDateTime(payment.created_at, locale)}</span>
                       <span>· Ref {payment.purchase_ref}</span>
                     </div>
@@ -129,7 +137,7 @@ export function AdminProgramPaymentsQueue({
                     <p className="font-medium text-white">{purchase.email}</p>
                     <p className="mt-1 text-sm text-white/70">{purchase.program_name}</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/60">
-                      <span>{purchase.amount_eur}€</span>
+                      <span>{formatPrice(purchase.amount_eur, locale)}</span>
                       <span>· {formatDateTime(purchase.created_at, locale)}</span>
                       <span>· Ref {purchase.purchase_ref}</span>
                       {purchase.payment_method ? <span>· {purchase.payment_method}</span> : null}

@@ -35,6 +35,13 @@ export type ProgramAccessMeta = {
 export type ProgramAccessContent = {
   title: string
   programKey: string
+  workouts: Array<{
+    key: string
+    title: string
+    group: 'start' | 'build' | 'sculpt' | 'other'
+  }>
+  activeWorkoutKey: string
+  workoutTitle: string
   meta?: ProgramAccessMeta
   sections: ProgramAccessSection[]
 }
@@ -76,10 +83,10 @@ export async function fetchProgramOrderStatus(ref: string) {
   return data as { ok: boolean; status: string; purchaseRef: string }
 }
 
-export async function fetchProgramAccess(token: string, locale: string) {
-  const res = await fetch(
-    `/api/programs/access/${encodeURIComponent(token)}?locale=${encodeURIComponent(locale)}`,
-  )
+export async function fetchProgramAccess(token: string, locale: string, workoutKey?: string) {
+  const params = new URLSearchParams({ locale })
+  if (workoutKey) params.set('workout', workoutKey)
+  const res = await fetch(`/api/programs/access/${encodeURIComponent(token)}?${params}`)
   const data = await parseApiJson(res)
   if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'access_failed'))
   return data as ProgramAccessContent & { ok: boolean }

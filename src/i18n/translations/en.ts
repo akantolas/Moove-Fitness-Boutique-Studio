@@ -226,6 +226,11 @@ export const en = {
       body: 'Enter your email, then complete payment securely with Stripe.',
       paymentMethod: 'Secure card payment via Stripe',
     },
+    catalog: {
+      eyebrow: 'Choose your plan',
+      title: 'Four options. One clear goal.',
+      body: 'Every purchase includes all workouts in that program and one private access link.',
+    },
     collections: {
       collection: {
         eyebrow: 'Peach Collection',
@@ -254,6 +259,7 @@ export const en = {
       posterior: 'Posterior-chain focus',
       volume: 'Volume & pump',
       conditioning: 'Conditioning & burn',
+      complete: 'Complete Peach system',
     },
     outcomes: {
       foundation: 'Build confident technique and strength in the fundamentals.',
@@ -266,6 +272,7 @@ export const en = {
       posterior: 'Train your posterior chain for meaningful progression.',
       volume: 'Add volume and pump through higher training volume.',
       conditioning: 'Boost conditioning and calorie burn with metabolic circuits and high-rep glute work.',
+      complete: 'Progress from solid foundations to strength, volume, definition, and conditioning with all 12 workouts.',
     },
     featured: 'Popular choice',
     includes: {
@@ -336,6 +343,8 @@ export const en = {
     },
     durationLabel: 'Duration',
     priceLabel: 'Price',
+    vatIncluded: 'VAT included',
+    workoutsLabel: 'workouts',
     levels: {
       beginner: 'Beginners',
       intermediate: 'Intermediate',
@@ -347,55 +356,24 @@ export const en = {
       weeks6: '6 weeks',
       weeks4x3: '4 weeks · 3x/week',
       weeks8x45: '8 weeks · 4–5x/week',
+      complete: 'Complete collection',
     },
     items: {
-      peach_start: {
-        title: 'Peach Collection – 1. Peach Start',
-        desc: '4-week glute program — goblet squat, hip thrust, RDL, lunges, and activation work. Build strength with proper technique.',
+      peach_start_bundle: {
+        title: 'Peach Start',
+        desc: 'Three workouts for technique, activation, and progressive strength across the essential glute patterns.',
       },
-      peach_workout_b: {
-        title: 'Peach Collection – 2. Workout B',
-        desc: '4-week glute program — leg press, Bulgarian split squats, dumbbell RDL, cable kickbacks, and standing abduction. Part of the Peach Collection.',
+      peach_build: {
+        title: 'Peach Build',
+        desc: 'Four strength and volume workouts combining heavy lifts, unilateral work, posterior chain, and pump training.',
       },
-      peach_workout_c: {
-        title: 'Peach Collection – 3. Workout C',
-        desc: '4-week glute program — hip thrust, sumo squat, step-up, cable pull through, and seated abduction. Glute Shape program from the Peach Collection.',
+      peach_sculpt: {
+        title: 'Peach Sculpt',
+        desc: 'Five workouts with supersets, pump, conditioning, and intensity methods for shape, definition, and symmetry.',
       },
-      peach_sculpt_a: {
-        title: 'Peach Sculpt – Workout A',
-        desc: '8-week program — hip thrust, Bulgarian split squats, Smith lunges, cable kickbacks, and finisher circuit. Shape, definition, and symmetry with progressive load plan.',
-      },
-      peach_sculpt_b: {
-        title: 'Peach Sculpt – Workout B: Glute Pump Symmetry',
-        desc: '8-week program — B-stance hip thrust, cable kickbacks, back extensions, abduction supersets, burnout, and finisher circuit. Pump and symmetry focus.',
-      },
-      peach_sculpt_c: {
-        title: 'Peach Sculpt – Workout C: Posterior Chain',
-        desc: '8-week program — RDL main lift, single-leg RDL, leg curls, pull-throughs, hyperextensions, and finisher circuit. Posterior chain focus.',
-      },
-      peach_sculpt_d: {
-        title: 'Peach Sculpt – Workout D: Leg Volume & Pump',
-        desc: '8-week program — elevated split squats, hack squat supersets, leg extensions, abductions, and finisher circuit. Leg volume and pump focus.',
-      },
-      peach_sculpt_e: {
-        title: 'Peach Sculpt – Workout E: Conditioning & Burn',
-        desc: '8-week program — conditioning circuit, glute pump superset, burnout circuit, and recommended cardio. Metabolic conditioning and glute definition.',
-      },
-      peach_build_wa_heavy: {
-        title: 'Peach Build – WA Heavy Glutes',
-        desc: '6-week intensive — heavy hip thrusts, high bar squat, RDL, and seated abduction. Finisher superset: Frog Pumps + banded abduction.',
-      },
-      peach_build_wb: {
-        title: 'Peach Build – Workout B: Glute & Unilateral Strength',
-        desc: '6-week program — lunges, Bulgarian split squats, step-ups, single-leg hip thrust, and cable abduction. Finisher: weighted reverse lunges.',
-      },
-      peach_build_wc: {
-        title: 'Peach Build – Workout C: Posterior Chain',
-        desc: '6-week program — RDL, back extension, pull through, leg press high stance, and cable abduction. Finisher: abduction machine 80–100 reps.',
-      },
-      peach_build_wd: {
-        title: 'Peach Build – Workout D: Glute Volume & Pump',
-        desc: '6-week program — hip thrust, Smith reverse lunge, leg press wide stance, cable kickback, and seated abduction. Finisher: Frog Pumps + banded hold.',
+      peach_complete: {
+        title: 'Complete Collection',
+        desc: 'All 12 Peach Start, Build, and Sculpt workouts in one complete training system.',
       },
     },
     order: {
@@ -437,6 +415,14 @@ export const en = {
       overview: 'Program overview',
       programPlan: 'Your training roadmap',
       workout: 'Training session',
+      chooseWorkout: 'Choose a workout',
+      includedWorkouts: 'Your workouts',
+      groups: {
+        start: 'Peach Start',
+        build: 'Peach Build',
+        sculpt: 'Peach Sculpt',
+        other: 'Workout',
+      },
       todaysPlan: "Today's plan",
       sections: 'sections',
       exercises: 'exercises',

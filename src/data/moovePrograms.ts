@@ -1,27 +1,19 @@
 /** Public catalog metadata — prices validated server-side in api/programs/_pricing.js */
 
 export type MooveProgramKey =
-  | 'peach_start'
-  | 'peach_workout_b'
-  | 'peach_workout_c'
-  | 'peach_sculpt_a'
-  | 'peach_sculpt_b'
-  | 'peach_sculpt_c'
-  | 'peach_sculpt_d'
-  | 'peach_sculpt_e'
-  | 'peach_build_wa_heavy'
-  | 'peach_build_wb'
-  | 'peach_build_wc'
-  | 'peach_build_wd'
+  | 'peach_start_bundle'
+  | 'peach_build'
+  | 'peach_sculpt'
+  | 'peach_complete'
 
 export type MooveProgramCatalogItem = {
   key: MooveProgramKey
-  priceEur: number
+  priceCents: number
   levelKey: string
   durationKey: string
-  collectionKey: 'collection' | 'build' | 'sculpt'
   benefitKey: string
   outcomeKey: string
+  workoutCount: number
   imagePath: string
   imagePosition?: string
   featured?: boolean
@@ -29,137 +21,56 @@ export type MooveProgramCatalogItem = {
 
 export const mooveProgramCatalog: MooveProgramCatalogItem[] = [
   {
-    key: 'peach_start',
-    priceEur: 45,
+    key: 'peach_start_bundle',
+    priceCents: 3490,
     levelKey: 'allLevels',
     durationKey: 'weeks4x3',
-    collectionKey: 'collection',
     benefitKey: 'foundation',
     outcomeKey: 'foundation',
+    workoutCount: 3,
     imagePath: '/programs/peach-start-cover.png',
     imagePosition: 'center center',
   },
   {
-    key: 'peach_workout_b',
-    priceEur: 45,
-    levelKey: 'allLevels',
-    durationKey: 'weeks4x3',
-    collectionKey: 'collection',
-    benefitKey: 'shape',
-    outcomeKey: 'shape',
-    imagePath: '/programs/peach-workout-b-cover.png',
-    imagePosition: 'center center',
+    key: 'peach_build',
+    priceCents: 4990,
+    levelKey: 'intermediate',
+    durationKey: 'weeks6',
+    benefitKey: 'strength',
+    outcomeKey: 'strength',
+    workoutCount: 4,
+    imagePath: '/image2.jpeg',
+    imagePosition: 'center 30%',
   },
   {
-    key: 'peach_workout_c',
-    priceEur: 45,
-    levelKey: 'allLevels',
-    durationKey: 'weeks4x3',
-    collectionKey: 'collection',
-    benefitKey: 'sculpt',
-    outcomeKey: 'sculpt',
-    imagePath: '/programs/peach-workout-c-cover.png',
-    imagePosition: 'center center',
-  },
-  {
-    key: 'peach_sculpt_a',
-    priceEur: 60,
+    key: 'peach_sculpt',
+    priceCents: 5990,
     levelKey: 'intermediateAdvanced',
     durationKey: 'weeks8x45',
-    collectionKey: 'sculpt',
     benefitKey: 'definition',
     outcomeKey: 'definition',
-    imagePath: '/image2.jpeg',
-    imagePosition: 'center 38%',
-    featured: true,
-  },
-  {
-    key: 'peach_sculpt_b',
-    priceEur: 60,
-    levelKey: 'intermediateAdvanced',
-    durationKey: 'weeks8x45',
-    collectionKey: 'sculpt',
-    benefitKey: 'symmetry',
-    outcomeKey: 'symmetry',
+    workoutCount: 5,
     imagePath: '/image1.jpeg',
     imagePosition: 'center 52%',
   },
   {
-    key: 'peach_sculpt_c',
-    priceEur: 60,
-    levelKey: 'intermediateAdvanced',
-    durationKey: 'weeks8x45',
-    collectionKey: 'sculpt',
-    benefitKey: 'posterior',
-    outcomeKey: 'posterior',
-    imagePath: '/image4.jpeg',
-    imagePosition: 'center 58%',
-  },
-  {
-    key: 'peach_sculpt_d',
-    priceEur: 60,
-    levelKey: 'intermediateAdvanced',
-    durationKey: 'weeks8x45',
-    collectionKey: 'sculpt',
-    benefitKey: 'volume',
-    outcomeKey: 'volume',
-    imagePath: '/image5.jpeg',
-    imagePosition: 'center 45%',
-  },
-  {
-    key: 'peach_sculpt_e',
-    priceEur: 60,
-    levelKey: 'intermediateAdvanced',
-    durationKey: 'weeks8x45',
-    collectionKey: 'sculpt',
-    benefitKey: 'conditioning',
-    outcomeKey: 'conditioning',
-    imagePath: '/image2.jpeg',
-    imagePosition: 'center 62%',
-  },
-  {
-    key: 'peach_build_wa_heavy',
-    priceEur: 60,
-    levelKey: 'intermediate',
-    durationKey: 'weeks6',
-    collectionKey: 'build',
-    benefitKey: 'strength',
-    outcomeKey: 'strength',
-    imagePath: '/image2.jpeg',
-    imagePosition: 'center 30%',
-    featured: true,
-  },
-  {
-    key: 'peach_build_wb',
-    priceEur: 45,
-    levelKey: 'intermediate',
-    durationKey: 'weeks6',
-    collectionKey: 'build',
-    benefitKey: 'unilateral',
-    outcomeKey: 'unilateral',
-    imagePath: '/image5.jpeg',
-    imagePosition: 'center 68%',
-  },
-  {
-    key: 'peach_build_wc',
-    priceEur: 45,
-    levelKey: 'intermediate',
-    durationKey: 'weeks6',
-    collectionKey: 'build',
-    benefitKey: 'posterior',
-    outcomeKey: 'posterior',
-    imagePath: '/image1.jpeg',
-    imagePosition: 'center 68%',
-  },
-  {
-    key: 'peach_build_wd',
-    priceEur: 45,
-    levelKey: 'intermediate',
-    durationKey: 'weeks6',
-    collectionKey: 'build',
-    benefitKey: 'volume',
-    outcomeKey: 'volume',
+    key: 'peach_complete',
+    priceCents: 9990,
+    levelKey: 'allLevels',
+    durationKey: 'complete',
+    benefitKey: 'complete',
+    outcomeKey: 'complete',
+    workoutCount: 12,
     imagePath: '/image4.jpeg',
     imagePosition: 'center 42%',
+    featured: true,
   },
 ]
+
+export function formatProgramPrice(priceCents: number, locale: string) {
+  return new Intl.NumberFormat(locale === 'en' ? 'en-IE' : 'el-GR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+  }).format(priceCents / 100)
+}

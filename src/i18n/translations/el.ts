@@ -225,6 +225,11 @@ export const el = {
       body: 'Βάλε το email σου και ολοκλήρωσε με ασφάλεια την πληρωμή στο Stripe.',
       paymentMethod: 'Ασφαλής πληρωμή με κάρτα μέσω Stripe',
     },
+    catalog: {
+      eyebrow: 'Διάλεξε το πλάνο σου',
+      title: 'Τέσσερις επιλογές. Ένας ξεκάθαρος στόχος.',
+      body: 'Κάθε αγορά περιλαμβάνει όλες τις προπονήσεις του προγράμματος και προσωπικό private link.',
+    },
     collections: {
       collection: {
         eyebrow: 'Peach Collection',
@@ -253,6 +258,7 @@ export const el = {
       posterior: 'Posterior-chain focus',
       volume: 'Volume & pump',
       conditioning: 'Conditioning & burn',
+      complete: 'Ολοκληρωμένο Peach system',
     },
     outcomes: {
       foundation: 'Χτίσε σωστή τεχνική και δύναμη στα βασικά patterns.',
@@ -265,6 +271,7 @@ export const el = {
       posterior: 'Δούλεψε οπίσθια αλυσίδα με στόχο πραγματική πρόοδο.',
       volume: 'Πρόσθεσε όγκο και pump με πιο υψηλό training volume.',
       conditioning: 'Αύξησε conditioning και θερμιδική κατανάλωση με μεταβολικούς κύκλους και high-rep glute work.',
+      complete: 'Από τη σωστή βάση μέχρι δύναμη, όγκο, ορισμό και conditioning — και οι 12 προπονήσεις σε μία συλλογή.',
     },
     featured: 'Δημοφιλής επιλογή',
     includes: {
@@ -335,6 +342,8 @@ export const el = {
     },
     durationLabel: 'Διάρκεια',
     priceLabel: 'Τιμή',
+    vatIncluded: 'Συμπεριλαμβάνεται ΦΠΑ',
+    workoutsLabel: 'προπονήσεις',
     levels: {
       beginner: 'Αρχάριοι',
       intermediate: 'Μεσαίο',
@@ -346,55 +355,24 @@ export const el = {
       weeks6: '6 εβδομάδες',
       weeks4x3: '4 εβδομάδες · 3x/εβδομάδα',
       weeks8x45: '8 εβδομάδες · 4–5x/εβδομάδα',
+      complete: 'Πλήρης συλλογή',
     },
     items: {
-      peach_start: {
-        title: 'Peach Collection – 1. Peach Start',
-        desc: '4 εβδομάδες γλουτοί — goblet squat, hip thrust, RDL, lunges και ενεργοποίηση. Ιδανικό για χτίσιμο δύναμης με σωστή τεχνική.',
+      peach_start_bundle: {
+        title: 'Peach Start',
+        desc: 'Τρεις προπονήσεις για τεχνική, ενεργοποίηση και σταδιακό χτίσιμο δύναμης στα βασικά glute patterns.',
       },
-      peach_workout_b: {
-        title: 'Peach Collection – 2. Workout B',
-        desc: '4 εβδομάδες γλουτοί — leg press, βουλγάρικα, dumbbell RDL, cable kickback και standing abduction. Συμπληρωματικό πρόγραμμα της Peach Collection.',
+      peach_build: {
+        title: 'Peach Build',
+        desc: 'Τέσσερις προπονήσεις δύναμης και όγκου με heavy lifts, unilateral work, posterior chain και pump.',
       },
-      peach_workout_c: {
-        title: 'Peach Collection – 3. Workout C',
-        desc: '4 εβδομάδες γλουτοί — hip thrust, sumo squat, step-up, cable pull through και seated abduction. Glute Shape πρόγραμμα της Peach Collection.',
+      peach_sculpt: {
+        title: 'Peach Sculpt',
+        desc: 'Πέντε προπονήσεις με supersets, pump, conditioning και τεχνικές έντασης για shape, definition και symmetry.',
       },
-      peach_sculpt_a: {
-        title: 'Peach Sculpt – Workout A',
-        desc: '8 εβδομάδες — hip thrust, βουλγάρικα, Smith lunges, cable kickbacks και finisher circuit. Shape, definition και symmetry με progressive load plan.',
-      },
-      peach_sculpt_b: {
-        title: 'Peach Sculpt – Workout B: Glute Pump Symmetry',
-        desc: '8 εβδομάδες — B-stance hip thrust, cable kickbacks, back extensions, abduction supersets, burnout και finisher circuit. Στόχος pump και συμμετρία.',
-      },
-      peach_sculpt_c: {
-        title: 'Peach Sculpt – Workout C: Posterior Chain',
-        desc: '8 εβδομάδες — RDL main lift, single-leg RDL, leg curls, pull-throughs, hyperextensions και finisher circuit. Εστίαση στην οπίσθια αλυσίδα.',
-      },
-      peach_sculpt_d: {
-        title: 'Peach Sculpt – Workout D: Leg Volume & Pump',
-        desc: '8 εβδομάδες — elevated split squats, hack squat supersets, leg extensions, abductions και finisher circuit. Στόχος leg volume και pump.',
-      },
-      peach_sculpt_e: {
-        title: 'Peach Sculpt – Workout E: Conditioning & Burn',
-        desc: '8 εβδομάδες — conditioning circuit, glute pump superset, burnout circuit και προτεινόμενη καρδιοαναπνευστική. Μεταβολικό conditioning και γράμμωση γλουτών.',
-      },
-      peach_build_wa_heavy: {
-        title: 'Peach Build – WA Heavy Glutes',
-        desc: '6 εβδομάδες intensive — βαριά hip thrusts, high bar squat, RDL και seated abduction. Finisher superset Frog Pumps + banded abduction.',
-      },
-      peach_build_wb: {
-        title: 'Peach Build – Workout B: Glute & Unilateral Strength',
-        desc: '6 εβδομάδες — lunges, βουλγάρικα, step-ups, single-leg hip thrust και cable abduction. Finisher weighted reverse lunges.',
-      },
-      peach_build_wc: {
-        title: 'Peach Build – Workout C: Posterior Chain',
-        desc: '6 εβδομάδες — RDL, back extension, pull through, leg press high stance και cable abduction. Finisher abduction machine 80–100 reps.',
-      },
-      peach_build_wd: {
-        title: 'Peach Build – Workout D: Glute Volume & Pump',
-        desc: '6 εβδομάδες — hip thrust, Smith reverse lunge, leg press wide stance, cable kickback και seated abduction. Finisher Frog Pumps + banded hold.',
+      peach_complete: {
+        title: 'Complete Collection',
+        desc: 'Και οι 12 προπονήσεις των Peach Start, Build και Sculpt σε ένα ολοκληρωμένο training system.',
       },
     },
     order: {
@@ -436,6 +414,14 @@ export const el = {
       overview: 'Επισκόπηση προγράμματος',
       programPlan: 'Ο χάρτης της προπόνησής σου',
       workout: 'Προπόνηση',
+      chooseWorkout: 'Διάλεξε προπόνηση',
+      includedWorkouts: 'Οι προπονήσεις σου',
+      groups: {
+        start: 'Peach Start',
+        build: 'Peach Build',
+        sculpt: 'Peach Sculpt',
+        other: 'Προπόνηση',
+      },
       todaysPlan: 'Το σημερινό πλάνο',
       sections: 'ενότητες',
       exercises: 'ασκήσεις',
