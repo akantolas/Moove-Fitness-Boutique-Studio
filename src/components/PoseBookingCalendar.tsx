@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
+import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { createPosingBooking, fetchPosingSlots } from '../lib/posingApi'
 import {
   fetchPackagePlan,
@@ -87,6 +88,8 @@ export function PoseBookingCalendar({
 }: PoseBookingCalendarProps) {
   const { t } = useTranslation()
   const { configured, loading: authLoading, user, accessToken } = usePosingAuth()
+  const posingBookingSticky = usePosingBookingSticky()
+  const confirmPanelRef = useRef<HTMLDivElement>(null)
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [slots, setSlots] = useState<Array<{ id: string; start_at: string; end_at: string }>>([])
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
@@ -175,7 +178,12 @@ export function PoseBookingCalendar({
   )
   const bookingBlocked = quota?.status === 'pending_payment'
 
-  async function handleBook() {
+  const selectedSlot = useMemo(
+    () => (selectedSlotId ? slots.find((slot) => slot.id === selectedSlotId) ?? null : null),
+    [selectedSlotId, slots],
+  )
+
+  const handleBook = useCallback(async () => {
     if (!selectedSlotId || !accessToken || bookingBlocked) return
     setBooking(true)
     setError('')
@@ -207,7 +215,52 @@ export function PoseBookingCalendar({
     } finally {
       setBooking(false)
     }
-  }
+  }, [
+    accessToken,
+    bookingBlocked,
+    loadQuota,
+    loadSlots,
+    locale,
+    selectedPlanKey,
+    selectedSlotId,
+    t,
+  ])
+
+  useEffect(() => {
+    if (!selectedSlot) {
+      posingBookingSticky?.setConfirmDetails(null)
+      return
+    }
+
+    posingBookingSticky?.setConfirmDetails(
+      {
+        slotLabel: formatTime(selectedSlot.start_at, locale),
+        disabled: !user || booking || bookingBlocked,
+        loading: booking,
+      },
+      handleBook,
+    )
+  }, [
+    booking,
+    bookingBlocked,
+    handleBook,
+    locale,
+    posingBookingSticky,
+    selectedSlot,
+    user,
+  ])
+
+  useEffect(() => {
+    if (!selectedSlotId) return
+    confirmPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [selectedSlotId])
+
+  useEffect(() => {
+    const clearConfirm = posingBookingSticky?.setConfirmDetails
+    return () => {
+      clearConfirm?.(null)
+    }
+  }, [])
 
   if (!configured) {
     return (
@@ -330,10 +383,20 @@ export function PoseBookingCalendar({
         </div>
       )}
 
-      {selectedSlotId ? (
-        <div className="mt-6 rounded-xl border border-fuchsia-200/25 bg-fuchsia-500/10 px-4 py-4">
-          <p className="text-sm text-white">
+      {selectedSlotId && selectedSlot ? (
+        <div
+          ref={confirmPanelRef}
+          className="mt-6 rounded-xl border border-fuchsia-200/25 bg-fuchsia-500/10 px-4 py-4"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-100/80">
+            {t('posing.booking.stepConfirm')}
+          </p>
+          <p className="mt-2 text-sm text-white">
             {t('posing.booking.selectedLabel')}: <strong>{selectedPackageName}</strong>
+          </p>
+          <p className="mt-1 text-sm text-white/85">
+            {t('posing.booking.selectedTimeLabel')}:{' '}
+            <strong>{formatTime(selectedSlot.start_at, locale)}</strong>
           </p>
           {willUseIncludedSession && quota ? (
             <p className="mt-1 text-xs text-fuchsia-100/80">
@@ -344,7 +407,7 @@ export function PoseBookingCalendar({
             type="button"
             disabled={!user || booking || bookingBlocked}
             onClick={handleBook}
-            className="mt-4 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-4 hidden rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50 sm:inline-flex"
           >
             {booking
               ? t('posing.calendar.booking')

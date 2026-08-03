@@ -3,6 +3,7 @@ import { ConditionalAnalytics } from './components/ConditionalAnalytics'
 import { Layout } from './components/Layout'
 import { ScrollToTop } from './components/ScrollToTop'
 import { PosingAuthProvider } from './contexts/PosingAuthContext'
+import { PosingBookingStickyProvider } from './contexts/PosingBookingStickyContext'
 import { HomePage } from './pages/Home'
 import { ClassesPage } from './pages/Classes'
 import { AboutPage } from './pages/About'
@@ -29,7 +30,13 @@ export default function App() {
         <ConditionalAnalytics />
         <PosingOAuthReturnGuard />
         <Routes>
-          <Route element={<Layout />}>
+          <Route
+            element={
+              <PosingBookingStickyProvider>
+                <Layout />
+              </PosingBookingStickyProvider>
+            }
+          >
             <Route path="/" element={<HomePage />} />
             <Route path="/mathimata" element={<ClassesPage />} />
             <Route path="/sxetika" element={<AboutPage />} />

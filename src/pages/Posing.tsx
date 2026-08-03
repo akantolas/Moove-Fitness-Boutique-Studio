@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
 import { PosingOffersModal } from '../components/PosingOffersModal'
@@ -6,6 +6,8 @@ import { PosingOffersSection } from '../components/PosingOffersSection'
 import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
 import { SiteContainer } from '../components/SiteContainer'
 import { ZoomableImage } from '../components/ZoomableImage'
+import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
+import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
 import { fetchPackagePlan } from '../lib/posingPackages'
 import { hasSeenOffersPopup, isJulyOfferActive } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
@@ -50,12 +52,26 @@ export function PosingPage() {
   )
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
   const [offersModalOpen, setOffersModalOpen] = useState(false)
+  const bookingSectionRef = useRef<HTMLElement | null>(null)
+  const bookingSectionVisible = useBookingSectionVisible(bookingSectionRef)
+  const posingBookingSticky = usePosingBookingSticky()
 
   const selectedPackageName = useMemo(
     () =>
       planKeyLabel(selectedPlanKey, (i) => dictionary.posing.pricing.packages[i]?.name, t),
     [selectedPlanKey, dictionary.posing.pricing.packages, t],
   )
+
+  useEffect(() => {
+    posingBookingSticky?.setBookingSectionVisible(bookingSectionVisible)
+  }, [bookingSectionVisible, posingBookingSticky])
+
+  useEffect(() => {
+    const resetSticky = posingBookingSticky?.resetSticky
+    return () => {
+      resetSticky?.()
+    }
+  }, [])
 
   useEffect(() => {
     if (!isJulyOfferActive()) return
@@ -292,7 +308,7 @@ export function PosingPage() {
         </SiteContainer>
       </section>
 
-      <section id="booking" className="scroll-mt-20 py-16 sm:py-20">
+      <section id="booking" ref={bookingSectionRef} className="scroll-mt-20 py-16 sm:py-20">
         <SiteContainer>
           {paymentSuccess ? (
             <div className="mx-auto mb-8 max-w-2xl rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 text-center text-sm leading-relaxed text-emerald-100">
