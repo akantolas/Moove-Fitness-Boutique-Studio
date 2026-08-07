@@ -3,9 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminBookingsPanel } from '../components/AdminBookingsPanel'
 import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminPaymentsQueue } from '../components/AdminPaymentsQueue'
+import { AdminNutritionQueue } from '../components/AdminNutritionQueue'
 import { AdminProgramPaymentsQueue } from '../components/AdminProgramPaymentsQueue'
 import { AdminShell, AdminPanelSkeleton, AdminStatCard, AdminStatsSkeleton } from '../components/AdminShell'
-import { SiteContainer } from '../components/SiteContainer'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPosingIsAdmin } from '../lib/posingAccount'
@@ -67,6 +67,7 @@ export function PosingAdminPage() {
 
   const pendingBadge = admin.stats?.pendingPayments ?? admin.payments.length
   const programPendingBadge = admin.programPayments.length
+  const nutritionPendingBadge = admin.nutritionPayments.length
 
   const tabs = [
     {
@@ -86,27 +87,30 @@ export function PosingAdminPage() {
       label: t('posing.admin.tabPrograms'),
       badge: programPendingBadge > 0 ? programPendingBadge : undefined,
     },
+    {
+      id: 'nutrition',
+      label: t('posing.admin.tabNutrition'),
+      badge: nutritionPendingBadge > 0 ? nutritionPendingBadge : undefined,
+    },
     { id: 'bookings', label: t('posing.admin.tabBookings') },
   ]
 
   if (loading || authorized === null) {
     return (
-      <SiteContainer variant="admin" className="py-16 text-center">
-        <div className="text-white/60">{t('posing.account.loading')}</div>
-      </SiteContainer>
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center text-white/60">
+        {t('posing.account.loading')}
+      </div>
     )
   }
 
   if (!authorized) {
     return (
-      <SiteContainer variant="admin" className="py-16 text-center">
-        <div className="mx-auto max-w-md">
-          <h1 className="font-display text-2xl font-semibold text-white">{t('posing.admin.forbidden')}</h1>
-          <Link to="/posing" className="mt-6 inline-block text-fuchsia-200 hover:underline">
-            {t('nav.home')}
-          </Link>
-        </div>
-      </SiteContainer>
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-semibold text-white">{t('posing.admin.forbidden')}</h1>
+        <Link to="/posing" className="mt-6 inline-block text-fuchsia-200 hover:underline">
+          {t('nav.home')}
+        </Link>
+      </div>
     )
   }
 
@@ -272,6 +276,22 @@ export function PosingAdminPage() {
             busy={isBusy}
             onConfirm={admin.confirmProgramPayment}
             onResendAccess={admin.resendProgramAccess}
+          />
+        )
+      ) : null}
+
+      {activeTab === 'nutrition' ? (
+        admin.loading ? (
+          <AdminPanelSkeleton rows={3} />
+        ) : (
+          <AdminNutritionQueue
+            payments={admin.nutritionPayments}
+            paidOrders={admin.nutritionOrders}
+            locale={locale}
+            busy={isBusy}
+            onConfirm={admin.confirmNutritionPayment}
+            onResend={admin.resendNutritionPlan}
+            onPreview={admin.previewNutritionPdf}
           />
         )
       ) : null}

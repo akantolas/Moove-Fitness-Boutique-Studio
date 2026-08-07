@@ -59,6 +59,8 @@ export async function createProgramOrder(payload: {
   programKey: string
   email: string
   locale: string
+  includeNutrition?: boolean
+  nutritionResponses?: Record<string, unknown>
 }) {
   const res = await fetch('/api/programs/order', {
     method: 'POST',

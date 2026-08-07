@@ -15,6 +15,7 @@ type ProgramShowcaseProps = {
 }
 
 const SWIPE_THRESHOLD_PX = 48
+const NUTRITION_ADDON_EUR = 25
 
 export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseProps) {
   const { t, locale } = useTranslation()
@@ -58,7 +59,7 @@ export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseP
 
   return (
     <div
-      className="mt-8"
+      className="mt-6"
       role="region"
       aria-roledescription="carousel"
       aria-label={t('programs.catalog.title')}
@@ -199,6 +200,18 @@ export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseP
               >
                 {t('programs.order.cta')}
               </button>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-moove-lime/30 bg-moove-lime/10 px-4 py-3.5">
+              <p className="text-sm font-semibold text-moove-silver">
+                {t('programs.nutritionUpsell.title')}{' '}
+                <span className="text-moove-espresso">
+                  {t('programs.nutritionUpsell.priceLabel', { price: NUTRITION_ADDON_EUR })}
+                </span>
+              </p>
+              <p className="mt-1.5 text-xs leading-relaxed text-moove-muted">
+                {t('programs.nutritionUpsell.body')} {t('programs.order.nutritionAddonHint')}
+              </p>
             </div>
 
           </div>

@@ -135,9 +135,15 @@ export function getCatalogPriceCents(programKey) {
   return CATALOG_PRICES_CENTS[programKey] ?? null
 }
 
+export function centsToEurAmount(cents) {
+  const parsed = Number(cents)
+  if (!Number.isFinite(parsed)) return null
+  return Number((parsed / 100).toFixed(2))
+}
+
 export function getCatalogPriceEur(programKey) {
   const cents = getCatalogPriceCents(programKey)
-  return cents === null ? null : cents / 100
+  return cents === null ? null : centsToEurAmount(cents)
 }
 
 export function getProgramName(programKey, locale = 'el') {

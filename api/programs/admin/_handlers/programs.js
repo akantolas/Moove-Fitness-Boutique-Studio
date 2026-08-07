@@ -1,4 +1,4 @@
-import { readJsonBody, ensureAdmin, getUserFromRequest } from '../../posing/_lib.js'
+import { readJsonBody, ensureAdmin, getUserFromRequest, hasEmailTransportConfig } from '../../../posing/_lib.js'
 import {
   activateProgramPurchase,
   cors,
@@ -8,7 +8,7 @@ import {
   json,
   normalizeBookingLocale,
   sendProgramAccessFlowEmail,
-} from '../_lib.js'
+} from '../../_lib.js'
 
 async function fetchPendingProgramPayments(supabase) {
   const { data, error } = await supabase
@@ -56,38 +56,72 @@ export async function handleAdminPrograms(req, res) {
 
         const { data: existing } = await supabase
           .from('moove_program_purchases')
-          .select('locale')
+          .select('locale, status, access_email_sent_at')
           .eq('id', purchaseId)
           .maybeSingle()
 
         if (!existing) return json(res, 404, { ok: false, error: 'purchase_not_found' })
 
-        const paymentRef = `manual:${user.id}:${Date.now()}`
-        const result = await activateProgramPurchase(supabase, {
-          purchaseId,
-          paymentRef,
-          paymentMethod: 'manual',
-          confirmedBy: user.id,
-        })
+        const emailStillPending = !existing.access_email_sent_at
+        const isPendingPayment = existing.status === 'pending_payment'
+
+        if (emailStillPending && !hasEmailTransportConfig()) {
+          return json(res, 503, { ok: false, error: 'missing_email_config' })
+        }
+
+        let result
+        if (isPendingPayment) {
+          const paymentRef = `manual:${user.id}:${Date.now()}`
+          result = await activateProgramPurchase(supabase, {
+            purchaseId,
+            paymentRef,
+            paymentMethod: 'manual',
+            confirmedBy: user.id,
+          })
+        } else if (existing.status === 'paid' && emailStillPending) {
+          const { data: paidPurchase } = await supabase
+            .from('moove_program_purchases')
+            .select('*')
+            .eq('id', purchaseId)
+            .maybeSingle()
+          if (!paidPurchase) return json(res, 404, { ok: false, error: 'purchase_not_found' })
+          result = { ok: true, already: true, purchase: paidPurchase }
+        } else if (existing.status === 'paid') {
+          return json(res, 200, { ok: true, already: true })
+        } else {
+          return json(res, 409, { ok: false, error: 'invalid_purchase_status' })
+        }
 
         if (!result.ok) {
           const status = result.error === 'invalid_purchase_status' ? 409 : 500
           return json(res, status, { ok: false, error: result.error })
         }
 
-        if (!result.already && result.purchase) {
+        if (emailStillPending && result.purchase) {
           const locale = normalizeBookingLocale(existing.locale)
-          await sendProgramAccessFlowEmail(result.purchase, locale)
-          await supabase
-            .from('moove_program_purchases')
-            .update({
-              access_email_sent_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+          try {
+            await sendProgramAccessFlowEmail(result.purchase, locale)
+            await supabase
+              .from('moove_program_purchases')
+              .update({
+                access_email_sent_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', purchaseId)
+          } catch (emailError) {
+            const emailMessage = emailError instanceof Error ? emailError.message : 'email_failed'
+            return json(res, 502, {
+              ok: false,
+              error:
+                emailMessage === 'missing_email_config'
+                  ? 'missing_email_config'
+                  : 'payment_confirmed_email_failed',
+              email_sent: false,
             })
-            .eq('id', purchaseId)
+          }
         }
 
-        return json(res, 200, { ok: true, already: result.already ?? false })
+        return json(res, 200, { ok: true, already: result.already ?? false, email_sent: emailStillPending })
       }
 
       if (action === 'resend-access') {
@@ -105,6 +139,10 @@ export async function handleAdminPrograms(req, res) {
         if (!purchase) return json(res, 404, { ok: false, error: 'purchase_not_found' })
         if (purchase.status !== 'paid' || !purchase.access_token) {
           return json(res, 400, { ok: false, error: 'not_paid' })
+        }
+
+        if (!hasEmailTransportConfig()) {
+          return json(res, 503, { ok: false, error: 'missing_email_config' })
         }
 
         const locale = normalizeBookingLocale(purchase.locale)
