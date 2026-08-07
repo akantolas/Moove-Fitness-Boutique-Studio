@@ -15,7 +15,6 @@ export const en = {
     about: 'About',
     contact: 'Contact',
     programs: 'Programs',
-    nutrition: 'Nutrition',
     packages: 'Packages',
     main: 'Main navigation',
     mobile: 'Mobile navigation',
@@ -210,7 +209,8 @@ export const en = {
   },
   programs: {
     eyebrow: 'Peach training system',
-    title: 'Build your glutes with a plan. Not guesswork.',
+    title: 'Build your glutes with a plan.',
+    titleAccent: 'Not guesswork.',
     description:
       'Structured glute programs that tell you exactly what to do in every session — from activation through to the finisher.',
     heroBadge: 'Structured training · On-demand access',
@@ -226,6 +226,25 @@ export const en = {
       title: 'Secure checkout',
       body: 'Enter your email, then complete payment securely with Stripe.',
       paymentMethod: 'Secure card payment via Stripe',
+    },
+    catalog: {
+      eyebrow: 'Choose your plan',
+      title: 'Four options. One clear goal.',
+      body: 'Every purchase includes all workouts in that program and one private access link.',
+      selectorLabel: 'Choose a package',
+      selectorHint: 'There are 4 packages available — select one to see its details.',
+    },
+    nutritionUpsell: {
+      eyebrow: 'Optional add-on',
+      title: 'Add personalized nutrition',
+      body: 'Weekly meal plan as a PDF, based on your questionnaire answers.',
+      bullets: [
+        'PDF plan emailed after payment',
+        'Short questionnaire at checkout',
+        'Available only with a program purchase',
+      ],
+      priceLabel: '+{{price}}€',
+      checkoutHint: 'Enable it at checkout — tick the option before payment.',
     },
     collections: {
       collection: {
@@ -255,6 +274,7 @@ export const en = {
       posterior: 'Posterior-chain focus',
       volume: 'Volume & pump',
       conditioning: 'Conditioning & burn',
+      complete: 'Complete Peach system',
     },
     outcomes: {
       foundation: 'Build confident technique and strength in the fundamentals.',
@@ -267,6 +287,7 @@ export const en = {
       posterior: 'Train your posterior chain for meaningful progression.',
       volume: 'Add volume and pump through higher training volume.',
       conditioning: 'Boost conditioning and calorie burn with metabolic circuits and high-rep glute work.',
+      complete: 'Progress from solid foundations to strength, volume, definition, and conditioning with all 12 workouts.',
     },
     featured: 'Popular choice',
     includes: {
@@ -337,6 +358,8 @@ export const en = {
     },
     durationLabel: 'Duration',
     priceLabel: 'Price',
+    vatIncluded: 'VAT included',
+    workoutsLabel: 'workouts',
     levels: {
       beginner: 'Beginners',
       intermediate: 'Intermediate',
@@ -348,55 +371,24 @@ export const en = {
       weeks6: '6 weeks',
       weeks4x3: '4 weeks · 3x/week',
       weeks8x45: '8 weeks · 4–5x/week',
+      complete: 'Complete collection',
     },
     items: {
-      peach_start: {
-        title: 'Peach Collection – 1. Peach Start',
-        desc: '4-week glute program — goblet squat, hip thrust, RDL, lunges, and activation work. Build strength with proper technique.',
+      peach_start_bundle: {
+        title: 'Peach Start',
+        desc: 'Three workouts for technique, activation, and progressive strength across the essential glute patterns.',
       },
-      peach_workout_b: {
-        title: 'Peach Collection – 2. Workout B',
-        desc: '4-week glute program — leg press, Bulgarian split squats, dumbbell RDL, cable kickbacks, and standing abduction. Part of the Peach Collection.',
+      peach_build: {
+        title: 'Peach Build',
+        desc: 'Four strength and volume workouts combining heavy lifts, unilateral work, posterior chain, and pump training.',
       },
-      peach_workout_c: {
-        title: 'Peach Collection – 3. Workout C',
-        desc: '4-week glute program — hip thrust, sumo squat, step-up, cable pull through, and seated abduction. Glute Shape program from the Peach Collection.',
+      peach_sculpt: {
+        title: 'Peach Sculpt',
+        desc: 'Five workouts with supersets, pump, conditioning, and intensity methods for shape, definition, and symmetry.',
       },
-      peach_sculpt_a: {
-        title: 'Peach Sculpt – Workout A',
-        desc: '8-week program — hip thrust, Bulgarian split squats, Smith lunges, cable kickbacks, and finisher circuit. Shape, definition, and symmetry with progressive load plan.',
-      },
-      peach_sculpt_b: {
-        title: 'Peach Sculpt – Workout B: Glute Pump Symmetry',
-        desc: '8-week program — B-stance hip thrust, cable kickbacks, back extensions, abduction supersets, burnout, and finisher circuit. Pump and symmetry focus.',
-      },
-      peach_sculpt_c: {
-        title: 'Peach Sculpt – Workout C: Posterior Chain',
-        desc: '8-week program — RDL main lift, single-leg RDL, leg curls, pull-throughs, hyperextensions, and finisher circuit. Posterior chain focus.',
-      },
-      peach_sculpt_d: {
-        title: 'Peach Sculpt – Workout D: Leg Volume & Pump',
-        desc: '8-week program — elevated split squats, hack squat supersets, leg extensions, abductions, and finisher circuit. Leg volume and pump focus.',
-      },
-      peach_sculpt_e: {
-        title: 'Peach Sculpt – Workout E: Conditioning & Burn',
-        desc: '8-week program — conditioning circuit, glute pump superset, burnout circuit, and recommended cardio. Metabolic conditioning and glute definition.',
-      },
-      peach_build_wa_heavy: {
-        title: 'Peach Build – WA Heavy Glutes',
-        desc: '6-week intensive — heavy hip thrusts, high bar squat, RDL, and seated abduction. Finisher superset: Frog Pumps + banded abduction.',
-      },
-      peach_build_wb: {
-        title: 'Peach Build – Workout B: Glute & Unilateral Strength',
-        desc: '6-week program — lunges, Bulgarian split squats, step-ups, single-leg hip thrust, and cable abduction. Finisher: weighted reverse lunges.',
-      },
-      peach_build_wc: {
-        title: 'Peach Build – Workout C: Posterior Chain',
-        desc: '6-week program — RDL, back extension, pull through, leg press high stance, and cable abduction. Finisher: abduction machine 80–100 reps.',
-      },
-      peach_build_wd: {
-        title: 'Peach Build – Workout D: Glute Volume & Pump',
-        desc: '6-week program — hip thrust, Smith reverse lunge, leg press wide stance, cable kickback, and seated abduction. Finisher: Frog Pumps + banded hold.',
+      peach_complete: {
+        title: 'Complete Collection',
+        desc: 'All 12 Peach Start, Build, and Sculpt workouts in one complete training system.',
       },
     },
     order: {
@@ -409,24 +401,24 @@ export const en = {
       successBody: 'We sent payment links. After payment you will receive your access link.',
       refLabel: 'Order ref',
       invalidEmail: 'Enter a valid email.',
+      nutritionAddon: 'Add personalized nutrition (+{{price}}€)',
+      nutritionAddonHint: 'Available only when purchasing a program.',
+      nutritionQuestionnaireTitle: 'Nutrition questionnaire',
+      nutritionQuestionnaireHint: 'Fill in your details to generate your personalized plan.',
+      cancelNutrition: 'Cancel nutrition add-on',
       errors: {
         order_failed: 'Order failed. Please try again.',
         rate_limit: 'Too many orders — try again later.',
         invalid_email: 'Invalid email.',
         invalid_program: 'Invalid program.',
         stripe_unavailable: 'Secure payment is temporarily unavailable. Please try again later.',
+        stripe_not_configured: 'Stripe is not configured locally. Add STRIPE_SECRET_KEY to .env.local and restart vercel dev.',
       },
-      nutritionAddon: 'Add personalized nutrition (+{{price}}€)',
-      nutritionAddonHint: 'Available only when purchasing a program.',
-      nutritionQuestionnaireTitle: 'Nutrition questionnaire',
-      nutritionQuestionnaireHint: 'Fill in your details to generate your personalized plan.',
-      cancelNutrition: 'Cancel nutrition add-on',
     },
     paymentSuccess: {
       title: 'Payment completed',
       body: 'You will receive an email with your program access link shortly.',
       paid: 'Payment confirmed — check your email for the access link.',
-      nutritionHint: 'If you added nutrition, you will also receive your meal plan PDF by email.',
     },
     access: {
       eyebrow: 'Your program',
@@ -444,6 +436,14 @@ export const en = {
       overview: 'Program overview',
       programPlan: 'Your training roadmap',
       workout: 'Training session',
+      chooseWorkout: 'Choose a workout',
+      includedWorkouts: 'Your workouts',
+      groups: {
+        start: 'Peach Start',
+        build: 'Peach Build',
+        sculpt: 'Peach Sculpt',
+        other: 'Workout',
+      },
       todaysPlan: "Today's plan",
       sections: 'sections',
       exercises: 'exercises',
@@ -668,6 +668,9 @@ export const en = {
       paymentRequiredFirst: 'Complete payment before booking your next session',
       sessionsExhausted: 'You have used all sessions in this package',
       confirmIncluded: 'Confirm booking',
+      stickyConfirm: 'Confirm booking',
+      selectedTimeLabel: 'Selected time',
+      stepConfirm: 'Step 2: Confirm',
       successIncluded: 'Your session is confirmed.',
       bookWithPackage: 'Book with this package',
     },
@@ -994,6 +997,10 @@ export const en = {
         preset_failed: 'Failed to open day.',
         clear_failed: 'Failed to clear day.',
         payment_confirm_failed: 'Payment confirmation failed.',
+        missing_email_config:
+          'Email is not configured. Locally: add RESEND_API_KEY from Vercel (Preview/Production) to .env.local. Payment was not confirmed.',
+        payment_confirmed_email_failed:
+          'Payment was confirmed but the email failed. Use “Resend access link”.',
         overview_fetch_failed: 'Failed to load overview.',
         payments_fetch_failed: 'Failed to load payments.',
         bookings_fetch_failed: 'Failed to load bookings.',
@@ -1357,10 +1364,6 @@ export const en = {
         {
           title: 'Ready-made programs (digital)',
           body: 'Ready-made workout programs are purchased online through this site. After payment (Stripe, PayPal, or Revolut) you receive an email with a link to a private page (exercise plan, videos). Content is for personal use only; redistribution or public sharing is not permitted.',
-        },
-        {
-          title: 'Personalized nutrition (digital)',
-          body: 'The nutrition plan service is provided online after a questionnaire and payment. The plan is sent as a PDF to your email. It is not medical or dietary advice; consult a healthcare professional for allergies or medical conditions.',
         },
         {
           title: 'Cancellations & no-shows',

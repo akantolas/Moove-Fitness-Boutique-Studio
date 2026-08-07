@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { NutritionQuestionnaire } from '../components/NutritionQuestionnaire'
-import { mooveProgramCatalog, type MooveProgramKey } from '../data/moovePrograms'
+import {
+  formatProgramPrice,
+  mooveProgramCatalog,
+  type MooveProgramKey,
+} from '../data/moovePrograms'
 import { createProgramOrder, fetchProgramOrderStatus } from '../lib/programsApi'
 import type { NutritionResponses } from '../lib/nutritionTypes'
+import { ProgramShowcase } from '../components/ProgramShowcase'
+import { SiteContainer } from '../components/SiteContainer'
 import { useTranslation } from '../i18n/useTranslation'
 
 type OrderState = 'idle' | 'submitting' | 'error'
 
-const NUTRITION_ADDON_EUR = 25
+const NUTRITION_ADDON_CENTS = 2500
 
 export function ProgramsPage() {
   const { t, locale, dictionary } = useTranslation()
   const [searchParams] = useSearchParams()
   const paymentSuccess = searchParams.get('payment') === 'success'
   const purchaseRef = searchParams.get('purchase') ?? ''
-  const nutritionSuccess = searchParams.get('nutrition') === '1'
 
   const [selectedKey, setSelectedKey] = useState<MooveProgramKey | null>(null)
   const [checkoutProgram, setCheckoutProgram] = useState<(typeof mooveProgramCatalog)[number] | null>(null)
@@ -49,20 +54,13 @@ export function ProgramsPage() {
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape' && orderState !== 'submitting') {
-        closeCheckout()
+        setCheckoutProgram(null)
       }
     }
 
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
   }, [checkoutProgram, orderState])
-
-  function closeCheckout() {
-    setCheckoutProgram(null)
-    setShowQuestionnaire(false)
-    setOrderState('idle')
-    setOrderError('')
-  }
 
   function openCheckout(program: (typeof mooveProgramCatalog)[number]) {
     setCheckoutProgram(program)
@@ -72,21 +70,19 @@ export function ProgramsPage() {
     setOrderError('')
   }
 
-  function startOrder(programKey: MooveProgramKey) {
+  async function handleOrder(programKey: MooveProgramKey, nutritionResponses?: NutritionResponses) {
     if (!email.trim()) {
       setOrderError(t('programs.order.invalidEmail'))
       return
     }
-    setSelectedKey(programKey)
-    setOrderError('')
-    if (includeNutrition) {
+
+    if (includeNutrition && !nutritionResponses) {
       setShowQuestionnaire(true)
+      setOrderError('')
       return
     }
-    void submitOrder(programKey)
-  }
 
-  async function submitOrder(programKey: MooveProgramKey, nutritionResponses?: NutritionResponses) {
+    setSelectedKey(programKey)
     setOrderState('submitting')
     setOrderError('')
     try {
@@ -105,48 +101,55 @@ export function ProgramsPage() {
     }
   }
 
-  function handleNutritionComplete(responses: NutritionResponses) {
-    if (!checkoutProgram) return
-    void submitOrder(checkoutProgram.key, responses)
-  }
-
-  function checkoutTotalEur(program: (typeof mooveProgramCatalog)[number]) {
-    return program.priceEur + (includeNutrition ? NUTRITION_ADDON_EUR : 0)
+  function checkoutTotalCents(program: (typeof mooveProgramCatalog)[number]) {
+    return program.priceCents + (includeNutrition ? NUTRITION_ADDON_CENTS : 0)
   }
 
   return (
     <>
       <section className="relative overflow-hidden border-b border-moove-border/80">
         <div className="programs-hero-grid pointer-events-none absolute inset-0" aria-hidden />
-        <div className="pointer-events-none absolute -right-20 top-8 h-72 w-72 rounded-full bg-moove-lime/15 blur-3xl" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:py-24">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          style={{
+            backgroundImage:
+              'radial-gradient(ellipse 65% 55% at 10% 25%, rgba(196, 240, 49, 0.16) 0%, transparent 52%), radial-gradient(circle at 88% 12%, rgba(232, 180, 160, 0.38) 0%, transparent 38%)',
+          }}
+          aria-hidden
+        />
+        <SiteContainer className="relative grid gap-8 py-10 sm:py-12 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:py-14 xl:gap-12">
           <div className="animate-fade-up">
             <p className="moove-eyebrow">{t('programs.eyebrow')}</p>
-            <h1 className="font-display mt-5 max-w-2xl text-4xl font-semibold leading-[1.06] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.5rem]">
+            <div className="moove-rule mt-4" aria-hidden />
+            <h1 className="font-display mt-4 max-w-2xl text-4xl font-semibold leading-[1.06] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.5rem]">
               {t('programs.title')}
+              <span className="mt-1 block text-gradient-lime sm:mt-2">{t('programs.titleAccent')}</span>
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-moove-muted sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-moove-muted sm:text-lg">
               {t('programs.description')}
             </p>
             <a
               href="#programs"
-              className="mt-9 inline-flex items-center rounded-full bg-moove-espresso px-6 py-3 text-sm font-semibold text-moove-lime transition hover:brightness-110"
+              className="mt-7 inline-flex items-center rounded-full bg-moove-espresso px-6 py-3 text-sm font-semibold text-moove-lime shadow-moove-lift transition hover:-translate-y-0.5 hover:brightness-110"
             >
               {t('programs.heroCta')}
               <span className="ml-2" aria-hidden>↓</span>
             </a>
-            <ul className="mt-10 grid gap-3 text-sm text-moove-silver sm:grid-cols-3">
+            <dl className="mt-8 grid gap-4 border-t border-moove-border/70 pt-6 sm:grid-cols-3">
               {Object.values(dictionary.programs.proof).map((proof) => (
-                <li key={proof} className="flex items-start gap-2">
-                  <span className="mt-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-moove-lime text-[10px] text-moove-espresso">✓</span>
-                  <span>{proof}</span>
-                </li>
+                <div key={proof}>
+                  <dt className="font-display text-sm font-semibold text-moove-silver sm:text-base">{proof}</dt>
+                </div>
               ))}
-            </ul>
+            </dl>
           </div>
 
-          <div className="animate-fade-up relative mx-auto w-full max-w-md [animation-delay:120ms] lg:max-w-none">
-            <div className="programs-cover relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-white/40 shadow-moove-soft">
+          <div className="moove-hero-breakout animate-fade-up relative mx-auto w-full max-w-md [animation-delay:120ms] lg:max-w-none">
+            <div
+              className="pointer-events-none absolute -right-4 -top-4 -z-10 h-32 w-32 rounded-full bg-moove-lime/20 blur-2xl"
+              aria-hidden
+            />
+            <div className="programs-cover relative aspect-[4/5] overflow-hidden rounded-[2rem] border border-white/40 shadow-moove-soft ring-1 ring-moove-lime/20">
               <img
                 src="/image4.jpeg"
                 alt={t('programs.heroImageAlt')}
@@ -161,121 +164,36 @@ export function ProgramsPage() {
               </div>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
-      <main className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+      <SiteContainer as="main" className="pb-14 pt-8 sm:pb-16 sm:pt-10">
         {paymentSuccess ? (
           <div className="rounded-2xl border border-moove-lime/30 bg-moove-lime/10 p-6">
             <p className="font-display text-lg font-semibold text-moove-silver">{t('programs.paymentSuccess.title')}</p>
             <p className="mt-2 text-sm text-moove-muted">
               {pollStatus === 'paid' ? t('programs.paymentSuccess.paid') : t('programs.paymentSuccess.body')}
             </p>
-            {nutritionSuccess ? (
-              <p className="mt-2 text-sm text-moove-muted">{t('programs.paymentSuccess.nutritionHint')}</p>
-            ) : null}
           </div>
         ) : null}
 
         <section id="programs" className="scroll-mt-24">
-          {(['collection', 'sculpt', 'build'] as const).map((collectionKey) => {
-            const collection = dictionary.programs.collections[collectionKey]
-            const programs = mooveProgramCatalog.filter((program) => program.collectionKey === collectionKey)
+          <div className="max-w-2xl">
+            <p className="moove-eyebrow">{t('programs.catalog.eyebrow')}</p>
+            <h2 className="font-display mt-3 text-3xl font-semibold text-moove-silver sm:text-4xl">
+              {t('programs.catalog.title')}
+            </h2>
+            <p className="mt-3 text-moove-muted">{t('programs.catalog.body')}</p>
+          </div>
 
-            return (
-              <div key={collectionKey} className="mt-20 first:mt-16">
-                <div className="max-w-2xl">
-                  <p className="moove-eyebrow">{collection.eyebrow}</p>
-                  <h2 className="font-display mt-3 text-3xl font-semibold text-moove-silver sm:text-4xl">{collection.title}</h2>
-                  <p className="mt-3 text-moove-muted">{collection.body}</p>
-                </div>
-                <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                  {programs.map((program) => {
-                    const item = dictionary.programs.items[program.key]
-                    const title = item?.title ?? program.key
-                    const totalPrice = checkoutTotalEur(program)
-
-                    return (
-                      <article
-                        key={program.key}
-                        className={`group programs-card relative flex flex-col overflow-hidden rounded-[1.5rem] border transition duration-300 hover:-translate-y-1 hover:shadow-moove-soft ${
-                          program.featured
-                            ? 'border-moove-lime/60 bg-moove-espresso text-white'
-                            : 'border-moove-border/80 bg-moove-surface'
-                        }`}
-                      >
-                        <div className="relative aspect-[16/10] overflow-hidden">
-                          <img
-                            src={program.imagePath}
-                            alt=""
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-                            style={{ objectPosition: program.imagePosition }}
-                          />
-                          <div className={`absolute inset-0 ${program.featured ? 'bg-moove-espresso/45' : 'bg-moove-espresso/20'}`} />
-                          {program.featured ? (
-                            <span className="absolute left-5 top-5 rounded-full bg-moove-lime px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-moove-espresso">
-                              {t('programs.featured')}
-                            </span>
-                          ) : null}
-                        </div>
-
-                        <div className="flex flex-1 flex-col p-6 sm:p-7">
-                          <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${program.featured ? 'text-moove-lime' : 'text-moove-accent'}`}>
-                            {t(`programs.benefits.${program.benefitKey}`)}
-                          </p>
-                          <h3 className={`font-display mt-3 text-2xl font-semibold leading-[1.13] ${program.featured ? 'text-white' : 'text-moove-silver'}`}>
-                            {title}
-                          </h3>
-                          <p className={`mt-3 flex-1 text-sm leading-relaxed ${program.featured ? 'text-moove-glow/90' : 'text-moove-muted'}`}>
-                            {t(`programs.outcomes.${program.outcomeKey}`)}
-                          </p>
-
-                          <div className="mt-7 flex flex-wrap gap-2">
-                            <span className={`rounded-full border px-3 py-1.5 text-xs font-medium ${program.featured ? 'border-white/20 text-white/90' : 'border-moove-border/80 text-moove-silver'}`}>
-                              {t(`programs.levels.${program.levelKey}`)}
-                            </span>
-                            <span className={`rounded-full border px-3 py-1.5 text-xs font-medium ${program.featured ? 'border-white/20 text-white/90' : 'border-moove-border/80 text-moove-silver'}`}>
-                              {t(`programs.durations.${program.durationKey}`)}
-                            </span>
-                          </div>
-
-                          <div className={`mt-6 flex items-center justify-between border-t pt-5 ${program.featured ? 'border-white/15' : 'border-moove-border/80'}`}>
-                            <div>
-                              <p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${program.featured ? 'text-white/50' : 'text-moove-muted/70'}`}>
-                                {t('programs.priceLabel')}
-                              </p>
-                              <p className={`mt-1 font-display text-2xl font-semibold ${program.featured ? 'text-moove-lime' : 'text-moove-silver'}`}>
-                                {includeNutrition ? `${totalPrice}€` : `${program.priceEur}€`}
-                              </p>
-                              {includeNutrition ? (
-                                <p className={`mt-0.5 text-[10px] ${program.featured ? 'text-white/60' : 'text-moove-muted'}`}>
-                                  {program.priceEur}€ + {NUTRITION_ADDON_EUR}€
-                                </p>
-                              ) : null}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => openCheckout(program)}
-                              className={`rounded-full px-4 py-2.5 text-xs font-semibold transition ${
-                                program.featured
-                                  ? 'bg-moove-lime text-moove-espresso hover:bg-moove-lime-hover'
-                                  : 'border border-moove-espresso bg-moove-espresso text-moove-lime hover:brightness-110'
-                              }`}
-                            >
-                              {t('programs.order.cta')}
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+          <ProgramShowcase
+            programs={mooveProgramCatalog}
+            copy={dictionary.programs.items}
+            onPurchase={openCheckout}
+          />
         </section>
 
-        <section className="mt-20 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className="mt-14 grid gap-5 sm:mt-16 lg:grid-cols-[1.2fr_0.8fr] xl:gap-8">
           <div className="rounded-[1.75rem] border border-moove-border/80 bg-moove-elevated/50 p-7 sm:p-9">
             <p className="moove-eyebrow">{t('programs.includes.eyebrow')}</p>
             <h2 className="font-display mt-3 text-3xl font-semibold text-moove-silver">{t('programs.includes.title')}</h2>
@@ -304,49 +222,104 @@ export function ProgramsPage() {
             </ol>
           </div>
         </section>
-      </main>
+      </SiteContainer>
 
       {checkoutProgram ? (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-moove-espresso/55 p-4 backdrop-blur-sm sm:items-center sm:p-6"
           role="presentation"
           onMouseDown={() => {
-            if (orderState !== 'submitting') closeCheckout()
+            if (orderState !== 'submitting') setCheckoutProgram(null)
           }}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="program-checkout-title"
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[1.75rem] border border-white/60 bg-moove-surface p-6 shadow-moove-soft sm:p-8"
+            className={`w-full max-w-lg rounded-[1.75rem] border border-white/60 bg-moove-surface p-6 shadow-moove-soft sm:p-8${showQuestionnaire ? ' max-h-[90vh] overflow-y-auto' : ''}`}
             onMouseDown={(event) => event.stopPropagation()}
           >
-            {showQuestionnaire ? (
-              <>
-                <div className="flex items-start justify-between gap-5">
-                  <div>
-                    <p className="moove-eyebrow">{t('programs.purchase.eyebrow')}</p>
-                    <h2 id="program-checkout-title" className="font-display mt-3 text-2xl font-semibold text-moove-silver">
-                      {t('programs.order.nutritionQuestionnaireTitle')}
-                    </h2>
-                    <p className="mt-2 text-sm text-moove-muted">{t('programs.order.nutritionQuestionnaireHint')}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowQuestionnaire(false)}
-                    disabled={orderState === 'submitting'}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-moove-border text-lg text-moove-muted transition hover:border-moove-espresso hover:text-moove-espresso disabled:opacity-50"
-                    aria-label={t('common.close')}
-                  >
-                    ×
-                  </button>
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="moove-eyebrow">{t('programs.purchase.eyebrow')}</p>
+                <h2 id="program-checkout-title" className="font-display mt-3 text-2xl font-semibold text-moove-silver">
+                  {t('programs.purchase.title')}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCheckoutProgram(null)}
+                disabled={orderState === 'submitting'}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-moove-border text-lg text-moove-muted transition hover:border-moove-espresso hover:text-moove-espresso disabled:opacity-50"
+                aria-label={t('common.close')}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-moove-lime/30 bg-moove-lime/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-moove-accent">
+                {t('programs.priceLabel')}
+              </p>
+              <div className="mt-2 flex items-end justify-between gap-4">
+                <p className="font-display text-lg font-semibold text-moove-silver">
+                  {dictionary.programs.items[checkoutProgram.key]?.title ?? checkoutProgram.key}
+                </p>
+                <div className="shrink-0 text-right">
+                  <span className="text-lg font-bold text-moove-espresso">
+                    {formatProgramPrice(checkoutTotalCents(checkoutProgram), locale)}
+                  </span>
+                  <p className="mt-1 text-[10px] text-moove-muted">{t('programs.vatIncluded')}</p>
                 </div>
-                <div className="mt-6">
+              </div>
+            </div>
+
+            <p className="mt-5 text-sm leading-relaxed text-moove-muted">{t('programs.purchase.body')}</p>
+            <div className="mt-5 rounded-xl border border-moove-border/70 bg-moove-elevated/45 px-4 py-3 text-sm font-medium text-moove-silver">
+              {t('programs.purchase.paymentMethod')}
+            </div>
+            <label className="mt-6 block text-sm font-semibold text-moove-silver" htmlFor="program-email">
+              {t('programs.order.emailLabel')}
+            </label>
+            <input
+              id="program-email"
+              type="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder={t('programs.order.emailPlaceholder')}
+              className="mt-2 w-full rounded-xl border border-moove-border/80 bg-white px-4 py-3.5 text-sm text-moove-silver outline-none ring-moove-lime/40 focus:ring-2"
+            />
+            <p className="mt-3 text-xs leading-relaxed text-moove-muted">{t('programs.order.hint')}</p>
+
+            {!showQuestionnaire ? (
+              <>
+                <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm text-moove-silver">
+                  <input
+                    type="checkbox"
+                    checked={includeNutrition}
+                    onChange={(event) => setIncludeNutrition(event.target.checked)}
+                    className="mt-1 rounded border-moove-border text-moove-espresso focus:ring-moove-lime"
+                  />
+                  <span>{t('programs.order.nutritionAddon', { price: NUTRITION_ADDON_CENTS / 100 })}</span>
+                </label>
+                <p className="mt-2 text-xs text-moove-muted">{t('programs.order.nutritionAddonHint')}</p>
+              </>
+            ) : null}
+
+            {showQuestionnaire ? (
+              <div className="mt-6">
+                <h3 className="font-display text-lg font-semibold text-moove-silver">
+                  {t('programs.order.nutritionQuestionnaireTitle')}
+                </h3>
+                <p className="mt-2 text-sm text-moove-muted">{t('programs.order.nutritionQuestionnaireHint')}</p>
+                <div className="mt-4">
                   <NutritionQuestionnaire
                     email={email}
                     hideEmail
                     busy={orderState === 'submitting'}
-                    onComplete={(responses) => handleNutritionComplete(responses)}
+                    onComplete={(responses) => void handleOrder(checkoutProgram.key, responses)}
                     submitLabel={
                       orderState === 'submitting' ? t('programs.order.submitting') : t('programs.order.cta')
                     }
@@ -360,96 +333,27 @@ export function ProgramsPage() {
                 >
                   {t('programs.order.cancelNutrition')}
                 </button>
-              </>
-            ) : (
-              <>
-                <div className="flex items-start justify-between gap-5">
-                  <div>
-                    <p className="moove-eyebrow">{t('programs.purchase.eyebrow')}</p>
-                    <h2 id="program-checkout-title" className="font-display mt-3 text-2xl font-semibold text-moove-silver">
-                      {t('programs.purchase.title')}
-                    </h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeCheckout}
-                    disabled={orderState === 'submitting'}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-moove-border text-lg text-moove-muted transition hover:border-moove-espresso hover:text-moove-espresso disabled:opacity-50"
-                    aria-label={t('common.close')}
-                  >
-                    ×
-                  </button>
-                </div>
+              </div>
+            ) : null}
 
-                <div className="mt-6 rounded-2xl border border-moove-lime/30 bg-moove-lime/10 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-moove-accent">
-                    {t('programs.priceLabel')}
-                  </p>
-                  <div className="mt-2 flex items-end justify-between gap-4">
-                    <p className="font-display text-lg font-semibold text-moove-silver">
-                      {dictionary.programs.items[checkoutProgram.key]?.title ?? checkoutProgram.key}
-                    </p>
-                    <div className="shrink-0 text-right">
-                      <span className="text-lg font-bold text-moove-espresso">
-                        {checkoutTotalEur(checkoutProgram)}€
-                      </span>
-                      {includeNutrition ? (
-                        <p className="text-[10px] text-moove-muted">
-                          {checkoutProgram.priceEur}€ + {NUTRITION_ADDON_EUR}€
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
+            {orderError ? (
+              <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                {orderError}
+              </p>
+            ) : null}
 
-                <p className="mt-5 text-sm leading-relaxed text-moove-muted">{t('programs.purchase.body')}</p>
-                <div className="mt-5 rounded-xl border border-moove-border/70 bg-moove-elevated/45 px-4 py-3 text-sm font-medium text-moove-silver">
-                  {t('programs.purchase.paymentMethod')}
-                </div>
-                <label className="mt-6 block text-sm font-semibold text-moove-silver" htmlFor="program-email">
-                  {t('programs.order.emailLabel')}
-                </label>
-                <input
-                  id="program-email"
-                  type="email"
-                  autoComplete="email"
-                  autoFocus
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder={t('programs.order.emailPlaceholder')}
-                  className="mt-2 w-full rounded-xl border border-moove-border/80 bg-white px-4 py-3.5 text-sm text-moove-silver outline-none ring-moove-lime/40 focus:ring-2"
-                />
-                <p className="mt-3 text-xs leading-relaxed text-moove-muted">{t('programs.order.hint')}</p>
-
-                <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm text-moove-silver">
-                  <input
-                    type="checkbox"
-                    checked={includeNutrition}
-                    onChange={(event) => setIncludeNutrition(event.target.checked)}
-                    className="mt-1 rounded border-moove-border text-moove-espresso focus:ring-moove-lime"
-                  />
-                  <span>{t('programs.order.nutritionAddon', { price: NUTRITION_ADDON_EUR })}</span>
-                </label>
-                <p className="mt-2 text-xs text-moove-muted">{t('programs.order.nutritionAddonHint')}</p>
-
-                {orderError ? (
-                  <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                    {orderError}
-                  </p>
-                ) : null}
-
-                <button
-                  type="button"
-                  disabled={orderState === 'submitting'}
-                  onClick={() => startOrder(checkoutProgram.key)}
-                  className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-moove-espresso px-6 py-3.5 text-sm font-semibold text-moove-lime transition hover:brightness-110 disabled:opacity-60"
-                >
-                  {orderState === 'submitting' && selectedKey === checkoutProgram.key
-                    ? t('programs.order.submitting')
-                    : t('programs.order.cta')}
-                </button>
-              </>
-            )}
+            {!showQuestionnaire ? (
+            <button
+              type="button"
+              disabled={orderState === 'submitting'}
+              onClick={() => void handleOrder(checkoutProgram.key)}
+              className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-moove-espresso px-6 py-3.5 text-sm font-semibold text-moove-lime transition hover:brightness-110 disabled:opacity-60"
+            >
+              {orderState === 'submitting' && selectedKey === checkoutProgram.key
+                ? t('programs.order.submitting')
+                : t('programs.order.cta')}
+            </button>
+            ) : null}
           </section>
         </div>
       ) : null}

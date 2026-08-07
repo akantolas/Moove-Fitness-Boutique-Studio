@@ -15,7 +15,6 @@ export const el = {
     about: 'Σχετικά',
     contact: 'Επικοινωνία',
     programs: 'Προγράμματα',
-    nutrition: 'Διατροφή',
     packages: 'Πακέτα',
     main: 'Κύρια πλοήγηση',
     mobile: 'Κινητή πλοήγηση',
@@ -209,7 +208,8 @@ export const el = {
   },
   programs: {
     eyebrow: 'Peach training system',
-    title: 'Χτίσε γλουτούς με πρόγραμμα. Όχι στην τύχη.',
+    title: 'Χτίσε γλουτούς με πρόγραμμα.',
+    titleAccent: 'Όχι στην τύχη.',
     description:
       'Δομημένα προγράμματα γλουτών, σχεδιασμένα για να ξέρεις ακριβώς τι κάνεις σε κάθε προπόνηση — από την ενεργοποίηση μέχρι το finisher.',
     heroBadge: 'Εξατομικευμένη δομή · On-demand πρόσβαση',
@@ -225,6 +225,25 @@ export const el = {
       title: 'Ασφαλές checkout',
       body: 'Βάλε το email σου και ολοκλήρωσε με ασφάλεια την πληρωμή στο Stripe.',
       paymentMethod: 'Ασφαλής πληρωμή με κάρτα μέσω Stripe',
+    },
+    catalog: {
+      eyebrow: 'Διάλεξε το πλάνο σου',
+      title: 'Τέσσερις επιλογές. Ένας ξεκάθαρος στόχος.',
+      body: 'Κάθε αγορά περιλαμβάνει όλες τις προπονήσεις του προγράμματος και προσωπικό private link.',
+      selectorLabel: 'Διάλεξε πακέτο',
+      selectorHint: 'Υπάρχουν 4 διαθέσιμα πακέτα — πάτησε για να δεις λεπτομέρειες.',
+    },
+    nutritionUpsell: {
+      eyebrow: 'Προαιρετική προσθήκη',
+      title: 'Πρόσθεσε προσωποποιημένη διατροφή',
+      body: 'Εβδομαδιαίο πλάνο γευμάτων σε PDF, με βάση το ερωτηματολόγιό σου.',
+      bullets: [
+        'Πλάνο σε PDF στο email σου μετά την πληρωμή',
+        'Συμπληρώνεις σύντομο ερωτηματολόγιο στο checkout',
+        'Διαθέσιμο μόνο με αγορά προγράμματος',
+      ],
+      priceLabel: '+{{price}}€',
+      checkoutHint: 'Ενεργοποιείται στο βήμα πληρωμής — τσέκαρε την επιλογή στο checkout.',
     },
     collections: {
       collection: {
@@ -254,6 +273,7 @@ export const el = {
       posterior: 'Posterior-chain focus',
       volume: 'Volume & pump',
       conditioning: 'Conditioning & burn',
+      complete: 'Ολοκληρωμένο Peach system',
     },
     outcomes: {
       foundation: 'Χτίσε σωστή τεχνική και δύναμη στα βασικά patterns.',
@@ -266,6 +286,7 @@ export const el = {
       posterior: 'Δούλεψε οπίσθια αλυσίδα με στόχο πραγματική πρόοδο.',
       volume: 'Πρόσθεσε όγκο και pump με πιο υψηλό training volume.',
       conditioning: 'Αύξησε conditioning και θερμιδική κατανάλωση με μεταβολικούς κύκλους και high-rep glute work.',
+      complete: 'Από τη σωστή βάση μέχρι δύναμη, όγκο, ορισμό και conditioning — και οι 12 προπονήσεις σε μία συλλογή.',
     },
     featured: 'Δημοφιλής επιλογή',
     includes: {
@@ -336,6 +357,8 @@ export const el = {
     },
     durationLabel: 'Διάρκεια',
     priceLabel: 'Τιμή',
+    vatIncluded: 'Συμπεριλαμβάνεται ΦΠΑ',
+    workoutsLabel: 'προπονήσεις',
     levels: {
       beginner: 'Αρχάριοι',
       intermediate: 'Μεσαίο',
@@ -347,55 +370,24 @@ export const el = {
       weeks6: '6 εβδομάδες',
       weeks4x3: '4 εβδομάδες · 3x/εβδομάδα',
       weeks8x45: '8 εβδομάδες · 4–5x/εβδομάδα',
+      complete: 'Πλήρης συλλογή',
     },
     items: {
-      peach_start: {
-        title: 'Peach Collection – 1. Peach Start',
-        desc: '4 εβδομάδες γλουτοί — goblet squat, hip thrust, RDL, lunges και ενεργοποίηση. Ιδανικό για χτίσιμο δύναμης με σωστή τεχνική.',
+      peach_start_bundle: {
+        title: 'Peach Start',
+        desc: 'Τρεις προπονήσεις για τεχνική, ενεργοποίηση και σταδιακό χτίσιμο δύναμης στα βασικά glute patterns.',
       },
-      peach_workout_b: {
-        title: 'Peach Collection – 2. Workout B',
-        desc: '4 εβδομάδες γλουτοί — leg press, βουλγάρικα, dumbbell RDL, cable kickback και standing abduction. Συμπληρωματικό πρόγραμμα της Peach Collection.',
+      peach_build: {
+        title: 'Peach Build',
+        desc: 'Τέσσερις προπονήσεις δύναμης και όγκου με heavy lifts, unilateral work, posterior chain και pump.',
       },
-      peach_workout_c: {
-        title: 'Peach Collection – 3. Workout C',
-        desc: '4 εβδομάδες γλουτοί — hip thrust, sumo squat, step-up, cable pull through και seated abduction. Glute Shape πρόγραμμα της Peach Collection.',
+      peach_sculpt: {
+        title: 'Peach Sculpt',
+        desc: 'Πέντε προπονήσεις με supersets, pump, conditioning και τεχνικές έντασης για shape, definition και symmetry.',
       },
-      peach_sculpt_a: {
-        title: 'Peach Sculpt – Workout A',
-        desc: '8 εβδομάδες — hip thrust, βουλγάρικα, Smith lunges, cable kickbacks και finisher circuit. Shape, definition και symmetry με progressive load plan.',
-      },
-      peach_sculpt_b: {
-        title: 'Peach Sculpt – Workout B: Glute Pump Symmetry',
-        desc: '8 εβδομάδες — B-stance hip thrust, cable kickbacks, back extensions, abduction supersets, burnout και finisher circuit. Στόχος pump και συμμετρία.',
-      },
-      peach_sculpt_c: {
-        title: 'Peach Sculpt – Workout C: Posterior Chain',
-        desc: '8 εβδομάδες — RDL main lift, single-leg RDL, leg curls, pull-throughs, hyperextensions και finisher circuit. Εστίαση στην οπίσθια αλυσίδα.',
-      },
-      peach_sculpt_d: {
-        title: 'Peach Sculpt – Workout D: Leg Volume & Pump',
-        desc: '8 εβδομάδες — elevated split squats, hack squat supersets, leg extensions, abductions και finisher circuit. Στόχος leg volume και pump.',
-      },
-      peach_sculpt_e: {
-        title: 'Peach Sculpt – Workout E: Conditioning & Burn',
-        desc: '8 εβδομάδες — conditioning circuit, glute pump superset, burnout circuit και προτεινόμενη καρδιοαναπνευστική. Μεταβολικό conditioning και γράμμωση γλουτών.',
-      },
-      peach_build_wa_heavy: {
-        title: 'Peach Build – WA Heavy Glutes',
-        desc: '6 εβδομάδες intensive — βαριά hip thrusts, high bar squat, RDL και seated abduction. Finisher superset Frog Pumps + banded abduction.',
-      },
-      peach_build_wb: {
-        title: 'Peach Build – Workout B: Glute & Unilateral Strength',
-        desc: '6 εβδομάδες — lunges, βουλγάρικα, step-ups, single-leg hip thrust και cable abduction. Finisher weighted reverse lunges.',
-      },
-      peach_build_wc: {
-        title: 'Peach Build – Workout C: Posterior Chain',
-        desc: '6 εβδομάδες — RDL, back extension, pull through, leg press high stance και cable abduction. Finisher abduction machine 80–100 reps.',
-      },
-      peach_build_wd: {
-        title: 'Peach Build – Workout D: Glute Volume & Pump',
-        desc: '6 εβδομάδες — hip thrust, Smith reverse lunge, leg press wide stance, cable kickback και seated abduction. Finisher Frog Pumps + banded hold.',
+      peach_complete: {
+        title: 'Complete Collection',
+        desc: 'Και οι 12 προπονήσεις των Peach Start, Build και Sculpt σε ένα ολοκληρωμένο training system.',
       },
     },
     order: {
@@ -408,24 +400,24 @@ export const el = {
       successBody: 'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις link πρόσβασης.',
       refLabel: 'Κωδικός παραγγελίας',
       invalidEmail: 'Βάλε έγκυρο email.',
+      nutritionAddon: 'Προσθήκη προσωποποιημένης διατροφής (+{{price}}€)',
+      nutritionAddonHint: 'Διαθέσιμη μόνο με αγορά προγράμματος.',
+      nutritionQuestionnaireTitle: 'Ερωτηματολόγιο διατροφής',
+      nutritionQuestionnaireHint: 'Συμπλήρωσε τα στοιχεία για να δημιουργηθεί το προσωποποιημένο πλάνο σου.',
+      cancelNutrition: 'Ακύρωση προσθήκης διατροφής',
       errors: {
         order_failed: 'Η παραγγελία απέτυχε. Δοκίμασε ξανά.',
         rate_limit: 'Πολλές παραγγελίες — δοκίμασε αργότερα.',
         invalid_email: 'Μη έγκυρο email.',
         invalid_program: 'Μη έγκυρο πρόγραμμα.',
         stripe_unavailable: 'Η ασφαλής πληρωμή δεν είναι διαθέσιμη αυτή τη στιγμή. Δοκίμασε ξανά αργότερα.',
+        stripe_not_configured: 'Το Stripe δεν είναι ρυθμισμένο τοπικά. Πρόσθεσε STRIPE_SECRET_KEY στο .env.local και κάνε restart το vercel dev.',
       },
-      nutritionAddon: 'Προσθήκη προσωποποιημένης διατροφής (+{{price}}€)',
-      nutritionAddonHint: 'Διαθέσιμη μόνο με αγορά προγράμματος.',
-      nutritionQuestionnaireTitle: 'Ερωτηματολόγιο διατροφής',
-      nutritionQuestionnaireHint: 'Συμπλήρωσε τα στοιχεία για να δημιουργηθεί το προσωποποιημένο πλάνο σου.',
-      cancelNutrition: 'Ακύρωση διατροφής',
     },
     paymentSuccess: {
       title: 'Η πληρωμή ολοκληρώθηκε',
       body: 'Θα λάβεις email με το link πρόσβασης στο πρόγραμμα σύντομα.',
       paid: 'Η πληρωμή επιβεβαιώθηκε — έλεγξε το email για το link πρόσβασης.',
-      nutritionHint: 'Αν πρόσθεσες διατροφή, θα λάβεις και PDF με το διατροφικό πλάνο στο email σου.',
     },
     access: {
       eyebrow: 'Το πρόγραμμά σου',
@@ -443,6 +435,14 @@ export const el = {
       overview: 'Επισκόπηση προγράμματος',
       programPlan: 'Ο χάρτης της προπόνησής σου',
       workout: 'Προπόνηση',
+      chooseWorkout: 'Διάλεξε προπόνηση',
+      includedWorkouts: 'Οι προπονήσεις σου',
+      groups: {
+        start: 'Peach Start',
+        build: 'Peach Build',
+        sculpt: 'Peach Sculpt',
+        other: 'Προπόνηση',
+      },
       todaysPlan: 'Το σημερινό πλάνο',
       sections: 'ενότητες',
       exercises: 'ασκήσεις',
@@ -667,6 +667,9 @@ export const el = {
       paymentRequiredFirst: 'Ολοκλήρωσε την πληρωμή πριν κλείσεις επόμενη συνεδρία',
       sessionsExhausted: 'Έχεις κλείσει όλες τις συνεδρίες αυτού του πακέτου',
       confirmIncluded: 'Επιβεβαίωση κράτησης',
+      stickyConfirm: 'Επιβεβαίωση κράτησης',
+      selectedTimeLabel: 'Επιλεγμένη ώρα',
+      stepConfirm: 'Βήμα 2: Επιβεβαίωση',
       successIncluded: 'Η συνεδρία επιβεβαιώθηκε.',
       bookWithPackage: 'Κλείσε με αυτό το πακέτο',
     },
@@ -993,6 +996,10 @@ export const el = {
         preset_failed: 'Αποτυχία ανοίγματος ημέρας.',
         clear_failed: 'Αποτυχία καθαρισμού ημέρας.',
         payment_confirm_failed: 'Η επιβεβαίωση πληρωμής απέτυχε.',
+        missing_email_config:
+          'Δεν έχει ρυθμιστεί αποστολή email. Τοπικά: βάλε το RESEND_API_KEY από Vercel (Preview/Production) στο .env.local. Η πληρωμή δεν επιβεβαιώθηκε.',
+        payment_confirmed_email_failed:
+          'Η πληρωμή επιβεβαιώθηκε αλλά το email απέτυχε. Χρησιμοποίησε «Επανάληψη αποστολής link».',
         overview_fetch_failed: 'Αποτυχία φόρτωσης επισκόπησης.',
         payments_fetch_failed: 'Αποτυχία φόρτωσης πληρωμών.',
         bookings_fetch_failed: 'Αποτυχία φόρτωσης κρατήσεων.',
@@ -1359,10 +1366,6 @@ export const el = {
         {
           title: 'Έτοιμα προγράμματα (digital)',
           body: 'Η αγορά έτοιμων προγραμμάτων γυμναστικής γίνεται online μέσω του site. Μετά την πληρωμή (Stripe, PayPal ή Revolut) λαμβάνετε email με link πρόσβασης σε προσωπική σελίδα (ασκησιολόγιο, videos). Το περιεχόμενο είναι για προσωπική χρήση· δεν επιτρέπεται αναδιανομή ή δημόσια κοινοποίηση.',
-        },
-        {
-          title: 'Προσωποποιημένη διατροφή (digital)',
-          body: 'Η υπηρεσία διατροφικού πλάνου παρέχεται online μετά από ερωτηματολόγιο και πληρωμή. Το πλάνο αποστέλλεται σε PDF στο email σας. Δεν αποτελεί ιατρική ή διαιτολογική συμβουλή· για αλλεργίες ή παθήσεις συμβουλευτείτε επαγγελματία υγείας.',
         },
         {
           title: 'Ακυρώσεις & απουσίες',

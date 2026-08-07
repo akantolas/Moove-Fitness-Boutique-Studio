@@ -9,9 +9,12 @@ import {
 import { getPayPalUrl, getRevolutUrl } from '../posing/_pricing.js'
 import {
   formatPurchaseRef,
+  getCatalogPriceCents,
   getCatalogPriceEur,
+  getIncludedWorkoutKeys,
   getProgramName,
   getStripePriceEnvKey,
+  getWorkoutGroup,
   isValidProgramKey,
 } from './_pricing.js'
 import { getProgramContentForApi } from './_catalog.js'
@@ -51,13 +54,13 @@ export async function createProgramStripeCheckout({
   programKey,
   customerEmail,
   locale = 'el',
-  amountEur,
+  amountCents,
   programName,
 }) {
   const secret = process.env.STRIPE_SECRET_KEY
   const priceEnvKey = getStripePriceEnvKey(programKey)
   const priceId = priceEnvKey ? process.env[priceEnvKey] : null
-  const resolvedAmount = Math.round(Number(amountEur))
+  const resolvedAmount = Math.round(Number(amountCents))
   const needsDynamic = !priceId
 
   if (!secret || (needsDynamic && (!resolvedAmount || resolvedAmount <= 0))) {
@@ -69,7 +72,7 @@ export async function createProgramStripeCheckout({
   params.set('mode', 'payment')
   if (needsDynamic) {
     params.set('line_items[0][price_data][currency]', 'eur')
-    params.set('line_items[0][price_data][unit_amount]', String(resolvedAmount * 100))
+    params.set('line_items[0][price_data][unit_amount]', String(resolvedAmount))
     params.set('line_items[0][price_data][product_data][name]', programName)
   } else {
     params.set('line_items[0][price]', priceId)
@@ -212,4 +215,19 @@ export async function sendProgramAccessFlowEmail(purchase, locale) {
   })
 }
 
-export { cors, json, getSupabaseAdmin, normalizeBookingLocale, isValidProgramKey, getCatalogPriceEur, getProgramName, formatPurchaseRef, getProgramContentForApi, getPayPalUrl, getRevolutUrl }
+export {
+  cors,
+  json,
+  getSupabaseAdmin,
+  normalizeBookingLocale,
+  isValidProgramKey,
+  getCatalogPriceCents,
+  getCatalogPriceEur,
+  getIncludedWorkoutKeys,
+  getProgramName,
+  getWorkoutGroup,
+  formatPurchaseRef,
+  getProgramContentForApi,
+  getPayPalUrl,
+  getRevolutUrl,
+}

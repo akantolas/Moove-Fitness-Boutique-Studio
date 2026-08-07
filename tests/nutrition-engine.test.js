@@ -104,3 +104,31 @@ describe('nutrition matcher', () => {
     assert.ok(list.length > 0)
   })
 })
+
+describe('nutrition pdf', () => {
+  it('generates a landscape table PDF buffer', async () => {
+    const { generateNutritionPdfBuffer } = await import('../api/nutrition/_pdf.js')
+    const calculated = calculateNutritionPlan({ ...sampleResponses, name: 'Λία', mealsPerDay: 5 })
+    const mealPlan = buildWeeklyMealPlan(
+      mealLibrary,
+      { ...sampleResponses, name: 'Λία', mealsPerDay: 5 },
+      calculated,
+    )
+    assert.equal(mealPlan.ok, true)
+    const shoppingList = buildShoppingList(mealPlan, 'el')
+    const buffer = await generateNutritionPdfBuffer({
+      locale: 'el',
+      responses: { ...sampleResponses, name: 'Λία', mealsPerDay: 5 },
+      calculated,
+      mealPlan,
+      shoppingList,
+    })
+    assert.ok(Buffer.isBuffer(buffer))
+    assert.ok(buffer.length > 5000)
+    assert.equal(buffer.subarray(0, 4).toString(), '%PDF')
+    const pdfRaw = buffer.toString('latin1')
+    const mediaBox = pdfRaw.match(/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]/)
+    assert.ok(mediaBox, 'expected MediaBox in PDF')
+    assert.ok(Number(mediaBox[1]) > Number(mediaBox[2]), 'expected landscape page width > height')
+  })
+})

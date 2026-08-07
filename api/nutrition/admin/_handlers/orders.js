@@ -1,4 +1,4 @@
-import { readJsonBody, ensureAdmin, getUserFromRequest } from '../../posing/_lib.js'
+import { readJsonBody, ensureAdmin, getUserFromRequest } from '../../../posing/_lib.js'
 import {
   activateNutritionOrder,
   cors,
@@ -7,8 +7,8 @@ import {
   getSupabaseAdmin,
   json,
   normalizeBookingLocale,
-} from '../_lib.js'
-import { getPayPalUrl, getRevolutUrl } from '../../posing/_pricing.js'
+} from '../../_lib.js'
+import { getPayPalUrl, getRevolutUrl } from '../../../posing/_pricing.js'
 
 async function fetchPendingNutritionOrders(supabase) {
   const { data, error } = await supabase

@@ -5,13 +5,14 @@ import {
   createProgramStripeCheckout,
   findRecentPendingPurchase,
   formatPurchaseRef,
+  getCatalogPriceCents,
   getCatalogPriceEur,
   getProgramName,
   getSupabaseAdmin,
   isValidProgramKey,
   json,
   normalizeBookingLocale,
-} from './_lib.js'
+} from '../_lib.js'
 import {
   countRecentNutritionOrders,
   createCombinedStripeCheckout,
@@ -51,8 +52,11 @@ export async function handleOrder(req, res) {
       nutritionResponses = validated.data
     }
 
+    const amountCents = getCatalogPriceCents(programKey)
     const amountEur = getCatalogPriceEur(programKey)
-    if (!amountEur) return json(res, 400, { ok: false, error: 'invalid_program' })
+    if (!amountCents || !amountEur) {
+      return json(res, 400, { ok: false, error: 'invalid_program' })
+    }
 
     const nutritionAmountEur = includeNutrition ? getNutritionPriceEur() : 0
 
@@ -116,6 +120,9 @@ export async function handleOrder(req, res) {
     }
 
     let checkout
+    if (!process.env.STRIPE_SECRET_KEY?.trim()) {
+      return json(res, 503, { ok: false, error: 'stripe_not_configured' })
+    }
     if (includeNutrition && nutritionOrder) {
       checkout = await createCombinedStripeCheckout({
         programPurchaseId: purchase.id,
@@ -123,7 +130,7 @@ export async function handleOrder(req, res) {
         programKey,
         customerEmail: email,
         locale,
-        programAmountEur: amountEur,
+        programAmountCents: amountCents,
         nutritionAmountEur,
         programName,
         programRef: purchaseRef,
@@ -134,7 +141,7 @@ export async function handleOrder(req, res) {
         programKey,
         customerEmail: email,
         locale,
-        amountEur,
+        amountCents,
         programName,
       })
     }

@@ -442,7 +442,6 @@ export function usePosingAdminPanel({
     } catch (err) {
       const code = err instanceof Error ? err.message : 'payment_confirm_failed'
       const message = translateAdminError(code, translate)
-      setError(message)
       throw new Error(message)
     } finally {
       setBusy(false)

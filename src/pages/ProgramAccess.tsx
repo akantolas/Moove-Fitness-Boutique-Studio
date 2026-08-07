@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { fetchProgramAccess, type ProgramAccessContent } from '../lib/programsApi'
 import { useTranslation } from '../i18n/useTranslation'
 import { PeachSculptGuidelines } from '../components/PeachSculptGuidelines'
+import { SiteContainer } from '../components/SiteContainer'
 import { mooveProgramCatalog } from '../data/moovePrograms'
 import {
   formatProgramPrescription,
@@ -75,6 +76,7 @@ function VideoEmbed({ videoId, title }: { videoId: string; title: string }) {
 
 export function ProgramAccessPage() {
   const { token } = useParams<{ token: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { t, locale } = useTranslation()
   const [content, setContent] = useState<ProgramAccessContent | null>(null)
   const [error, setError] = useState('')
@@ -86,16 +88,12 @@ export function ProgramAccessPage() {
     if (!token) return
 
     let active = true
+    const requestedWorkout = searchParams.get('workout') ?? undefined
 
-    fetchProgramAccess(token, locale)
+    fetchProgramAccess(token, locale, requestedWorkout)
       .then((data) => {
         if (!active) return
-        setContent({
-          title: data.title,
-          programKey: data.programKey,
-          meta: data.meta,
-          sections: data.sections,
-        })
+        setContent(data)
         setError('')
         setExpandedSections(new Set([0]))
         setActiveSection(0)
@@ -111,7 +109,7 @@ export function ProgramAccessPage() {
     return () => {
       active = false
     }
-  }, [token, locale])
+  }, [token, locale, searchParams])
 
   function toggleSection(index: number) {
     setActiveSection(index)
@@ -153,14 +151,14 @@ export function ProgramAccessPage() {
   if (loading) {
     return (
       <div className="program-portal-shell px-4 py-10 sm:px-6 sm:py-16">
-        <div className="mx-auto max-w-6xl animate-pulse">
+        <SiteContainer variant="app" className="animate-pulse">
           <div className="h-[26rem] rounded-[2rem] bg-moove-espresso/15 sm:h-[30rem]" />
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <div className="h-40 rounded-2xl bg-moove-espresso/[0.07]" />
             <div className="h-40 rounded-2xl bg-moove-espresso/[0.07]" />
           </div>
           <p className="mt-6 text-center text-sm font-medium text-moove-muted">{t('programs.access.loading')}</p>
-        </div>
+        </SiteContainer>
       </div>
     )
   }
@@ -185,8 +183,8 @@ export function ProgramAccessPage() {
   }
 
   const catalogProgram = mooveProgramCatalog.find((program) => program.key === content.programKey)
-  const heroImage = catalogProgram?.imagePath ?? '/image4.jpeg'
-  const heroPosition = catalogProgram?.imagePosition ?? 'center'
+  const heroImage = catalogProgram?.imagePath ?? '/programs/peach-workout-c-cover.png'
+  const heroPosition = catalogProgram?.imagePosition ?? 'center 40%'
   const levelLabel = catalogProgram ? t(`programs.levels.${catalogProgram.levelKey}`) : null
   const prescriptionLabels: PrescriptionLabels = {
     repetitions: t('programs.access.prescription.repetitions'),
@@ -199,10 +197,18 @@ export function ProgramAccessPage() {
     perLeg: t('programs.access.prescription.perLeg'),
     perSide: t('programs.access.prescription.perSide'),
   }
+  const workoutGroups = content.workouts.reduce<
+    Array<{ group: (typeof content.workouts)[number]['group']; workouts: typeof content.workouts }>
+  >((groups, workout) => {
+    const existing = groups.find((entry) => entry.group === workout.group)
+    if (existing) existing.workouts.push(workout)
+    else groups.push({ group: workout.group, workouts: [workout] })
+    return groups
+  }, [])
 
   return (
     <div className="program-portal-shell pb-20">
-      <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 sm:pt-8">
+      <SiteContainer variant="app" className="pt-5 sm:pt-8">
         <section className="program-portal-hero relative min-h-[28rem] overflow-hidden rounded-[2rem] border border-white/20 shadow-moove-soft sm:min-h-[32rem]">
           <img
             src={heroImage}
@@ -229,6 +235,9 @@ export function ProgramAccessPage() {
               <h1 className="font-display mt-4 text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
                 {content.title}
               </h1>
+              <p className="font-display mt-3 text-xl font-semibold text-moove-lime sm:text-2xl">
+                {content.workoutTitle}
+              </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {content.meta?.duration ? (
                   <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur">
@@ -257,6 +266,41 @@ export function ProgramAccessPage() {
           </div>
         </section>
 
+        {content.workouts.length > 1 ? (
+          <section className="mt-6 rounded-[1.5rem] border border-moove-border/80 bg-moove-surface p-5 shadow-moove-lift sm:p-7">
+            <p className="moove-eyebrow">{t('programs.access.includedWorkouts')}</p>
+            <h2 className="font-display mt-2 text-2xl font-semibold text-moove-silver">
+              {t('programs.access.chooseWorkout')}
+            </h2>
+            <div className="mt-5 space-y-5">
+              {workoutGroups.map((group) => (
+                <div key={group.group}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-moove-muted">
+                    {t(`programs.access.groups.${group.group}`)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {group.workouts.map((workout, index) => (
+                      <button
+                        key={workout.key}
+                        type="button"
+                        onClick={() => setSearchParams({ workout: workout.key })}
+                        className={`rounded-full border px-4 py-2.5 text-left text-xs font-semibold transition ${
+                          content.activeWorkoutKey === workout.key
+                            ? 'border-moove-espresso bg-moove-espresso text-moove-lime'
+                            : 'border-moove-border/80 bg-moove-bg text-moove-silver hover:border-moove-lime-deep/50'
+                        }`}
+                        aria-current={content.activeWorkoutKey === workout.key ? 'page' : undefined}
+                      >
+                        {String(index + 1).padStart(2, '0')} · {workout.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {content.meta ? (
           <section className="mt-6" aria-labelledby="program-overview-title">
             <p className="moove-eyebrow">{t('programs.access.overview')}</p>
@@ -280,7 +324,7 @@ export function ProgramAccessPage() {
           </section>
         ) : null}
 
-        {content.programKey.startsWith('peach_sculpt_') ? (
+        {content.activeWorkoutKey.startsWith('peach_sculpt_') ? (
           <PeachSculptGuidelines variant="access" />
         ) : null}
 
@@ -290,10 +334,10 @@ export function ProgramAccessPage() {
             {t('programs.access.todaysPlan')}
           </h2>
         </section>
-      </div>
+      </SiteContainer>
 
       <nav className="sticky top-[4.4rem] z-30 mt-6 border-y border-moove-border/70 bg-moove-bg/90 py-3 backdrop-blur-xl" aria-label={t('programs.access.sectionNavigation')}>
-        <div className="program-section-nav mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 sm:px-6">
+        <SiteContainer variant="app" className="program-section-nav flex gap-2 overflow-x-auto">
           {content.sections.map((section, index) => (
             <button
               key={`${section.title}-${index}`}
@@ -310,10 +354,10 @@ export function ProgramAccessPage() {
               {section.title}
             </button>
           ))}
-        </div>
+        </SiteContainer>
       </nav>
 
-      <div className="mx-auto mt-6 max-w-6xl space-y-4 px-4 sm:px-6">
+      <SiteContainer variant="app" className="mt-6 space-y-4">
         {content.sections.map((section, sectionIndex) => {
           const isOpen = expandedSections.has(sectionIndex)
           const panelId = `program-section-panel-${sectionIndex}`
@@ -443,7 +487,7 @@ export function ProgramAccessPage() {
             </section>
           )
         })}
-      </div>
+      </SiteContainer>
     </div>
   )
 }

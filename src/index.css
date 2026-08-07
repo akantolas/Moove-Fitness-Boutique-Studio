@@ -25,6 +25,9 @@
   --shadow-moove-lift: 0 12px 36px -14px rgba(61, 46, 40, 0.14);
   --shadow-moove-glow: 0 0 0 1px rgba(255, 255, 255, 0.5) inset,
     0 20px 50px -24px rgba(196, 240, 49, 0.35);
+
+  --width-site-marketing: 90rem;
+  --width-site-app: 80rem;
 }
 
 @layer base {
@@ -119,6 +122,80 @@
     backdrop-filter: blur(8px);
   }
 
+  .moove-site-container {
+    margin-inline: auto;
+    width: 100%;
+    max-width: var(--width-site-app);
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .moove-site-container {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .moove-site-container {
+      padding-inline: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .moove-site-container {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  .moove-site-container-wide {
+    margin-inline: auto;
+    width: 100%;
+    max-width: var(--width-site-marketing);
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .moove-site-container-wide {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .moove-site-container-wide {
+      padding-inline: 2rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .moove-site-container-wide {
+      padding-inline: 3rem;
+    }
+  }
+
+  .moove-prose-width {
+    max-width: 48rem;
+  }
+
+  .moove-prose-width-narrow {
+    max-width: 42rem;
+  }
+
+  .moove-hero-breakout {
+    position: relative;
+  }
+
+  @media (min-width: 1280px) {
+    .moove-hero-breakout {
+      margin-right: -2rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .moove-hero-breakout {
+      margin-right: -4rem;
+    }
+  }
+
   .moove-section-pad {
     padding-block: 4.5rem;
   }
@@ -172,6 +249,28 @@
 
   details > summary::-webkit-details-marker {
     display: none;
+  }
+
+  .pose-hero-gradient {
+    position: relative;
+  }
+
+  .pose-hero-gradient::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    pointer-events: none;
+    opacity: 0.8;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(192, 38, 211, 0.22) 0%, transparent 55%),
+      radial-gradient(circle at 85% 20%, rgba(34, 211, 238, 0.15) 0%, transparent 45%);
+  }
+
+  .pose-card {
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(4px);
   }
 
   @media (min-width: 640px) {

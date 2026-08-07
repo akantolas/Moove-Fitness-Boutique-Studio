@@ -29,25 +29,25 @@ export async function createCombinedStripeCheckout({
   programKey,
   customerEmail,
   locale,
-  programAmountEur,
+  programAmountCents,
   nutritionAmountEur,
   programName,
   programRef,
 }) {
   const secret = process.env.STRIPE_SECRET_KEY
   const nutritionPriceId = getStripeNutritionPriceId()
-  const resolvedProgram = Math.round(Number(programAmountEur))
+  const resolvedProgramCents = Math.round(Number(programAmountCents))
   const resolvedNutrition = Math.round(Number(nutritionAmountEur))
   const nutritionProductName = getNutritionProductName(locale)
 
-  if (!secret || resolvedProgram <= 0 || resolvedNutrition <= 0) {
+  if (!secret || resolvedProgramCents <= 0 || resolvedNutrition <= 0) {
     return { url: '', sessionId: null }
   }
 
   const params = new URLSearchParams()
   params.set('mode', 'payment')
   params.set('line_items[0][price_data][currency]', 'eur')
-  params.set('line_items[0][price_data][unit_amount]', String(resolvedProgram * 100))
+  params.set('line_items[0][price_data][unit_amount]', String(resolvedProgramCents))
   params.set('line_items[0][price_data][product_data][name]', programName)
   params.set('line_items[0][quantity]', '1')
 
@@ -240,5 +240,4 @@ export {
   normalizeBookingLocale,
   formatNutritionOrderRef,
   getNutritionPriceEur,
-  createCombinedStripeCheckout,
 }

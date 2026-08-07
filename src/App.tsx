@@ -39,7 +39,6 @@ export default function App() {
             <Route path="/terms" element={<TermsOfUsePage />} />
             <Route path="/service-terms" element={<ServiceTermsPage />} />
             <Route path="/programmata" element={<ProgramsPage />} />
-            <Route path="/diatrofi" element={<Navigate to="/programmata" replace />} />
             <Route path="/programmata/access/:token" element={<ProgramAccessPage />} />
             <Route path="/posing" element={<PosingPage />} />
             <Route path="/posing/about" element={<PosingAboutPage />} />
