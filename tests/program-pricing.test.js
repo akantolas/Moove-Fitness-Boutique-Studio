@@ -10,10 +10,10 @@ describe('moove program payment links', () => {
       const url = getPayPalUrl(amountEur)
       assert.match(url, new RegExp(`/${amountEur}EUR$`))
     })
-    it(`Revolut URL for ${programKey} uses whole EUR path segment`, () => {
+    it(`Revolut URL for ${programKey} uses the stable profile link`, () => {
       const url = getRevolutUrl(amountEur)
-      assert.match(url, new RegExp(`/eur${amountEur}$`))
-      assert.doesNotMatch(url, /amount=/, 'Revolut must not use query amount param')
+      assert.equal(url, 'https://revolut.me/magdaqsn9')
+      assert.doesNotMatch(url, /\/eur\d+$/, 'Revolut must not append an amount path')
     })
   }
 })

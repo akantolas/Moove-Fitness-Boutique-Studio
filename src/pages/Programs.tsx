@@ -1,20 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { NutritionQuestionnaire } from '../components/NutritionQuestionnaire'
 import { mooveProgramCatalog, type MooveProgramKey } from '../data/moovePrograms'
 import { createProgramOrder, fetchProgramOrderStatus } from '../lib/programsApi'
+import type { NutritionResponses } from '../lib/nutritionTypes'
 import { useTranslation } from '../i18n/useTranslation'
 
 type OrderState = 'idle' | 'submitting' | 'error'
+
+const NUTRITION_ADDON_EUR = 25
 
 export function ProgramsPage() {
   const { t, locale, dictionary } = useTranslation()
   const [searchParams] = useSearchParams()
   const paymentSuccess = searchParams.get('payment') === 'success'
   const purchaseRef = searchParams.get('purchase') ?? ''
+  const nutritionSuccess = searchParams.get('nutrition') === '1'
 
   const [selectedKey, setSelectedKey] = useState<MooveProgramKey | null>(null)
   const [checkoutProgram, setCheckoutProgram] = useState<(typeof mooveProgramCatalog)[number] | null>(null)
   const [email, setEmail] = useState('')
+  const [includeNutrition, setIncludeNutrition] = useState(false)
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [orderState, setOrderState] = useState<OrderState>('idle')
   const [orderError, setOrderError] = useState('')
   const [pollStatus, setPollStatus] = useState<string | null>(null)
@@ -42,7 +49,7 @@ export function ProgramsPage() {
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === 'Escape' && orderState !== 'submitting') {
-        setCheckoutProgram(null)
+        closeCheckout()
       }
     }
 
@@ -50,20 +57,36 @@ export function ProgramsPage() {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [checkoutProgram, orderState])
 
-  function openCheckout(program: (typeof mooveProgramCatalog)[number]) {
-    setCheckoutProgram(program)
-    setSelectedKey(program.key)
+  function closeCheckout() {
+    setCheckoutProgram(null)
+    setShowQuestionnaire(false)
     setOrderState('idle')
     setOrderError('')
   }
 
-  async function handleOrder(programKey: MooveProgramKey) {
+  function openCheckout(program: (typeof mooveProgramCatalog)[number]) {
+    setCheckoutProgram(program)
+    setSelectedKey(program.key)
+    setShowQuestionnaire(false)
+    setOrderState('idle')
+    setOrderError('')
+  }
+
+  function startOrder(programKey: MooveProgramKey) {
     if (!email.trim()) {
       setOrderError(t('programs.order.invalidEmail'))
       return
     }
-
     setSelectedKey(programKey)
+    setOrderError('')
+    if (includeNutrition) {
+      setShowQuestionnaire(true)
+      return
+    }
+    void submitOrder(programKey)
+  }
+
+  async function submitOrder(programKey: MooveProgramKey, nutritionResponses?: NutritionResponses) {
     setOrderState('submitting')
     setOrderError('')
     try {
@@ -71,6 +94,8 @@ export function ProgramsPage() {
         programKey,
         email: email.trim(),
         locale,
+        includeNutrition: Boolean(nutritionResponses),
+        nutritionResponses,
       })
       window.location.assign(result.checkoutUrl)
     } catch (err) {
@@ -78,6 +103,15 @@ export function ProgramsPage() {
       setOrderError(t(`programs.order.errors.${code}`) || code)
       setOrderState('error')
     }
+  }
+
+  function handleNutritionComplete(responses: NutritionResponses) {
+    if (!checkoutProgram) return
+    void submitOrder(checkoutProgram.key, responses)
+  }
+
+  function checkoutTotalEur(program: (typeof mooveProgramCatalog)[number]) {
+    return program.priceEur + (includeNutrition ? NUTRITION_ADDON_EUR : 0)
   }
 
   return (
@@ -137,6 +171,9 @@ export function ProgramsPage() {
             <p className="mt-2 text-sm text-moove-muted">
               {pollStatus === 'paid' ? t('programs.paymentSuccess.paid') : t('programs.paymentSuccess.body')}
             </p>
+            {nutritionSuccess ? (
+              <p className="mt-2 text-sm text-moove-muted">{t('programs.paymentSuccess.nutritionHint')}</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -156,6 +193,7 @@ export function ProgramsPage() {
                   {programs.map((program) => {
                     const item = dictionary.programs.items[program.key]
                     const title = item?.title ?? program.key
+                    const totalPrice = checkoutTotalEur(program)
 
                     return (
                       <article
@@ -207,8 +245,13 @@ export function ProgramsPage() {
                                 {t('programs.priceLabel')}
                               </p>
                               <p className={`mt-1 font-display text-2xl font-semibold ${program.featured ? 'text-moove-lime' : 'text-moove-silver'}`}>
-                                {program.priceEur}€
+                                {includeNutrition ? `${totalPrice}€` : `${program.priceEur}€`}
                               </p>
+                              {includeNutrition ? (
+                                <p className={`mt-0.5 text-[10px] ${program.featured ? 'text-white/60' : 'text-moove-muted'}`}>
+                                  {program.priceEur}€ + {NUTRITION_ADDON_EUR}€
+                                </p>
+                              ) : null}
                             </div>
                             <button
                               type="button"
@@ -268,81 +311,145 @@ export function ProgramsPage() {
           className="fixed inset-0 z-50 flex items-end justify-center bg-moove-espresso/55 p-4 backdrop-blur-sm sm:items-center sm:p-6"
           role="presentation"
           onMouseDown={() => {
-            if (orderState !== 'submitting') setCheckoutProgram(null)
+            if (orderState !== 'submitting') closeCheckout()
           }}
         >
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="program-checkout-title"
-            className="w-full max-w-lg rounded-[1.75rem] border border-white/60 bg-moove-surface p-6 shadow-moove-soft sm:p-8"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[1.75rem] border border-white/60 bg-moove-surface p-6 shadow-moove-soft sm:p-8"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="moove-eyebrow">{t('programs.purchase.eyebrow')}</p>
-                <h2 id="program-checkout-title" className="font-display mt-3 text-2xl font-semibold text-moove-silver">
-                  {t('programs.purchase.title')}
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCheckoutProgram(null)}
-                disabled={orderState === 'submitting'}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-moove-border text-lg text-moove-muted transition hover:border-moove-espresso hover:text-moove-espresso disabled:opacity-50"
-                aria-label={t('common.close')}
-              >
-                ×
-              </button>
-            </div>
+            {showQuestionnaire ? (
+              <>
+                <div className="flex items-start justify-between gap-5">
+                  <div>
+                    <p className="moove-eyebrow">{t('programs.purchase.eyebrow')}</p>
+                    <h2 id="program-checkout-title" className="font-display mt-3 text-2xl font-semibold text-moove-silver">
+                      {t('programs.order.nutritionQuestionnaireTitle')}
+                    </h2>
+                    <p className="mt-2 text-sm text-moove-muted">{t('programs.order.nutritionQuestionnaireHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuestionnaire(false)}
+                    disabled={orderState === 'submitting'}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-moove-border text-lg text-moove-muted transition hover:border-moove-espresso hover:text-moove-espresso disabled:opacity-50"
+                    aria-label={t('common.close')}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="mt-6">
+                  <NutritionQuestionnaire
+                    email={email}
+                    hideEmail
+                    busy={orderState === 'submitting'}
+                    onComplete={(responses) => handleNutritionComplete(responses)}
+                    submitLabel={
+                      orderState === 'submitting' ? t('programs.order.submitting') : t('programs.order.cta')
+                    }
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowQuestionnaire(false)}
+                  disabled={orderState === 'submitting'}
+                  className="mt-4 text-sm text-moove-muted underline disabled:opacity-50"
+                >
+                  {t('programs.order.cancelNutrition')}
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start justify-between gap-5">
+                  <div>
+                    <p className="moove-eyebrow">{t('programs.purchase.eyebrow')}</p>
+                    <h2 id="program-checkout-title" className="font-display mt-3 text-2xl font-semibold text-moove-silver">
+                      {t('programs.purchase.title')}
+                    </h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeCheckout}
+                    disabled={orderState === 'submitting'}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-moove-border text-lg text-moove-muted transition hover:border-moove-espresso hover:text-moove-espresso disabled:opacity-50"
+                    aria-label={t('common.close')}
+                  >
+                    ×
+                  </button>
+                </div>
 
-            <div className="mt-6 rounded-2xl border border-moove-lime/30 bg-moove-lime/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-moove-accent">
-                {t('programs.priceLabel')}
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-4">
-                <p className="font-display text-lg font-semibold text-moove-silver">
-                  {dictionary.programs.items[checkoutProgram.key]?.title ?? checkoutProgram.key}
-                </p>
-                <span className="shrink-0 text-lg font-bold text-moove-espresso">{checkoutProgram.priceEur}€</span>
-              </div>
-            </div>
+                <div className="mt-6 rounded-2xl border border-moove-lime/30 bg-moove-lime/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-moove-accent">
+                    {t('programs.priceLabel')}
+                  </p>
+                  <div className="mt-2 flex items-end justify-between gap-4">
+                    <p className="font-display text-lg font-semibold text-moove-silver">
+                      {dictionary.programs.items[checkoutProgram.key]?.title ?? checkoutProgram.key}
+                    </p>
+                    <div className="shrink-0 text-right">
+                      <span className="text-lg font-bold text-moove-espresso">
+                        {checkoutTotalEur(checkoutProgram)}€
+                      </span>
+                      {includeNutrition ? (
+                        <p className="text-[10px] text-moove-muted">
+                          {checkoutProgram.priceEur}€ + {NUTRITION_ADDON_EUR}€
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
 
-            <p className="mt-5 text-sm leading-relaxed text-moove-muted">{t('programs.purchase.body')}</p>
-            <div className="mt-5 rounded-xl border border-moove-border/70 bg-moove-elevated/45 px-4 py-3 text-sm font-medium text-moove-silver">
-              {t('programs.purchase.paymentMethod')}
-            </div>
-            <label className="mt-6 block text-sm font-semibold text-moove-silver" htmlFor="program-email">
-              {t('programs.order.emailLabel')}
-            </label>
-            <input
-              id="program-email"
-              type="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder={t('programs.order.emailPlaceholder')}
-              className="mt-2 w-full rounded-xl border border-moove-border/80 bg-white px-4 py-3.5 text-sm text-moove-silver outline-none ring-moove-lime/40 focus:ring-2"
-            />
-            <p className="mt-3 text-xs leading-relaxed text-moove-muted">{t('programs.order.hint')}</p>
+                <p className="mt-5 text-sm leading-relaxed text-moove-muted">{t('programs.purchase.body')}</p>
+                <div className="mt-5 rounded-xl border border-moove-border/70 bg-moove-elevated/45 px-4 py-3 text-sm font-medium text-moove-silver">
+                  {t('programs.purchase.paymentMethod')}
+                </div>
+                <label className="mt-6 block text-sm font-semibold text-moove-silver" htmlFor="program-email">
+                  {t('programs.order.emailLabel')}
+                </label>
+                <input
+                  id="program-email"
+                  type="email"
+                  autoComplete="email"
+                  autoFocus
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={t('programs.order.emailPlaceholder')}
+                  className="mt-2 w-full rounded-xl border border-moove-border/80 bg-white px-4 py-3.5 text-sm text-moove-silver outline-none ring-moove-lime/40 focus:ring-2"
+                />
+                <p className="mt-3 text-xs leading-relaxed text-moove-muted">{t('programs.order.hint')}</p>
 
-            {orderError ? (
-              <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                {orderError}
-              </p>
-            ) : null}
+                <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm text-moove-silver">
+                  <input
+                    type="checkbox"
+                    checked={includeNutrition}
+                    onChange={(event) => setIncludeNutrition(event.target.checked)}
+                    className="mt-1 rounded border-moove-border text-moove-espresso focus:ring-moove-lime"
+                  />
+                  <span>{t('programs.order.nutritionAddon', { price: NUTRITION_ADDON_EUR })}</span>
+                </label>
+                <p className="mt-2 text-xs text-moove-muted">{t('programs.order.nutritionAddonHint')}</p>
 
-            <button
-              type="button"
-              disabled={orderState === 'submitting'}
-              onClick={() => void handleOrder(checkoutProgram.key)}
-              className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-moove-espresso px-6 py-3.5 text-sm font-semibold text-moove-lime transition hover:brightness-110 disabled:opacity-60"
-            >
-              {orderState === 'submitting' && selectedKey === checkoutProgram.key
-                ? t('programs.order.submitting')
-                : t('programs.order.cta')}
-            </button>
+                {orderError ? (
+                  <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    {orderError}
+                  </p>
+                ) : null}
+
+                <button
+                  type="button"
+                  disabled={orderState === 'submitting'}
+                  onClick={() => startOrder(checkoutProgram.key)}
+                  className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-moove-espresso px-6 py-3.5 text-sm font-semibold text-moove-lime transition hover:brightness-110 disabled:opacity-60"
+                >
+                  {orderState === 'submitting' && selectedKey === checkoutProgram.key
+                    ? t('programs.order.submitting')
+                    : t('programs.order.cta')}
+                </button>
+              </>
+            )}
           </section>
         </div>
       ) : null}

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  adminConfirmProgramPayment,
-  adminResendProgramAccess,
-  fetchAdminProgramPayments,
-  fetchAdminProgramPurchases,
-  type ProgramPaidPurchase,
-  type ProgramPurchasePayment,
-} from '../lib/programsApi'
+  adminConfirmNutritionPayment,
+  adminResendNutritionPlan,
+  fetchAdminNutritionOrders,
+  fetchAdminNutritionPayments,
+  fetchAdminNutritionPreviewUrl,
+} from '../lib/nutritionApi'
+import type { NutritionOrderPayment, NutritionPaidOrder } from '../lib/nutritionTypes'
 import {
   adminConfirmPayment,
   adminCreateSlot,
@@ -30,6 +30,14 @@ import {
   type CalendarSettings,
 } from '../lib/posingApi'
 import {
+  adminConfirmProgramPayment,
+  adminResendProgramAccess,
+  fetchAdminProgramPayments,
+  fetchAdminProgramPurchases,
+  type ProgramPaidPurchase,
+  type ProgramPurchasePayment,
+} from '../lib/programsApi'
+import {
   athensDateKey,
   athensTimeKey,
   buildSlotEndIso,
@@ -41,7 +49,7 @@ import {
   normalizeTimeInput,
 } from '../lib/posingDates'
 
-export const ADMIN_TABS = ['overview', 'calendar', 'members', 'payments', 'programs', 'bookings'] as const
+export const ADMIN_TABS = ['overview', 'calendar', 'members', 'payments', 'programs', 'nutrition', 'bookings'] as const
 export type AdminTab = (typeof ADMIN_TABS)[number]
 
 export function isAdminTab(value: string | null): value is AdminTab {
@@ -91,6 +99,8 @@ export function usePosingAdminPanel({
   const [payments, setPayments] = useState<AdminPayment[]>([])
   const [programPayments, setProgramPayments] = useState<ProgramPurchasePayment[]>([])
   const [programPurchases, setProgramPurchases] = useState<ProgramPaidPurchase[]>([])
+  const [nutritionPayments, setNutritionPayments] = useState<NutritionOrderPayment[]>([])
+  const [nutritionOrders, setNutritionOrders] = useState<NutritionPaidOrder[]>([])
   const [bookings, setBookings] = useState<AdminBookingRow[]>([])
   const [stats, setStats] = useState<AdminOverviewStats | null>(null)
   const [calendarSettings, setCalendarSettings] = useState<CalendarSettings>(DEFAULT_CALENDAR_SETTINGS)
@@ -156,6 +166,16 @@ export function usePosingAdminPanel({
     setProgramPurchases(paid)
   }, [accessToken])
 
+  const loadNutritionOrders = useCallback(async () => {
+    if (!accessToken) return
+    const [pending, paid] = await Promise.all([
+      fetchAdminNutritionPayments(accessToken),
+      fetchAdminNutritionOrders(accessToken),
+    ])
+    setNutritionPayments(pending)
+    setNutritionOrders(paid)
+  }, [accessToken])
+
   const loadBookings = useCallback(
     async (status?: string) => {
       if (!accessToken) return
@@ -185,6 +205,8 @@ export function usePosingAdminPanel({
           await loadPayments()
         } else if (tab === 'programs') {
           await loadProgramPayments()
+        } else if (tab === 'nutrition') {
+          await loadNutritionOrders()
         } else if (tab === 'bookings') {
           await loadBookings(bookingStatusFilter)
         }
@@ -203,6 +225,7 @@ export function usePosingAdminPanel({
       loadMembers,
       loadPayments,
       loadProgramPayments,
+      loadNutritionOrders,
       loadSlots,
       loadStats,
       translate,
@@ -432,6 +455,35 @@ export function usePosingAdminPanel({
     await loadProgramPayments()
   }
 
+  async function confirmNutritionPayment(orderId: string) {
+    if (!accessToken) return
+    setBusy(true)
+    setError('')
+    try {
+      await adminConfirmNutritionPayment(accessToken, orderId)
+      await loadNutritionOrders()
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'payment_confirm_failed'
+      const message = translateAdminError(code, translate)
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function resendNutritionPlan(orderId: string) {
+    if (!accessToken) throw new Error('unauthorized')
+    await adminResendNutritionPlan(accessToken, orderId)
+    await loadNutritionOrders()
+  }
+
+  async function previewNutritionPdf(orderId: string) {
+    if (!accessToken) throw new Error('unauthorized')
+    const url = await fetchAdminNutritionPreviewUrl(accessToken, orderId)
+    if (url) window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
   async function confirmPayment(bookingId: string) {
     if (!accessToken) return
     setBusy(true)
@@ -455,6 +507,8 @@ export function usePosingAdminPanel({
     payments,
     programPayments,
     programPurchases,
+    nutritionPayments,
+    nutritionOrders,
     bookings,
     stats,
     calendarSettings,
@@ -475,5 +529,8 @@ export function usePosingAdminPanel({
     confirmPayment,
     confirmProgramPayment,
     resendProgramAccess,
+    confirmNutritionPayment,
+    resendNutritionPlan,
+    previewNutritionPdf,
   }
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminBookingsPanel } from '../components/AdminBookingsPanel'
 import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminPaymentsQueue } from '../components/AdminPaymentsQueue'
+import { AdminNutritionQueue } from '../components/AdminNutritionQueue'
 import { AdminProgramPaymentsQueue } from '../components/AdminProgramPaymentsQueue'
 import { AdminShell, AdminPanelSkeleton, AdminStatCard, AdminStatsSkeleton } from '../components/AdminShell'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
@@ -66,6 +67,7 @@ export function PosingAdminPage() {
 
   const pendingBadge = admin.stats?.pendingPayments ?? admin.payments.length
   const programPendingBadge = admin.programPayments.length
+  const nutritionPendingBadge = admin.nutritionPayments.length
 
   const tabs = [
     {
@@ -84,6 +86,11 @@ export function PosingAdminPage() {
       id: 'programs',
       label: t('posing.admin.tabPrograms'),
       badge: programPendingBadge > 0 ? programPendingBadge : undefined,
+    },
+    {
+      id: 'nutrition',
+      label: t('posing.admin.tabNutrition'),
+      badge: nutritionPendingBadge > 0 ? nutritionPendingBadge : undefined,
     },
     { id: 'bookings', label: t('posing.admin.tabBookings') },
   ]
@@ -269,6 +276,22 @@ export function PosingAdminPage() {
             busy={isBusy}
             onConfirm={admin.confirmProgramPayment}
             onResendAccess={admin.resendProgramAccess}
+          />
+        )
+      ) : null}
+
+      {activeTab === 'nutrition' ? (
+        admin.loading ? (
+          <AdminPanelSkeleton rows={3} />
+        ) : (
+          <AdminNutritionQueue
+            payments={admin.nutritionPayments}
+            paidOrders={admin.nutritionOrders}
+            locale={locale}
+            busy={isBusy}
+            onConfirm={admin.confirmNutritionPayment}
+            onResend={admin.resendNutritionPlan}
+            onPreview={admin.previewNutritionPdf}
           />
         )
       ) : null}
