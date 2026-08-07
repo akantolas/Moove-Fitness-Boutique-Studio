@@ -13,10 +13,10 @@ describe('payment link amounts', () => {
       assert.ok(url.endsWith(`/${amountEur}EUR`), `expected /${amountEur}EUR, got ${url}`)
     })
 
-    it(`Revolut URL for ${planKey} uses whole EUR path segment`, () => {
+    it(`Revolut URL for ${planKey} uses the stable profile link`, () => {
       const url = getRevolutUrl(amountEur)
-      assert.ok(url.endsWith(`/eur${amountEur}`), `expected /eur${amountEur}, got ${url}`)
-      assert.doesNotMatch(url, /amount=/, 'Revolut must not use query amount param (cents bug)')
+      assert.equal(url, 'https://revolut.me/magdaqsn9')
+      assert.doesNotMatch(url, /\/eur\d+$/, 'Revolut must not append an amount path')
     })
   }
 
