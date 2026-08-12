@@ -130,7 +130,9 @@ export function Layout() {
                   <span className="min-w-0 flex-1 text-center text-sm font-semibold leading-tight tracking-wide text-black">
                     {posingBookingSticky.sticky.loading
                       ? t('posing.calendar.booking')
-                      : t('posing.booking.stickyConfirm')}
+                      : posingBookingSticky.sticky.sessionReady
+                        ? t('posing.booking.stickyConfirm')
+                        : t('posing.auth.login')}
                     <span className="mt-0.5 block text-xs font-medium text-black/70">
                       {posingBookingSticky.sticky.slotLabel}
                     </span>

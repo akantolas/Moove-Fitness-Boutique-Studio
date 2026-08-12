@@ -847,6 +847,7 @@ export const en = {
       error: 'Booking failed. Please try again.',
       slotTaken: 'This slot was just taken. Pick another.',
       loginRequired: 'Sign in to book a slot.',
+      sessionExpired: 'Your session expired. Sign in again to complete your booking.',
       errors: {
         server_config_error:
           'Server configuration issue. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on Vercel, then redeploy.',

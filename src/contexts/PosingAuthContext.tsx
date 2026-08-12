@@ -17,6 +17,7 @@ type PosingAuthContextValue = {
   user: User | null
   session: Session | null
   accessToken: string | null
+  sessionReady: boolean
   passwordRecovery: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
@@ -38,17 +39,35 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured) return
 
     const supabase = createSupabaseClient()
+    let mounted = true
+
+    void supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (!mounted) return
+      setSession(initialSession)
+      setUser(initialSession?.user ?? null)
+      setLoading(false)
+    })
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY') {
         setPasswordRecovery(true)
+      }
+      if (event === 'SIGNED_OUT') {
+        setPasswordRecovery(false)
+        setSession(null)
+        setUser(null)
+        setLoading(false)
+        return
       }
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
       setLoading(false)
     })
 
-    return () => sub.subscription.unsubscribe()
+    return () => {
+      mounted = false
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -109,13 +128,16 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
     setPasswordRecovery(false)
   }, [])
 
+  const accessToken = session?.access_token ?? null
+
   const value = useMemo(
     () => ({
       configured: isSupabaseConfigured,
       loading,
       user,
       session,
-      accessToken: session?.access_token ?? null,
+      accessToken,
+      sessionReady: Boolean(user && accessToken && !loading),
       passwordRecovery,
       signIn,
       signUp,
@@ -125,6 +147,7 @@ export function PosingAuthProvider({ children }: { children: ReactNode }) {
       updatePassword,
     }),
     [
+      accessToken,
       loading,
       passwordRecovery,
       session,

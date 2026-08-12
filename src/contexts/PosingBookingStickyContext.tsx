@@ -16,12 +16,14 @@ export type PosingBookingStickyState =
       slotLabel: string
       disabled: boolean
       loading: boolean
+      sessionReady: boolean
     }
 
 type ConfirmDetails = {
   slotLabel: string
   disabled: boolean
   loading: boolean
+  sessionReady: boolean
 }
 
 type PosingBookingStickyContextValue = {

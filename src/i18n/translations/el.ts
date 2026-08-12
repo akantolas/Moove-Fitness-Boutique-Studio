@@ -846,6 +846,7 @@ export const el = {
       error: 'Η κράτηση απέτυχε. Δοκίμασε ξανά.',
       slotTaken: 'Η ώρα μόλις κλείστηκε. Επίλεξε άλλη.',
       loginRequired: 'Συνδέσου για να κλείσεις ώρα.',
+      sessionExpired: 'Η σύνδεσή σου έληξε. Συνδέσου ξανά για να ολοκληρώσεις την κράτηση.',
       errors: {
         server_config_error:
           'Πρόβλημα ρύθμισης server. Έλεγξε SUPABASE_URL και SUPABASE_SERVICE_ROLE_KEY στο Vercel και κάνε redeploy.',
