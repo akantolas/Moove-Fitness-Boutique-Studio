@@ -208,6 +208,16 @@ export const en = {
     ],
   },
   programs: {
+    processing: {
+      eyebrow: 'Coming soon',
+      title: 'Programs are under processing',
+      body:
+        'We are preparing new workout programs. The purchase page is temporarily closed and will be available again soon.',
+      note:
+        'If you have already purchased a program, the access link in your email continues to work as usual.',
+      cta: 'Contact us',
+      backHome: 'Back to home',
+    },
     eyebrow: 'Peach training system',
     title: 'Build your glutes with a plan.',
     titleAccent: 'Not guesswork.',
