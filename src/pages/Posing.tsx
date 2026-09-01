@@ -9,9 +9,9 @@ import { ZoomableImage } from '../components/ZoomableImage'
 import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { hasSeenOffersPopup, isJulyOfferActive } from '../lib/posingOffers'
+import { hasSeenOffersPopup, isSeptemberOfferActive } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
-import { site, type PosingOfferPlanKey, type PosingPackageKey, type PosingPlanKey } from '../site'
+import { site, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 const posingHeroGhostCtaClass =
@@ -74,7 +74,7 @@ export function PosingPage() {
   }, [])
 
   useEffect(() => {
-    if (!isJulyOfferActive()) return
+    if (!isSeptemberOfferActive()) return
     if (!hasSeenOffersPopup()) setOffersModalOpen(true)
   }, [])
 
@@ -106,16 +106,11 @@ export function PosingPage() {
     setSelectedPlanKey(posing.packageKeys[index] ?? posing.packageKeys[0])
   }
 
-  function handleOfferSelect(planKey: PosingOfferPlanKey) {
-    setSelectedPlanKey(planKey)
-  }
-
   return (
     <div className="bg-[#08080c] text-white">
       <PosingOffersModal
         open={offersModalOpen}
         onClose={() => setOffersModalOpen(false)}
-        onSelectOffer={handleOfferSelect}
       />
       {accountDeleted ? (
         <div className="border-b border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-center text-sm text-emerald-100">
@@ -147,7 +142,7 @@ export function PosingPage() {
               >
                 {t('posing.hero.viewPackages')}
               </a>
-              {isJulyOfferActive() ? (
+              {isSeptemberOfferActive() ? (
                 <a href="#offers" className={posingHeroGhostCtaClass}>
                   {t('posing.offers.heroCta')}
                 </a>
@@ -232,7 +227,7 @@ export function PosingPage() {
         </SiteContainer>
       </section>
 
-      <PosingOffersSection onSelectOffer={handleOfferSelect} />
+      <PosingOffersSection />
 
       <section className="border-b border-white/10 py-16 sm:py-20">
         <SiteContainer>
