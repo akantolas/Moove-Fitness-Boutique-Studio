@@ -26,6 +26,7 @@ import {
   readJsonBody,
   sendPosingEmailReliable,
 } from '../_lib.js'
+import { getSeptemberBonusSessions } from '../_offers.js'
 import {
   formatPriceEUR,
   getPayPalUrl,
@@ -371,7 +372,7 @@ export async function handleBookings(req, res) {
     .insert({
       user_id: user.id,
       plan_key: planKey,
-      sessions_total: plan.sessions_total,
+      sessions_total: plan.sessions_total + getSeptemberBonusSessions(planKey, now),
       sessions_used: 0,
       status: 'pending_payment',
       period_start: now.toISOString(),

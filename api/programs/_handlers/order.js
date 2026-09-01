@@ -28,6 +28,8 @@ export async function handleOrder(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
+  return json(res, 503, { ok: false, error: 'orders_disabled' })
+
   try {
     const body = await readJsonBody(req)
     const programKey = String(body?.programKey ?? body?.program_key ?? '').trim()
