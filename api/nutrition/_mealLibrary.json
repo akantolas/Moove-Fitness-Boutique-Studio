@@ -1,0 +1,632 @@
+[
+  {
+    "id": "breakfast_oats_berry",
+    "name": { "el": "Βρώμη με berries", "en": "Oats with berries" },
+    "mealType": "breakfast",
+    "calories": 380,
+    "protein": 14,
+    "carbs": 58,
+    "fat": 10,
+    "prepTimeMin": 10,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["80g βρώμη", "150g berries", "250ml almond milk", "1 κ.γ. μέλι"],
+      "en": ["80g oats", "150g berries", "250ml almond milk", "1 tsp honey"]
+    },
+    "instructions": {
+      "el": "Βράσε τη βρώμη με το γάλα 5 λεπτά. Πρόσθεσε berries και μέλι.",
+      "en": "Cook oats with milk for 5 minutes. Top with berries and honey."
+    }
+  },
+  {
+    "id": "breakfast_eggs_toast",
+    "name": { "el": "Αυγά με ψωμί ολικής", "en": "Eggs with wholegrain toast" },
+    "mealType": "breakfast",
+    "calories": 420,
+    "protein": 28,
+    "carbs": 32,
+    "fat": 20,
+    "prepTimeMin": 12,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["dairy", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["2 αυγά", "2 φέτες ψωμί ολικής", "1 κ.γ. ελαιόλαδο"],
+      "en": ["2 eggs", "2 slices wholegrain bread", "1 tsp olive oil"]
+    },
+    "instructions": {
+      "el": "Ψήσε τα αυγά και σέρβιρε με τοψιμο.",
+      "en": "Cook eggs and serve with toast."
+    }
+  },
+  {
+    "id": "breakfast_yogurt_granola",
+    "name": { "el": "Γιαούρτι με granola", "en": "Yogurt with granola" },
+    "mealType": "breakfast",
+    "calories": 350,
+    "protein": 22,
+    "carbs": 42,
+    "fat": 10,
+    "prepTimeMin": 5,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["eggs", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["200g γιαούρτι 2%", "40g granola", "1 μπανάνα"],
+      "en": ["200g 2% yogurt", "40g granola", "1 banana"]
+    },
+    "instructions": {
+      "el": "Ανακάτεψε όλα σε μπολ.",
+      "en": "Mix everything in a bowl."
+    }
+  },
+  {
+    "id": "breakfast_smoothie_bowl",
+    "name": { "el": "Smoothie bowl", "en": "Smoothie bowl" },
+    "mealType": "breakfast",
+    "calories": 400,
+    "protein": 18,
+    "carbs": 55,
+    "fat": 12,
+    "prepTimeMin": 8,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["1 μπανάνα", "100g frozen berries", "30g protein powder", "150ml νερό"],
+      "en": ["1 banana", "100g frozen berries", "30g protein powder", "150ml water"]
+    },
+    "instructions": {
+      "el": "Χτύπησε στο blender και σέρβιρε.",
+      "en": "Blend and serve."
+    }
+  },
+  {
+    "id": "breakfast_cottage_cheese",
+    "name": { "el": "Cottage cheese με φρούτα", "en": "Cottage cheese with fruit" },
+    "mealType": "breakfast",
+    "calories": 320,
+    "protein": 30,
+    "carbs": 28,
+    "fat": 8,
+    "prepTimeMin": 5,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["200g cottage cheese", "1 μήλο", "1 κ.γ. κανέλα"],
+      "en": ["200g cottage cheese", "1 apple", "1 tsp cinnamon"]
+    },
+    "instructions": {
+      "el": "Συνδύασε σε μπολ.",
+      "en": "Combine in a bowl."
+    }
+  },
+  {
+    "id": "breakfast_avocado_toast",
+    "name": { "el": "Avocado toast", "en": "Avocado toast" },
+    "mealType": "breakfast",
+    "calories": 390,
+    "protein": 12,
+    "carbs": 38,
+    "fat": 22,
+    "prepTimeMin": 10,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["2 φέτες ψωμί ολικής", "1/2 αβοκάντο", "lime", "αλάτι"],
+      "en": ["2 wholegrain bread slices", "1/2 avocado", "lime", "salt"]
+    },
+    "instructions": {
+      "el": "Τοστάρε το ψωμί και άλειψε με αβοκάντο.",
+      "en": "Toast bread and spread mashed avocado."
+    }
+  },
+  {
+    "id": "breakfast_protein_pancakes",
+    "name": { "el": "Protein pancakes", "en": "Protein pancakes" },
+    "mealType": "breakfast",
+    "calories": 450,
+    "protein": 35,
+    "carbs": 45,
+    "fat": 12,
+    "prepTimeMin": 15,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["shellfish", "fish"],
+    "ingredients": {
+      "el": ["2 αυγά", "60g βρώμη", "30g protein powder", "100g γιαούρτι"],
+      "en": ["2 eggs", "60g oats", "30g protein powder", "100g yogurt"]
+    },
+    "instructions": {
+      "el": "Ανακάτεψε και ψήσε σε τηγάνι.",
+      "en": "Mix batter and cook on a pan."
+    }
+  },
+  {
+    "id": "breakfast_tofu_scramble",
+    "name": { "el": "Tofu scramble", "en": "Tofu scramble" },
+    "mealType": "breakfast",
+    "calories": 360,
+    "protein": 24,
+    "carbs": 18,
+    "fat": 20,
+    "prepTimeMin": 12,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["200g tofu", "1 κ.γ. ελαιόλαδο", "κουρκουμά", "αλάτι", "πιπέρι"],
+      "en": ["200g tofu", "1 tsp olive oil", "turmeric", "salt", "pepper"]
+    },
+    "instructions": {
+      "el": "Τσάκισε το tofu και σοτάρε 8 λεπτά.",
+      "en": "Crumble tofu and sauté for 8 minutes."
+    }
+  },
+  {
+    "id": "snack_apple_peanut",
+    "name": { "el": "Μήλο με φυστικοβούτυρο", "en": "Apple with peanut butter" },
+    "mealType": "snack",
+    "calories": 220,
+    "protein": 8,
+    "carbs": 28,
+    "fat": 10,
+    "prepTimeMin": 3,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["1 μήλο", "20g φυστικοβούτυρο"],
+      "en": ["1 apple", "20g peanut butter"]
+    },
+    "instructions": {
+      "el": "Κόψε το μήλο και βάλε φυστικοβούτυρο.",
+      "en": "Slice apple and add peanut butter."
+    }
+  },
+  {
+    "id": "snack_protein_bar",
+    "name": { "el": "Protein bar + καρπός", "en": "Protein bar and nuts" },
+    "mealType": "snack",
+    "calories": 250,
+    "protein": 20,
+    "carbs": 22,
+    "fat": 10,
+    "prepTimeMin": 2,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["dairy", "eggs", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["1 protein bar", "15g αμύγδαλα"],
+      "en": ["1 protein bar", "15g almonds"]
+    },
+    "instructions": {
+      "el": "Έτοιμο για κατανάλωση.",
+      "en": "Ready to eat."
+    }
+  },
+  {
+    "id": "snack_hummus_veggies",
+    "name": { "el": "Hummus με λαχανικά", "en": "Hummus with veggies" },
+    "mealType": "snack",
+    "calories": 200,
+    "protein": 8,
+    "carbs": 20,
+    "fat": 10,
+    "prepTimeMin": 5,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["80g hummus", "καρότο", "αγγούρι", "πιπεριά"],
+      "en": ["80g hummus", "carrot", "cucumber", "bell pepper"]
+    },
+    "instructions": {
+      "el": "Κόψε τα λαχανικά και βούτηξε στο hummus.",
+      "en": "Cut veggies and dip in hummus."
+    }
+  },
+  {
+    "id": "snack_yogurt_honey",
+    "name": { "el": "Γιαούρτι με μέλι", "en": "Yogurt with honey" },
+    "mealType": "snack",
+    "calories": 180,
+    "protein": 15,
+    "carbs": 22,
+    "fat": 4,
+    "prepTimeMin": 2,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["150g γιαούρτι 2%", "1 κ.γ. μέλι"],
+      "en": ["150g 2% yogurt", "1 tsp honey"]
+    },
+    "instructions": {
+      "el": "Ανακάτεψε και σέρβιρε.",
+      "en": "Stir and serve."
+    }
+  },
+  {
+    "id": "snack_rice_cakes_tuna",
+    "name": { "el": "Rice cakes με τόνο", "en": "Rice cakes with tuna" },
+    "mealType": "snack",
+    "calories": 240,
+    "protein": 22,
+    "carbs": 24,
+    "fat": 6,
+    "prepTimeMin": 5,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish"],
+    "ingredients": {
+      "el": ["2 rice cakes", "1 κονσέρβα τόνου", "λεμόνι"],
+      "en": ["2 rice cakes", "1 tuna can", "lemon"]
+    },
+    "instructions": {
+      "el": "Άλειψε τον τόνο στα rice cakes.",
+      "en": "Spread tuna on rice cakes."
+    }
+  },
+  {
+    "id": "snack_fruit_nuts",
+    "name": { "el": "Φρούτα με καρύδια", "en": "Fruit with walnuts" },
+    "mealType": "snack",
+    "calories": 210,
+    "protein": 6,
+    "carbs": 26,
+    "fat": 10,
+    "prepTimeMin": 3,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["1 πορτοκάλι", "20g καρύδια"],
+      "en": ["1 orange", "20g walnuts"]
+    },
+    "instructions": {
+      "el": "Σέρβιρε μαζί.",
+      "en": "Serve together."
+    }
+  },
+  {
+    "id": "lunch_chicken_rice",
+    "name": { "el": "Κοτόπουλο με ρύζι", "en": "Chicken with rice" },
+    "mealType": "lunch",
+    "calories": 550,
+    "protein": 45,
+    "carbs": 55,
+    "fat": 12,
+    "prepTimeMin": 25,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["150g κοτόπουλο", "80g ρύζι", "λαχανικά", "ελαιόλαδο"],
+      "en": ["150g chicken", "80g rice", "vegetables", "olive oil"]
+    },
+    "instructions": {
+      "el": "Ψήσε το κοτόπουλο και σερβίρε με ρύζι.",
+      "en": "Cook chicken and serve with rice."
+    }
+  },
+  {
+    "id": "lunch_salmon_quinoa",
+    "name": { "el": "Σολομός με κινόα", "en": "Salmon with quinoa" },
+    "mealType": "lunch",
+    "calories": 580,
+    "protein": 40,
+    "carbs": 45,
+    "fat": 24,
+    "prepTimeMin": 25,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish"],
+    "ingredients": {
+      "el": ["140g σολομός", "70g κινόα", "σπανάκι", "λεμόνι"],
+      "en": ["140g salmon", "70g quinoa", "spinach", "lemon"]
+    },
+    "instructions": {
+      "el": "Ψήσε σολομό και σερβίρε με κινόα.",
+      "en": "Bake salmon and serve with quinoa."
+    }
+  },
+  {
+    "id": "lunch_lentil_soup",
+    "name": { "el": "Φακές", "en": "Lentil soup" },
+    "mealType": "lunch",
+    "calories": 480,
+    "protein": 24,
+    "carbs": 68,
+    "fat": 10,
+    "prepTimeMin": 30,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["120g φακές", "καρότο", "κρεμμύδι", "ελαιόλαδο"],
+      "en": ["120g lentils", "carrot", "onion", "olive oil"]
+    },
+    "instructions": {
+      "el": "Βράσε τις φακές με τα λαχανικά 25 λεπτά.",
+      "en": "Simmer lentils with vegetables for 25 minutes."
+    }
+  },
+  {
+    "id": "lunch_turkey_wrap",
+    "name": { "el": "Turkey wrap", "en": "Turkey wrap" },
+    "mealType": "lunch",
+    "calories": 520,
+    "protein": 38,
+    "carbs": 48,
+    "fat": 16,
+    "prepTimeMin": 12,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["shellfish", "fish"],
+    "ingredients": {
+      "el": ["1 tortilla", "120g γαλοπούλα", "σαλάτα", "30g τυρί"],
+      "en": ["1 tortilla", "120g turkey", "lettuce", "30g cheese"]
+    },
+    "instructions": {
+      "el": "Τύλιξε όλα σε tortilla.",
+      "en": "Wrap everything in a tortilla."
+    }
+  },
+  {
+    "id": "lunch_chickpea_salad",
+    "name": { "el": "Σαλάτα με ρεβίθια", "en": "Chickpea salad" },
+    "mealType": "lunch",
+    "calories": 460,
+    "protein": 20,
+    "carbs": 52,
+    "fat": 18,
+    "prepTimeMin": 15,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["150g ρεβίθια", "ντομάτα", "αγγούρι", "ελαιόλαδο"],
+      "en": ["150g chickpeas", "tomato", "cucumber", "olive oil"]
+    },
+    "instructions": {
+      "el": "Ανακατέψτε όλα σε μπολ.",
+      "en": "Mix everything in a bowl."
+    }
+  },
+  {
+    "id": "lunch_pasta_chicken",
+    "name": { "el": "Ζυμαρικά με κοτόπουλο", "en": "Pasta with chicken" },
+    "mealType": "lunch",
+    "calories": 600,
+    "protein": 42,
+    "carbs": 70,
+    "fat": 14,
+    "prepTimeMin": 20,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["80g ζυμαρικά", "130g κοτόπουλο", "σάλτσα ντομάτας"],
+      "en": ["80g pasta", "130g chicken", "tomato sauce"]
+    },
+    "instructions": {
+      "el": "Βράσε ζυμαρικά και ανακάτεψε με κοτόπουλο.",
+      "en": "Boil pasta and toss with chicken."
+    }
+  },
+  {
+    "id": "lunch_tofu_bowl",
+    "name": { "el": "Tofu bowl με ρύζι", "en": "Tofu rice bowl" },
+    "mealType": "lunch",
+    "calories": 500,
+    "protein": 22,
+    "carbs": 62,
+    "fat": 16,
+    "prepTimeMin": 20,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["180g tofu", "80g ρύζι", "μπρόκολο", "σόγια σος"],
+      "en": ["180g tofu", "80g rice", "broccoli", "soy sauce"]
+    },
+    "instructions": {
+      "el": "Σοτάρε tofu και σερβίρε με ρύζι.",
+      "en": "Sauté tofu and serve with rice."
+    }
+  },
+  {
+    "id": "lunch_greek_salad_feta",
+    "name": { "el": "Χωριάτικη σαλάτα", "en": "Greek salad" },
+    "mealType": "lunch",
+    "calories": 420,
+    "protein": 16,
+    "carbs": 18,
+    "fat": 32,
+    "prepTimeMin": 10,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["ντομάτα", "αγγούρι", "ελιές", "60g φέτα", "ελαιόλαδο"],
+      "en": ["tomato", "cucumber", "olives", "60g feta", "olive oil"]
+    },
+    "instructions": {
+      "el": "Κόψε και ανακάτεψε.",
+      "en": "Chop and mix."
+    }
+  },
+  {
+    "id": "dinner_beef_potatoes",
+    "name": { "el": "Μοσχάρι με πατάτες", "en": "Beef with potatoes" },
+    "mealType": "dinner",
+    "calories": 620,
+    "protein": 48,
+    "carbs": 50,
+    "fat": 22,
+    "prepTimeMin": 35,
+    "cookingLevel": "advanced",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["160g μοσχάρι", "200g πατάτες", "ελαιόλαδο", "μυρωδικά"],
+      "en": ["160g beef", "200g potatoes", "olive oil", "herbs"]
+    },
+    "instructions": {
+      "el": "Ψήσε στο φούρνο 30 λεπτά.",
+      "en": "Roast in oven for 30 minutes."
+    }
+  },
+  {
+    "id": "dinner_chicken_salad",
+    "name": { "el": "Σαλάτα με κοτόπουλο", "en": "Chicken salad" },
+    "mealType": "dinner",
+    "calories": 480,
+    "protein": 42,
+    "carbs": 22,
+    "fat": 24,
+    "prepTimeMin": 15,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["shellfish", "fish"],
+    "ingredients": {
+      "el": ["150g κοτόπουλο", "μικτή σαλάτα", "ελαιόλαδο", "λεμόνι"],
+      "en": ["150g chicken", "mixed salad", "olive oil", "lemon"]
+    },
+    "instructions": {
+      "el": "Ψήσε κοτόπουλο και σερβίρε πάνω στη σαλάτα.",
+      "en": "Grill chicken and serve over salad."
+    }
+  },
+  {
+    "id": "dinner_fish_veggies",
+    "name": { "el": "Ψάρι με λαχανικά", "en": "Fish with vegetables" },
+    "mealType": "dinner",
+    "calories": 450,
+    "protein": 38,
+    "carbs": 28,
+    "fat": 18,
+    "prepTimeMin": 20,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish"],
+    "ingredients": {
+      "el": ["180g λευκό ψάρι", "κολοκύθι", "πιπεριά", "ελαιόλαδο"],
+      "en": ["180g white fish", "zucchini", "bell pepper", "olive oil"]
+    },
+    "instructions": {
+      "el": "Ψήσε ψάρι και λαχανικά στο φούρνο.",
+      "en": "Bake fish and vegetables."
+    }
+  },
+  {
+    "id": "dinner_pasta_pesto",
+    "name": { "el": "Ζυμαρικά pesto", "en": "Pesto pasta" },
+    "mealType": "dinner",
+    "calories": 520,
+    "protein": 18,
+    "carbs": 62,
+    "fat": 22,
+    "prepTimeMin": 15,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["eggs", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["90g ζυμαρικά", "2 κ.σ. pesto", "30g παρμεζάνα"],
+      "en": ["90g pasta", "2 tbsp pesto", "30g parmesan"]
+    },
+    "instructions": {
+      "el": "Βράσε ζυμαρικά και ανακάτεψε με pesto.",
+      "en": "Boil pasta and toss with pesto."
+    }
+  },
+  {
+    "id": "dinner_lentil_curry",
+    "name": { "el": "Φακές curry", "en": "Lentil curry" },
+    "mealType": "dinner",
+    "calories": 490,
+    "protein": 22,
+    "carbs": 58,
+    "fat": 18,
+    "prepTimeMin": 30,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["120g φακές", "καρύδα γάλα", "καρύδα", "κουρκουμά"],
+      "en": ["120g lentils", "coconut milk", "curry", "turmeric"]
+    },
+    "instructions": {
+      "el": "Σιγοβράσε 25 λεπτά.",
+      "en": "Simmer for 25 minutes."
+    }
+  },
+  {
+    "id": "dinner_omelette",
+    "name": { "el": "Ομελέτα με λαχανικά", "en": "Veggie omelette" },
+    "mealType": "dinner",
+    "calories": 400,
+    "protein": 28,
+    "carbs": 12,
+    "fat": 26,
+    "prepTimeMin": 12,
+    "cookingLevel": "minimal",
+    "dietTags": ["omnivore", "vegetarian"],
+    "excludeTags": ["nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["3 αυγά", "σπανάκι", "ντομάτα", "30g τυρί"],
+      "en": ["3 eggs", "spinach", "tomato", "30g cheese"]
+    },
+    "instructions": {
+      "el": "Χτύπησε αυγά και ψήσε με λαχανικά.",
+      "en": "Whisk eggs and cook with vegetables."
+    }
+  },
+  {
+    "id": "dinner_stuffed_peppers",
+    "name": { "el": "Γεμιστές πιπεριές", "en": "Stuffed peppers" },
+    "mealType": "dinner",
+    "calories": 460,
+    "protein": 20,
+    "carbs": 48,
+    "fat": 20,
+    "prepTimeMin": 40,
+    "cookingLevel": "advanced",
+    "dietTags": ["omnivore", "vegetarian", "vegan"],
+    "excludeTags": ["dairy", "eggs", "nuts", "shellfish", "fish"],
+    "ingredients": {
+      "el": ["2 πιπεριές", "80g ρύζι", "ρεβίθια", "ντομάτα"],
+      "en": ["2 bell peppers", "80g rice", "chickpeas", "tomato"]
+    },
+    "instructions": {
+      "el": "Γέμισε και ψήσε 35 λεπτά.",
+      "en": "Stuff and bake for 35 minutes."
+    }
+  },
+  {
+    "id": "dinner_shrimp_rice",
+    "name": { "el": "Γαρίδες με ρύζι", "en": "Shrimp with rice" },
+    "mealType": "dinner",
+    "calories": 510,
+    "protein": 36,
+    "carbs": 52,
+    "fat": 14,
+    "prepTimeMin": 20,
+    "cookingLevel": "moderate",
+    "dietTags": ["omnivore"],
+    "excludeTags": ["dairy", "eggs", "nuts", "fish"],
+    "ingredients": {
+      "el": ["180g γαρίδες", "80g ρύζι", "σκόρδο", "ελαιόλαδο"],
+      "en": ["180g shrimp", "80g rice", "garlic", "olive oil"]
+    },
+    "instructions": {
+      "el": "Σοτάρε γαρίδες και σερβίρε με ρύζι.",
+      "en": "Sauté shrimp and serve with rice."
+    }
+  }
+]

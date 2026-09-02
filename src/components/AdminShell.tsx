@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { SiteContainer } from './SiteContainer'
 import { useTranslation } from '../i18n/useTranslation'
 
 type AdminTabConfig = {
@@ -36,16 +37,8 @@ export function AdminShell({
   const { t } = useTranslation()
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:py-16">
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-70"
-          style={{
-            backgroundImage:
-              'radial-gradient(ellipse 70% 80% at 10% 0%, rgba(192, 38, 211, 0.2) 0%, transparent 55%), radial-gradient(circle at 90% 20%, rgba(34, 211, 238, 0.12) 0%, transparent 45%)',
-          }}
-          aria-hidden
-        />
+    <SiteContainer variant="admin" className="py-12 sm:py-16">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-8 pose-hero-gradient">
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
             <Link
@@ -105,7 +98,7 @@ export function AdminShell({
       </div>
 
       <div className="mt-8">{children}</div>
-    </div>
+    </SiteContainer>
   )
 }
 

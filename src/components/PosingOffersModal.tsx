@@ -1,24 +1,18 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from '../i18n/useTranslation'
 import {
-  isJulyOfferActive,
+  isSeptemberOfferActive,
   markOffersPopupSeen,
-  scrollToPosingBooking,
+  scrollToPosingPackages,
 } from '../lib/posingOffers'
-import type { PosingOfferPlanKey } from '../site'
-import {
-  OffersModalBackdrop,
-  OffersSectionHeader,
-  PosingOfferCards,
-} from './posingOffersShared'
+import { OffersModalBackdrop, SeptemberOfferFlyer } from './posingOffersShared'
 
 type PosingOffersModalProps = {
   open: boolean
   onClose: () => void
-  onSelectOffer: (planKey: PosingOfferPlanKey) => void
 }
 
-export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffersModalProps) {
+export function PosingOffersModal({ open, onClose }: PosingOffersModalProps) {
   const { t } = useTranslation()
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -45,13 +39,12 @@ export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffers
     }
   }, [open, dismiss])
 
-  if (!open || !isJulyOfferActive()) return null
+  if (!open || !isSeptemberOfferActive()) return null
 
-  function handleSelect(planKey: PosingOfferPlanKey) {
+  function handleBookNow() {
     markOffersPopupSeen()
-    onSelectOffer(planKey)
     onClose()
-    scrollToPosingBooking()
+    scrollToPosingPackages()
   }
 
   return (
@@ -59,7 +52,7 @@ export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffers
       className="fixed inset-0 z-[90] flex items-center justify-center p-4 sm:p-6"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="posing-offers-modal-title"
+      aria-label={t('posing.offers.flyerAlt')}
     >
       <button
         type="button"
@@ -73,7 +66,7 @@ export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffers
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="animate-pose-offers-modal-in relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] bg-[#08080f] shadow-[0_40px_120px_-30px_rgba(244,114,182,0.45)] outline-none"
+        className="animate-pose-offers-modal-in relative flex w-full max-w-sm flex-col overflow-hidden rounded-[1.75rem] bg-[#08080f] shadow-[0_40px_120px_-30px_rgba(244,114,182,0.45)] outline-none sm:max-w-md"
       >
         <div className="pose-offers-shimmer-border h-[2px] w-full shrink-0" aria-hidden />
         <div
@@ -93,31 +86,17 @@ export function PosingOffersModal({ open, onClose, onSelectOffer }: PosingOffers
           type="button"
           onClick={dismiss}
           aria-label={t('posing.offers.modalCloseAria')}
-          className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-black/50 text-xl leading-none text-white/65 shadow-lg backdrop-blur-md transition hover:border-fuchsia-200/30 hover:bg-white/10 hover:text-white"
+          className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-black/50 text-lg leading-none text-white/65 shadow-lg backdrop-blur-md transition hover:border-fuchsia-200/30 hover:bg-white/10 hover:text-white"
         >
           ×
         </button>
 
-        <div className="overflow-y-auto px-5 pb-6 pt-7 sm:px-10 sm:pb-8 sm:pt-9">
-          <OffersSectionHeader
-            titleId="posing-offers-modal-title"
+        <div className="overflow-hidden p-4 pt-10 sm:p-5 sm:pt-11">
+          <SeptemberOfferFlyer
             variant="modal"
-            showLogo
+            onCta={handleBookNow}
+            onDismiss={dismiss}
           />
-          <div
-            className="mx-auto mt-6 h-px max-w-xs bg-gradient-to-r from-transparent via-fuchsia-300/35 to-transparent sm:mt-8"
-            aria-hidden
-          />
-          <PosingOfferCards onSelect={handleSelect} compact className="mt-6 sm:mt-8" />
-          <div className="mt-7 flex justify-center sm:mt-8">
-            <button
-              type="button"
-              onClick={dismiss}
-              className="rounded-full border border-white/12 bg-white/[0.03] px-6 py-2.5 text-sm font-semibold text-white/55 backdrop-blur-sm transition hover:border-white/22 hover:bg-white/[0.06] hover:text-white/85"
-            >
-              {t('posing.offers.modalDismiss')}
-            </button>
-          </div>
         </div>
       </div>
     </div>

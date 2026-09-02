@@ -27,7 +27,7 @@ export function Footer() {
           : 'border-t border-moove-border/80 bg-moove-espresso/[0.04] pb-[calc(7.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0'
       }
     >
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="moove-site-container-wide grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div>
           {posing ? (
             <>

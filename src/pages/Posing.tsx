@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
 import { PosingOffersModal } from '../components/PosingOffersModal'
 import { PosingOffersSection } from '../components/PosingOffersSection'
 import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
+import { SiteContainer } from '../components/SiteContainer'
 import { ZoomableImage } from '../components/ZoomableImage'
+import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
+import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { hasSeenOffersPopup, isJulyOfferActive } from '../lib/posingOffers'
+import { hasSeenOffersPopup, isSeptemberOfferActive, shouldShowOffersPopup } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
-import { site, type PosingOfferPlanKey, type PosingPackageKey, type PosingPlanKey } from '../site'
+import { site, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 const posingHeroGhostCtaClass =
@@ -49,6 +52,9 @@ export function PosingPage() {
   )
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
   const [offersModalOpen, setOffersModalOpen] = useState(false)
+  const bookingSectionRef = useRef<HTMLElement | null>(null)
+  const bookingSectionVisible = useBookingSectionVisible(bookingSectionRef)
+  const posingBookingSticky = usePosingBookingSticky()
 
   const selectedPackageName = useMemo(
     () =>
@@ -57,8 +63,20 @@ export function PosingPage() {
   )
 
   useEffect(() => {
-    if (!isJulyOfferActive()) return
-    if (!hasSeenOffersPopup()) setOffersModalOpen(true)
+    posingBookingSticky?.setBookingSectionVisible(bookingSectionVisible)
+  }, [bookingSectionVisible, posingBookingSticky])
+
+  useEffect(() => {
+    const resetSticky = posingBookingSticky?.resetSticky
+    return () => {
+      resetSticky?.()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (shouldShowOffersPopup({ seenInSession: hasSeenOffersPopup() })) {
+      setOffersModalOpen(true)
+    }
   }, [])
 
   useEffect(() => {
@@ -89,32 +107,19 @@ export function PosingPage() {
     setSelectedPlanKey(posing.packageKeys[index] ?? posing.packageKeys[0])
   }
 
-  function handleOfferSelect(planKey: PosingOfferPlanKey) {
-    setSelectedPlanKey(planKey)
-  }
-
   return (
-    <div className="pose-page bg-[#08080c] text-white">
+    <div className="bg-[#08080c] text-white">
       <PosingOffersModal
         open={offersModalOpen}
         onClose={() => setOffersModalOpen(false)}
-        onSelectOffer={handleOfferSelect}
       />
       {accountDeleted ? (
         <div className="border-b border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-center text-sm text-emerald-100">
           {t('posing.account.deleteSuccess')}
         </div>
       ) : null}
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-80"
-          style={{
-            backgroundImage:
-              'radial-gradient(ellipse 80% 60% at 20% 0%, rgba(192, 38, 211, 0.22) 0%, transparent 55%), radial-gradient(circle at 85% 20%, rgba(34, 211, 238, 0.15) 0%, transparent 45%)',
-          }}
-          aria-hidden
-        />
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-12 lg:py-10">
+      <section className="pose-hero-gradient relative overflow-hidden border-b border-white/10">
+        <SiteContainer className="relative grid gap-12 py-10 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-start lg:gap-12 lg:py-10 xl:gap-16">
           <div className="order-2 flex flex-col items-center text-center lg:order-1 lg:items-start lg:text-left">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
               {t('posing.hero.byCoach', vars)}
@@ -138,7 +143,7 @@ export function PosingPage() {
               >
                 {t('posing.hero.viewPackages')}
               </a>
-              {isJulyOfferActive() ? (
+              {isSeptemberOfferActive() ? (
                 <a href="#offers" className={posingHeroGhostCtaClass}>
                   {t('posing.offers.heroCta')}
                 </a>
@@ -159,7 +164,7 @@ export function PosingPage() {
             </div>
           </div>
 
-          <div className="relative order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none">
+          <div className="moove-hero-breakout relative order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none">
             <div className="absolute -inset-8 rounded-full bg-fuchsia-500/18 blur-3xl" aria-hidden />
             <div className="relative overflow-hidden rounded-[2rem] border border-fuchsia-100/18 bg-white/[0.04] p-2 shadow-[0_32px_90px_-42px_rgba(244,114,182,0.9)]">
               <ZoomableImage
@@ -181,11 +186,11 @@ export function PosingPage() {
               </div>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
       <section id="packages" className="scroll-mt-20 border-b border-white/10 bg-black/20 py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SiteContainer>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
               {t('posing.pricing.eyebrow')}
@@ -220,13 +225,13 @@ export function PosingPage() {
               ))}
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
-      <PosingOffersSection onSelectOffer={handleOfferSelect} />
+      <PosingOffersSection />
 
       <section className="border-b border-white/10 py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SiteContainer>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
               {t('posing.service.eyebrow')}
@@ -275,11 +280,11 @@ export function PosingPage() {
               </ul>
             </div>
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
       <section className="border-b border-white/10 py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SiteContainer>
           <h2 className="font-display text-center text-3xl font-semibold text-white sm:text-4xl">
             {t('posing.how.title')}
           </h2>
@@ -296,11 +301,11 @@ export function PosingPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
-      <section id="booking" className="scroll-mt-20 py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+      <section id="booking" ref={bookingSectionRef} className="scroll-mt-20 py-16 sm:py-20">
+        <SiteContainer>
           {paymentSuccess ? (
             <div className="mx-auto mb-8 max-w-2xl rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 text-center text-sm leading-relaxed text-emerald-100">
               {t('posing.booking.paymentSuccess')}
@@ -335,11 +340,12 @@ export function PosingPage() {
               locale={locale}
             />
           </div>
-        </div>
+        </SiteContainer>
       </section>
 
       <section className="border-t border-white/10 bg-black/30 py-16 sm:py-20">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+        <SiteContainer>
+          <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-center text-2xl font-semibold text-white sm:text-3xl">
             {t('posing.faq.title')}
           </h2>
@@ -354,7 +360,8 @@ export function PosingPage() {
               </div>
             ))}
           </dl>
-        </div>
+          </div>
+        </SiteContainer>
       </section>
     </div>
   )

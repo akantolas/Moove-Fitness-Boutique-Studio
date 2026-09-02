@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AdminBookingsPanel } from '../components/AdminBookingsPanel'
 import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminPaymentsQueue } from '../components/AdminPaymentsQueue'
+import { AdminNutritionQueue } from '../components/AdminNutritionQueue'
+import { AdminProgramPaymentsQueue } from '../components/AdminProgramPaymentsQueue'
 import { AdminShell, AdminPanelSkeleton, AdminStatCard, AdminStatsSkeleton } from '../components/AdminShell'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
@@ -64,6 +66,8 @@ export function PosingAdminPage() {
   }
 
   const pendingBadge = admin.stats?.pendingPayments ?? admin.payments.length
+  const programPendingBadge = admin.programPayments.length
+  const nutritionPendingBadge = admin.nutritionPayments.length
 
   const tabs = [
     {
@@ -77,6 +81,16 @@ export function PosingAdminPage() {
       id: 'payments',
       label: t('posing.admin.tabPayments'),
       badge: pendingBadge > 0 ? pendingBadge : undefined,
+    },
+    {
+      id: 'programs',
+      label: t('posing.admin.tabPrograms'),
+      badge: programPendingBadge > 0 ? programPendingBadge : undefined,
+    },
+    {
+      id: 'nutrition',
+      label: t('posing.admin.tabNutrition'),
+      badge: nutritionPendingBadge > 0 ? nutritionPendingBadge : undefined,
     },
     { id: 'bookings', label: t('posing.admin.tabBookings') },
   ]
@@ -247,6 +261,37 @@ export function PosingAdminPage() {
             locale={locale}
             busy={isBusy}
             onConfirm={admin.confirmPayment}
+          />
+        )
+      ) : null}
+
+      {activeTab === 'programs' ? (
+        admin.loading ? (
+          <AdminPanelSkeleton rows={3} />
+        ) : (
+          <AdminProgramPaymentsQueue
+            payments={admin.programPayments}
+            paidPurchases={admin.programPurchases}
+            locale={locale}
+            busy={isBusy}
+            onConfirm={admin.confirmProgramPayment}
+            onResendAccess={admin.resendProgramAccess}
+          />
+        )
+      ) : null}
+
+      {activeTab === 'nutrition' ? (
+        admin.loading ? (
+          <AdminPanelSkeleton rows={3} />
+        ) : (
+          <AdminNutritionQueue
+            payments={admin.nutritionPayments}
+            paidOrders={admin.nutritionOrders}
+            locale={locale}
+            busy={isBusy}
+            onConfirm={admin.confirmNutritionPayment}
+            onResend={admin.resendNutritionPlan}
+            onPreview={admin.previewNutritionPdf}
           />
         )
       ) : null}

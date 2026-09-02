@@ -2,8 +2,44 @@
  * Shared helpers for Move & Pose Vercel API routes.
  */
 
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { PLAN_KEYS } from './_pricing.js'
+
+let localEnvLoaded = false
+
+function parseEnvValue(raw) {
+  let val = raw.trim()
+  if (
+    (val.startsWith('"') && val.endsWith('"')) ||
+    (val.startsWith("'") && val.endsWith("'"))
+  ) {
+    val = val.slice(1, -1)
+  }
+  return val
+}
+
+/** Load `.env.local` when API runs outside Vercel (e.g. `vercel dev` missed vars). */
+function ensureLocalEnvLoaded() {
+  if (localEnvLoaded) return
+  localEnvLoaded = true
+
+  const file = join(process.cwd(), '.env.local')
+  if (!existsSync(file)) return
+
+  for (const raw of readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    const eq = line.indexOf('=')
+    if (eq <= 0) continue
+    const key = line.slice(0, eq).trim()
+    if (process.env[key]) continue
+    process.env[key] = parseEnvValue(line.slice(eq + 1))
+  }
+}
+
+ensureLocalEnvLoaded()
 
 export const PACKAGE_KEYS = PLAN_KEYS
 
@@ -267,6 +303,7 @@ export async function sendResendEmail({ from, to, subject, html, text, idempoten
 }
 
 function getSmtpConfig() {
+  ensureLocalEnvLoaded()
   const user = process.env.SMTP_USER ?? process.env.SMTP_EMAIL
   const pass = process.env.SMTP_PASS ?? process.env.SMTP_PASSWORD
   if (!user || !pass) return null
@@ -280,7 +317,7 @@ function getSmtpConfig() {
 }
 
 export function hasEmailTransportConfig() {
-  return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY)
+  return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY?.trim())
 }
 
 export async function sendPosingEmail({ from, to, subject, html, text, idempotencyKey, replyTo, attachments }) {
@@ -309,7 +346,7 @@ export async function sendPosingEmail({ from, to, subject, html, text, idempoten
     return { ok: true, provider: 'smtp' }
   }
 
-  if (process.env.RESEND_API_KEY) {
+  if (process.env.RESEND_API_KEY?.trim()) {
     const result = await sendResendEmail({
       from,
       to,

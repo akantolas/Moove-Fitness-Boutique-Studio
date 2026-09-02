@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import type { PosingPackageKey } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
+import { getSeptemberBonusSessions, isSeptemberOfferActive } from '../lib/posingOffers'
 
 export type PosingPackage = {
   label: string
@@ -257,7 +258,7 @@ export function PosingPackagesCarousel({
         {/* hidden sizer for card width */}
         <div
           ref={measureRef}
-          className="pointer-events-none absolute w-[76vw] max-w-[18rem] opacity-0 sm:w-[22rem] lg:w-[24rem]"
+          className="pointer-events-none absolute w-[76vw] max-w-[20rem] opacity-0 sm:w-[24rem] lg:w-[28rem]"
           aria-hidden
         >
           <div className="min-h-[22rem] sm:min-h-[28rem]" />
@@ -283,7 +284,7 @@ export function PosingPackagesCarousel({
               <article
                 key={pack.name}
                 aria-hidden={!isActive}
-                className={`absolute left-1/2 top-1/2 flex min-h-[22rem] w-[76vw] max-w-[18rem] overflow-hidden rounded-[1.75rem] border bg-black shadow-[0_28px_80px_-36px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.12)] sm:min-h-[28rem] sm:w-[22rem] lg:w-[24rem] ${
+                className={`absolute left-1/2 top-1/2 flex min-h-[22rem] w-[76vw] max-w-[20rem] overflow-hidden rounded-[1.75rem] border bg-black shadow-[0_28px_80px_-36px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.12)] sm:min-h-[28rem] sm:w-[24rem] lg:w-[28rem] ${
                   isActive
                     ? `border-white/20 ring-2 ${accent.ring}`
                     : 'border-white/8'
@@ -303,6 +304,11 @@ export function PosingPackagesCarousel({
                   aria-hidden
                 />
                 <div className="relative flex min-h-full w-full flex-col p-4 sm:p-6">
+                  {isSeptemberOfferActive() && getSeptemberBonusSessions(tierKey) > 0 ? (
+                    <span className="absolute right-4 top-4 z-10 inline-flex items-center rounded-full bg-gradient-to-r from-fuchsia-500 via-pink-400 to-rose-300 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#160714] shadow-[0_8px_24px_-8px_rgba(244,114,182,0.8)]">
+                      {t('posing.offers.bonusBadge')}
+                    </span>
+                  ) : null}
                   <div className="rounded-2xl border border-white/8 bg-black/30 p-4 backdrop-blur-md sm:p-5">
                     <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/55">
                       {pack.label}

@@ -28,7 +28,7 @@ export async function handleHealth(req, res) {
     hasEmail: hasEmailTransportConfig(),
     emailProvider: process.env.SMTP_USER || process.env.SMTP_EMAIL
       ? 'smtp'
-      : process.env.RESEND_API_KEY
+      : process.env.RESEND_API_KEY?.trim()
         ? 'resend'
         : null,
     hint: !hasUrl
@@ -36,7 +36,7 @@ export async function handleHealth(req, res) {
       : !hasServiceKey
         ? 'Set SUPABASE_SERVICE_ROLE_KEY (legacy service_role JWT)'
         : !hasEmailTransportConfig()
-          ? 'Set RESEND_API_KEY (ImprovMX + Resend) or SMTP_USER + SMTP_PASS'
+          ? 'Set RESEND_API_KEY (production) or SMTP_USER + SMTP_PASS locally'
           : null,
   })
 }

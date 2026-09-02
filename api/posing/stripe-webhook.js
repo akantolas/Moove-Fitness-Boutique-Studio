@@ -1,5 +1,14 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { sendPaidConfirmationEmail } from '../../lib/email/sendPaidConfirmation.js'
+import {
+  activateNutritionOrder,
+  generateAndSendNutritionPlan,
+} from '../nutrition/_lib.js'
+import {
+  activateProgramPurchase,
+  normalizeBookingLocale,
+  sendProgramAccessFlowEmail,
+} from '../programs/_lib.js'
 import { activatePackagePayment, getSupabaseAdmin, json, readRawBody } from './_lib.js'
 
 export const config = {
@@ -30,6 +39,99 @@ function verifyStripeSignature(payload, signatureHeader, secret) {
   }
 }
 
+async function handleProgramWithNutritionCheckout(supabase, session) {
+  const purchaseId = session?.metadata?.purchase_id
+  const nutritionOrderId = session?.metadata?.nutrition_order_id
+  if (!purchaseId || !nutritionOrderId) {
+    return { handled: false, reason: 'missing_metadata' }
+  }
+
+  const locale = normalizeBookingLocale(session?.metadata?.locale)
+
+  const programResult = await activateProgramPurchase(supabase, {
+    purchaseId,
+    paymentRef: session.id,
+    paymentMethod: 'stripe',
+  })
+
+  if (!programResult.ok) {
+    return { handled: true, ok: false, error: programResult.error }
+  }
+
+  const nutritionResult = await activateNutritionOrder(supabase, {
+    nutritionOrderId,
+    paymentRef: session.id,
+    paymentMethod: 'stripe',
+  })
+
+  if (!nutritionResult.ok) {
+    return { handled: true, ok: false, error: nutritionResult.error }
+  }
+
+  if (!programResult.already && programResult.purchase) {
+    try {
+      await sendProgramAccessFlowEmail(programResult.purchase, locale)
+      await supabase
+        .from('moove_program_purchases')
+        .update({
+          access_email_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', purchaseId)
+    } catch (error) {
+      console.error('stripe webhook bundled program email failed:', { purchaseId, error })
+    }
+  }
+
+  if (!nutritionResult.already && nutritionResult.order) {
+    try {
+      await generateAndSendNutritionPlan(supabase, nutritionResult.order, locale)
+    } catch (error) {
+      console.error('stripe webhook bundled nutrition plan failed:', { nutritionOrderId, error })
+    }
+  }
+
+  return { handled: true, ok: true }
+}
+
+async function handleMooveProgramCheckout(supabase, session) {
+  const purchaseId = session?.metadata?.purchase_id
+  if (!purchaseId) {
+    return { handled: false, reason: 'missing_purchase_id' }
+  }
+
+  const locale = normalizeBookingLocale(session?.metadata?.locale)
+  const result = await activateProgramPurchase(supabase, {
+    purchaseId,
+    paymentRef: session.id,
+    paymentMethod: 'stripe',
+  })
+
+  if (!result.ok) {
+    return { handled: true, ok: false, error: result.error }
+  }
+
+  if (!result.already && result.purchase) {
+    try {
+      await sendProgramAccessFlowEmail(result.purchase, locale)
+      await supabase
+        .from('moove_program_purchases')
+        .update({
+          access_email_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', purchaseId)
+    } catch (error) {
+      console.error('stripe webhook program access email failed:', {
+        purchaseId,
+        error: error instanceof Error ? error.message : error,
+      })
+    }
+  }
+
+  return { handled: true, ok: true, already: result.already ?? false }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
@@ -53,6 +155,34 @@ export default async function handler(req, res) {
   }
 
   const session = event.data?.object
+  const supabase = getSupabaseAdmin()
+
+  const productType = session?.metadata?.product_type
+
+  if (productType === 'program_with_nutrition') {
+    const bundledResult = await handleProgramWithNutritionCheckout(supabase, session)
+    if (bundledResult.handled) {
+      if (!bundledResult.ok) {
+        return json(res, 500, { ok: false, error: bundledResult.error })
+      }
+      return json(res, 200, { ok: true, type: 'program_with_nutrition' })
+    }
+  }
+
+  if (productType === 'moove_program') {
+    const programResult = await handleMooveProgramCheckout(supabase, session)
+    if (programResult.handled) {
+      if (!programResult.ok) {
+        return json(res, 500, { ok: false, error: programResult.error })
+      }
+      return json(res, 200, {
+        ok: true,
+        type: 'moove_program',
+        already: programResult.already ?? false,
+      })
+    }
+  }
+
   const bookingId = session?.metadata?.booking_id
   const userPackageId = session?.metadata?.user_package_id
 
@@ -60,7 +190,6 @@ export default async function handler(req, res) {
     return json(res, 200, { ok: true, skipped: true, reason: 'missing_metadata' })
   }
 
-  const supabase = getSupabaseAdmin()
   const result = await activatePackagePayment(supabase, {
     bookingId,
     userPackageId,

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AccountProfileHero } from '../components/AccountProfileHero'
 import { AccountProfileSection } from '../components/AccountProfileSection'
 import { AccountSecuritySection } from '../components/AccountSecuritySection'
+import { SiteContainer } from '../components/SiteContainer'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import {
   changePosingPassword,
@@ -180,22 +181,22 @@ export function PosingAccountSettingsPage() {
 
   if (!configured) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-white/70">
-        {t('posing.auth.notConfigured')}
-      </div>
+      <SiteContainer variant="app" className="py-16 text-center">
+        <div className="text-white/70">{t('posing.auth.notConfigured')}</div>
+      </SiteContainer>
     )
   }
 
   if (!pageReady) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-white/60">
-        {t('posing.account.loading')}
-      </div>
+      <SiteContainer variant="app" className="py-16 text-center">
+        <div className="text-white/60">{t('posing.account.loading')}</div>
+      </SiteContainer>
     )
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
+    <SiteContainer variant="app" className="py-12 sm:py-16">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/45">
           {t('posing.admin.accountSettings')}
@@ -264,6 +265,6 @@ export function PosingAccountSettingsPage() {
         message={passwordMessage}
         className="mt-6"
       />
-    </div>
+    </SiteContainer>
   )
 }

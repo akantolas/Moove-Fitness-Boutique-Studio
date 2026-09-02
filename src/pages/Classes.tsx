@@ -1,5 +1,6 @@
 import { ButtonLink } from '../components/Links'
 import { PageHeader } from '../components/PageHeader'
+import { SiteContainer } from '../components/SiteContainer'
 import { WeekScheduleCarousel } from '../components/WeekScheduleCarousel'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
@@ -8,7 +9,7 @@ export function ClassesPage() {
   const { t, dictionary } = useTranslation()
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+    <SiteContainer className="py-14 sm:py-20">
       <PageHeader
         eyebrow={t('classes.eyebrow')}
         title={t('classes.title')}
@@ -48,7 +49,7 @@ export function ClassesPage() {
         </h2>
         <div className="moove-rule mt-5" aria-hidden />
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="mt-10 grid gap-6 lg:grid-cols-2 xl:gap-8">
           {dictionary.classes.items.map((c, i) => (
             <article
               key={c.title}
@@ -79,6 +80,6 @@ export function ClassesPage() {
           ))}
         </div>
       </section>
-    </div>
+    </SiteContainer>
   )
 }
