@@ -3,7 +3,7 @@
 const SEPTEMBER_OFFER_START = new Date('2026-09-01T00:00:00+03:00')
 const SEPTEMBER_OFFER_END = new Date('2026-10-01T00:00:00+03:00')
 
-const OFFERS_POPUP_STORAGE_KEY = 'posing_offers_popup_seen_sept2026_v1'
+const OFFERS_POPUP_STORAGE_KEY = 'posing_offers_popup_session_sept2026_v1'
 
 export const SEPTEMBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond'] as const
 
@@ -16,10 +16,17 @@ export function getSeptemberBonusSessions(planKey: string, now = new Date()) {
   return (SEPTEMBER_BONUS_PLAN_KEYS as readonly string[]).includes(planKey) ? 1 : 0
 }
 
+export function shouldShowOffersPopup(
+  { seenInSession }: { seenInSession: boolean },
+  now = new Date(),
+) {
+  return isSeptemberOfferActive(now) && !seenInSession
+}
+
 export function hasSeenOffersPopup(): boolean {
   if (typeof window === 'undefined') return true
   try {
-    return window.localStorage.getItem(OFFERS_POPUP_STORAGE_KEY) === '1'
+    return window.sessionStorage.getItem(OFFERS_POPUP_STORAGE_KEY) === '1'
   } catch {
     return true
   }
@@ -28,9 +35,18 @@ export function hasSeenOffersPopup(): boolean {
 export function markOffersPopupSeen(): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(OFFERS_POPUP_STORAGE_KEY, '1')
+    window.sessionStorage.setItem(OFFERS_POPUP_STORAGE_KEY, '1')
   } catch {
     // ignore quota / private mode
+  }
+}
+
+export function clearOffersPopupSeen(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.sessionStorage.removeItem(OFFERS_POPUP_STORAGE_KEY)
+  } catch {
+    // ignore
   }
 }
 

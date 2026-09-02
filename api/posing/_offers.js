@@ -14,3 +14,8 @@ export function getSeptemberBonusSessions(planKey, now = new Date()) {
   if (!isSeptemberOfferActive(now)) return 0
   return SEPTEMBER_BONUS_PLAN_KEYS.includes(String(planKey)) ? 1 : 0
 }
+
+/** @param {{ seenInSession: boolean }} state */
+export function shouldShowOffersPopup(state, now = new Date()) {
+  return isSeptemberOfferActive(now) && !state.seenInSession
+}

@@ -9,7 +9,7 @@ import { ZoomableImage } from '../components/ZoomableImage'
 import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { hasSeenOffersPopup, isSeptemberOfferActive } from '../lib/posingOffers'
+import { hasSeenOffersPopup, isSeptemberOfferActive, shouldShowOffersPopup } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
 import { site, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -74,8 +74,9 @@ export function PosingPage() {
   }, [])
 
   useEffect(() => {
-    if (!isSeptemberOfferActive()) return
-    if (!hasSeenOffersPopup()) setOffersModalOpen(true)
+    if (shouldShowOffersPopup({ seenInSession: hasSeenOffersPopup() })) {
+      setOffersModalOpen(true)
+    }
   }, [])
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import {
   getSeptemberBonusSessions,
   isSeptemberOfferActive,
   SEPTEMBER_BONUS_PLAN_KEYS,
+  shouldShowOffersPopup,
 } from '../api/posing/_offers.js'
 
 const SEPT_MID = new Date('2026-09-15T12:00:00+03:00')
@@ -34,5 +35,20 @@ describe('getSeptemberBonusSessions', () => {
     assert.equal(getSeptemberBonusSessions('single', SEPT_MID), 0)
     assert.equal(getSeptemberBonusSessions('ruby', AUG_END), 0)
     assert.equal(getSeptemberBonusSessions('diamond', OCT_START), 0)
+  })
+})
+
+describe('shouldShowOffersPopup', () => {
+  it('shows when offer is active and not seen this session', () => {
+    assert.equal(shouldShowOffersPopup({ seenInSession: false }, SEPT_MID), true)
+  })
+
+  it('hides when already seen this session', () => {
+    assert.equal(shouldShowOffersPopup({ seenInSession: true }, SEPT_MID), false)
+  })
+
+  it('hides when offer is inactive', () => {
+    assert.equal(shouldShowOffersPopup({ seenInSession: false }, OCT_START), false)
+    assert.equal(shouldShowOffersPopup({ seenInSession: false }, AUG_END), false)
   })
 })
