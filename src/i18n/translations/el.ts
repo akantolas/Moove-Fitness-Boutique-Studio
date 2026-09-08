@@ -893,6 +893,16 @@ export const el = {
       confirmingPayment: 'Επιβεβαίωση…',
       confirmPaymentTitle: 'Επιβεβαίωση πληρωμής;',
       confirmPaymentBody: 'Η κράτηση θα επιβεβαιωθεί χειροκίνητα (π.χ. μετρητά ή τραπεζική κατάθεση).',
+      cancelBooking: 'Ακύρωση κράτησης',
+      cancelPackage: 'Ακύρωση πακέτου',
+      cancellingBooking: 'Ακύρωση…',
+      cancellingPackage: 'Ακύρωση πακέτου…',
+      confirmCancelBookingTitle: 'Ακύρωση κράτησης;',
+      confirmCancelBookingBody:
+        'Η κράτηση θα ακυρωθεί. Για επιβεβαιωμένη ώρα, η συνεδρία επιστρέφει στο πακέτο του πελάτη.',
+      confirmCancelPackageTitle: 'Ακύρωση πακέτου;',
+      confirmCancelPackageBody:
+        'Το πακέτο θα ακυρωθεί και όλες οι μελλοντικές κρατήσεις του θα ακυρωθούν. Ο πελάτης θα ειδοποιηθεί με email.',
       allBookings: 'Όλες οι κρατήσεις',
       allBookingsBody: 'Πλήρης λίστα κρατήσεων με φίλτρο κατάστασης.',
       filterAll: 'Όλες',
@@ -1003,6 +1013,10 @@ export const el = {
         preset_failed: 'Αποτυχία ανοίγματος ημέρας.',
         clear_failed: 'Αποτυχία καθαρισμού ημέρας.',
         payment_confirm_failed: 'Η επιβεβαίωση πληρωμής απέτυχε.',
+        booking_cancel_failed: 'Η ακύρωση κράτησης απέτυχε.',
+        package_cancel_failed: 'Η ακύρωση πακέτου απέτυχε.',
+        package_not_cancellable: 'Αυτό το πακέτο δεν μπορεί να ακυρωθεί.',
+        cannot_cancel: 'Αυτή η κράτηση δεν μπορεί να ακυρωθεί.',
         missing_email_config:
           'Δεν έχει ρυθμιστεί αποστολή email. Τοπικά: βάλε το RESEND_API_KEY από Vercel (Preview/Production) στο .env.local. Η πληρωμή δεν επιβεβαιώθηκε.',
         payment_confirmed_email_failed:

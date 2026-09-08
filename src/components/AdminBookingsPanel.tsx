@@ -13,6 +13,7 @@ type AdminBookingsPanelProps = {
   loading: boolean
   busy?: boolean
   onConfirmPayment?: (bookingId: string) => Promise<void>
+  onCancelBooking?: (bookingId: string) => Promise<void>
 }
 
 function formatSlot(iso: string, locale: Locale) {
@@ -26,7 +27,16 @@ function formatSlot(iso: string, locale: Locale) {
   }).format(new Date(iso))
 }
 
+function canCancelAdminBooking(booking: AdminBookingRow) {
+  if (booking.status === 'pending_payment') return true
+  if (booking.status !== 'confirmed') return false
+  if (!booking.slot?.start_at) return false
+  return new Date(booking.slot.start_at) > new Date()
+}
+
 const STATUS_FILTERS = ['', 'pending_payment', 'confirmed', 'cancelled', 'completed'] as const
+
+type PendingAction = { mode: 'confirm' | 'cancel'; id: string } | null
 
 export function AdminBookingsPanel({
   bookings,
@@ -36,24 +46,86 @@ export function AdminBookingsPanel({
   loading,
   busy = false,
   onConfirmPayment,
+  onCancelBooking,
 }: AdminBookingsPanelProps) {
   const { t, dictionary } = useTranslation()
-  const [confirmId, setConfirmId] = useState<string | null>(null)
-  const [confirmingId, setConfirmingId] = useState<string | null>(null)
-  const [confirmError, setConfirmError] = useState('')
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null)
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
 
   async function handleConfirm(bookingId: string) {
     if (!onConfirmPayment) return
-    setConfirmError('')
-    setConfirmingId(bookingId)
+    setActionError('')
+    setActionBusyId(bookingId)
     try {
       await onConfirmPayment(bookingId)
-      setConfirmId(null)
+      setPendingAction(null)
     } catch (err) {
-      setConfirmError(err instanceof Error ? err.message : 'payment_confirm_failed')
+      setActionError(err instanceof Error ? err.message : 'payment_confirm_failed')
     } finally {
-      setConfirmingId(null)
+      setActionBusyId(null)
     }
+  }
+
+  async function handleCancel(bookingId: string) {
+    if (!onCancelBooking) return
+    setActionError('')
+    setActionBusyId(bookingId)
+    try {
+      await onCancelBooking(bookingId)
+      setPendingAction(null)
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'booking_cancel_failed')
+    } finally {
+      setActionBusyId(null)
+    }
+  }
+
+  function renderActions(booking: AdminBookingRow, stacked = false) {
+    const canConfirm = booking.status === 'pending_payment' && onConfirmPayment
+    const canCancel = canCancelAdminBooking(booking) && onCancelBooking
+    if (!canConfirm && !canCancel) {
+      return <span className="text-xs text-white/30">—</span>
+    }
+
+    const wrapperClass = stacked ? 'mt-3 flex flex-col gap-2' : 'flex flex-wrap gap-2'
+
+    return (
+      <div className={wrapperClass}>
+        {canConfirm ? (
+          <button
+            type="button"
+            disabled={busy || actionBusyId === booking.id}
+            onClick={() => setPendingAction({ mode: 'confirm', id: booking.id })}
+            className={
+              stacked
+                ? 'w-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-black transition hover:brightness-110 disabled:opacity-50'
+                : 'rounded-full border border-fuchsia-200/35 bg-fuchsia-500/15 px-3 py-1 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/25 disabled:opacity-50'
+            }
+          >
+            {actionBusyId === booking.id && pendingAction?.mode === 'confirm'
+              ? t('posing.admin.confirmingPayment')
+              : t('posing.admin.confirmPayment')}
+          </button>
+        ) : null}
+        {canCancel ? (
+          <button
+            type="button"
+            disabled={busy || actionBusyId === booking.id}
+            onClick={() => setPendingAction({ mode: 'cancel', id: booking.id })}
+            className={
+              stacked
+                ? 'w-full rounded-full border border-rose-300/30 bg-rose-400/10 px-4 py-2 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/15 disabled:opacity-50'
+                : 'rounded-full border border-rose-300/30 bg-rose-400/10 px-3 py-1 text-xs font-semibold text-rose-100 transition hover:bg-rose-400/15 disabled:opacity-50'
+            }
+          >
+            {actionBusyId === booking.id && pendingAction?.mode === 'cancel'
+              ? t('posing.admin.cancellingBooking')
+              : t('posing.admin.cancelBooking')}
+          </button>
+        ) : null}
+      </div>
+    )
   }
 
   return (
@@ -77,9 +149,9 @@ export function AdminBookingsPanel({
         </select>
       </div>
 
-      {confirmError ? (
+      {actionError ? (
         <p className="mt-4 rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">
-          {confirmError}
+          {actionError}
         </p>
       ) : null}
 
@@ -119,18 +191,7 @@ export function AdminBookingsPanel({
                     {bookingStatusLabel(booking.status, t)}
                   </span>
                 </div>
-                {booking.status === 'pending_payment' && onConfirmPayment ? (
-                  <button
-                    type="button"
-                    disabled={busy || confirmingId === booking.id}
-                    onClick={() => setConfirmId(booking.id)}
-                    className="mt-3 w-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-4 py-2 text-xs font-semibold text-black transition hover:brightness-110 disabled:opacity-50"
-                  >
-                    {confirmingId === booking.id
-                      ? t('posing.admin.confirmingPayment')
-                      : t('posing.admin.confirmPayment')}
-                  </button>
-                ) : null}
+                {renderActions(booking, true)}
               </div>
             ))}
           </div>
@@ -167,22 +228,7 @@ export function AdminBookingsPanel({
                           {bookingStatusLabel(booking.status, t)}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        {booking.status === 'pending_payment' && onConfirmPayment ? (
-                          <button
-                            type="button"
-                            disabled={busy || confirmingId === booking.id}
-                            onClick={() => setConfirmId(booking.id)}
-                            className="rounded-full border border-fuchsia-200/35 bg-fuchsia-500/15 px-3 py-1 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/25 disabled:opacity-50"
-                          >
-                            {confirmingId === booking.id
-                              ? t('posing.admin.confirmingPayment')
-                              : t('posing.admin.confirmPayment')}
-                          </button>
-                        ) : (
-                          <span className="text-xs text-white/30">—</span>
-                        )}
-                      </td>
+                      <td className="px-4 py-3">{renderActions(booking)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -193,16 +239,30 @@ export function AdminBookingsPanel({
       )}
 
       <ConfirmDialog
-        open={confirmId !== null}
+        open={pendingAction?.mode === 'confirm'}
         title={t('posing.admin.confirmPaymentTitle')}
         body={t('posing.admin.confirmPaymentBody')}
         confirmLabel={t('posing.admin.confirmPayment')}
         cancelLabel={t('posing.admin.cancelDeleteMember')}
-        busy={confirmingId !== null}
+        busy={actionBusyId !== null}
         onConfirm={() => {
-          if (confirmId) void handleConfirm(confirmId)
+          if (pendingAction?.mode === 'confirm') void handleConfirm(pendingAction.id)
         }}
-        onCancel={() => setConfirmId(null)}
+        onCancel={() => setPendingAction(null)}
+      />
+
+      <ConfirmDialog
+        open={pendingAction?.mode === 'cancel'}
+        title={t('posing.admin.confirmCancelBookingTitle')}
+        body={t('posing.admin.confirmCancelBookingBody')}
+        confirmLabel={t('posing.admin.cancelBooking')}
+        cancelLabel={t('posing.admin.cancelDeleteMember')}
+        busy={actionBusyId !== null}
+        destructive
+        onConfirm={() => {
+          if (pendingAction?.mode === 'cancel') void handleCancel(pendingAction.id)
+        }}
+        onCancel={() => setPendingAction(null)}
       />
     </section>
   )

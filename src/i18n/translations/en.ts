@@ -894,6 +894,16 @@ export const en = {
       confirmingPayment: 'Confirming…',
       confirmPaymentTitle: 'Confirm payment?',
       confirmPaymentBody: 'The booking will be confirmed manually (e.g. cash or bank transfer).',
+      cancelBooking: 'Cancel booking',
+      cancelPackage: 'Cancel package',
+      cancellingBooking: 'Cancelling…',
+      cancellingPackage: 'Cancelling package…',
+      confirmCancelBookingTitle: 'Cancel booking?',
+      confirmCancelBookingBody:
+        'The booking will be cancelled. For a confirmed slot, the session is returned to the client package.',
+      confirmCancelPackageTitle: 'Cancel package?',
+      confirmCancelPackageBody:
+        'The package will be cancelled and all of its upcoming bookings will be cancelled. The client will be notified by email.',
       allBookings: 'All bookings',
       allBookingsBody: 'Full booking list with status filter.',
       filterAll: 'All',
@@ -1004,6 +1014,10 @@ export const en = {
         preset_failed: 'Failed to open day.',
         clear_failed: 'Failed to clear day.',
         payment_confirm_failed: 'Payment confirmation failed.',
+        booking_cancel_failed: 'Booking cancellation failed.',
+        package_cancel_failed: 'Package cancellation failed.',
+        package_not_cancellable: 'This package cannot be cancelled.',
+        cannot_cancel: 'This booking cannot be cancelled.',
         missing_email_config:
           'Email is not configured. Locally: add RESEND_API_KEY from Vercel (Preview/Production) to .env.local. Payment was not confirmed.',
         payment_confirmed_email_failed:

@@ -558,3 +558,72 @@ export async function cancelPosingBooking(supabase, { bookingId, userId, allowAd
 
   return { ok: true }
 }
+
+export function isBookingCancellable({ status, slotStartAt }, now = new Date()) {
+  if (status === 'cancelled' || status === 'completed') return false
+  if (status === 'pending_payment') return true
+  if (status === 'confirmed') {
+    if (!slotStartAt) return false
+    return new Date(slotStartAt) > now
+  }
+  return false
+}
+
+export function isPackageCancellable(status) {
+  return status === 'pending_payment' || status === 'active'
+}
+
+export async function getCancellableBookingsForPackage(supabase, packageId, now = new Date()) {
+  const { data: bookings, error } = await supabase
+    .from('posing_bookings')
+    .select('id, status, slot:availability_slots(start_at)')
+    .eq('user_package_id', packageId)
+    .in('status', ['pending_payment', 'confirmed'])
+
+  if (error) throw new Error(error.message)
+
+  return (bookings ?? []).filter((booking) => {
+    const slot = Array.isArray(booking.slot) ? booking.slot[0] : booking.slot
+    return isBookingCancellable(
+      { status: booking.status, slotStartAt: slot?.start_at },
+      now,
+    )
+  })
+}
+
+export async function cancelUserPackage(supabase, { packageId }) {
+  const { data: pkg, error } = await supabase
+    .from('user_packages')
+    .select('id, status')
+    .eq('id', packageId)
+    .maybeSingle()
+
+  if (error || !pkg) return { ok: false, error: 'package_not_found' }
+  if (pkg.status === 'cancelled') return { ok: true, already: true, cancelledBookingIds: [] }
+  if (!isPackageCancellable(pkg.status)) {
+    return { ok: false, error: 'package_not_cancellable' }
+  }
+
+  const now = new Date()
+  const nowIso = now.toISOString()
+  const toCancel = await getCancellableBookingsForPackage(supabase, packageId, now)
+  const cancelledBookingIds = toCancel.map((booking) => booking.id)
+
+  if (cancelledBookingIds.length > 0) {
+    const { error: cancelError } = await supabase
+      .from('posing_bookings')
+      .update({ status: 'cancelled', updated_at: nowIso })
+      .in('id', cancelledBookingIds)
+
+    if (cancelError) return { ok: false, error: cancelError.message }
+  }
+
+  const { error: pkgError } = await supabase
+    .from('user_packages')
+    .update({ status: 'cancelled', updated_at: nowIso })
+    .eq('id', packageId)
+
+  if (pkgError) return { ok: false, error: pkgError.message }
+
+  return { ok: true, cancelledBookingIds }
+}

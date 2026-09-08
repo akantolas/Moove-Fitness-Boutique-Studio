@@ -1,11 +1,19 @@
 import { sendPaidConfirmationEmail } from '../../../../lib/email/sendPaidConfirmation.js'
 import {
+  fetchBookingCancellationSnapshot,
+  packageNameForLocale,
+  sendCancellationEmails,
+  sessionTimeForLocale,
+} from '../../../../lib/email/sendCancellationEmails.js'
+import {
   activatePackagePayment,
+  cancelPosingBooking,
   cors,
   ensureAdmin,
   getSupabaseAdmin,
   getUserFromRequest,
   json,
+  normalizeBookingLocale,
   readJsonBody,
 } from '../../_lib.js'
 
@@ -145,6 +153,65 @@ export async function handleAdminBookings(req, res) {
       return json(res, 200, { ok: true, already: result.already ?? false })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'server_error'
+      return json(res, 500, { ok: false, error: message })
+    }
+  }
+
+  if (req.method === 'DELETE') {
+    const bookingId = req.query?.id
+    if (!bookingId || typeof bookingId !== 'string') {
+      return json(res, 400, { ok: false, error: 'missing_id' })
+    }
+
+    const locale = normalizeBookingLocale(req.query?.locale)
+
+    try {
+      const snapshot = await fetchBookingCancellationSnapshot(supabase, bookingId)
+
+      const result = await cancelPosingBooking(supabase, {
+        bookingId,
+        userId: user.id,
+        allowAdmin: true,
+      })
+
+      if (!result.ok) {
+        const status =
+          result.error === 'forbidden'
+            ? 403
+            : result.error === 'booking_not_found'
+              ? 404
+              : result.error === 'cannot_cancel'
+                ? 409
+                : 500
+        return json(res, status, { ok: false, error: result.error })
+      }
+
+      if (!result.already && snapshot) {
+        const emailResult = await sendCancellationEmails({
+          bookingId: snapshot.bookingId,
+          locale,
+          previousStatus: snapshot.previousStatus,
+          attendeeName: snapshot.attendeeName,
+          userEmail: snapshot.userEmail,
+          phone: snapshot.phone,
+          division: snapshot.division,
+          notes: snapshot.notes,
+          durationMinutes: snapshot.durationMinutes,
+          packageName: packageNameForLocale(snapshot, locale),
+          sessionTime: sessionTimeForLocale(snapshot, locale),
+          sessionStartAt: snapshot.sessionStartAt,
+        })
+        if (!emailResult.ok) {
+          console.error('admin booking cancellation email failed:', {
+            bookingId,
+            error: emailResult.error,
+          })
+        }
+      }
+
+      return json(res, 200, { ok: true, already: result.already ?? false })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'booking_cancel_failed'
       return json(res, 500, { ok: false, error: message })
     }
   }

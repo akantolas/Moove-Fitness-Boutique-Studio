@@ -8,6 +8,8 @@ import {
 } from '../lib/nutritionApi'
 import type { NutritionOrderPayment, NutritionPaidOrder } from '../lib/nutritionTypes'
 import {
+  adminCancelBooking,
+  adminCancelPackage,
   adminConfirmPayment,
   adminCreateSlot,
   adminDeleteMember,
@@ -48,6 +50,7 @@ import {
   isPastCell,
   normalizeTimeInput,
 } from '../lib/posingDates'
+import type { Locale } from '../i18n/types'
 
 export const ADMIN_TABS = ['overview', 'calendar', 'members', 'payments', 'programs', 'nutrition', 'bookings'] as const
 export type AdminTab = (typeof ADMIN_TABS)[number]
@@ -77,6 +80,7 @@ type UsePosingAdminPanelOptions = {
   activeTab: AdminTab
   accessToken: string | null
   authorized: boolean
+  locale: Locale
   range: { from: string; to: string }
   bookingStatusFilter: string
   duration: number
@@ -89,6 +93,7 @@ export function usePosingAdminPanel({
   activeTab,
   accessToken,
   authorized,
+  locale,
   range,
   bookingStatusFilter,
   duration,
@@ -237,6 +242,15 @@ export function usePosingAdminPanel({
   const refreshAfterPayment = useCallback(async () => {
     await Promise.all([loadPayments(), loadStats(), loadBookings(bookingStatusFilter)])
   }, [bookingStatusFilter, loadBookings, loadPayments, loadStats])
+
+  const refreshAfterCancel = useCallback(async () => {
+    await Promise.all([
+      loadMembers(),
+      loadStats(),
+      loadBookings(bookingStatusFilter),
+      loadPayments(),
+    ])
+  }, [bookingStatusFilter, loadBookings, loadMembers, loadPayments, loadStats])
 
   useEffect(() => {
     if (!authorized) return
@@ -500,6 +514,40 @@ export function usePosingAdminPanel({
     }
   }
 
+  async function cancelBooking(bookingId: string) {
+    if (!accessToken) return
+    setBusy(true)
+    setError('')
+    try {
+      await adminCancelBooking(accessToken, bookingId, locale)
+      await refreshAfterCancel()
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'booking_cancel_failed'
+      const message = translateAdminError(code, translate)
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function cancelPackage(packageId: string) {
+    if (!accessToken) return
+    setBusy(true)
+    setError('')
+    try {
+      await adminCancelPackage(accessToken, packageId, locale)
+      await refreshAfterCancel()
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'package_cancel_failed'
+      const message = translateAdminError(code, translate)
+      setError(message)
+      throw new Error(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return {
     slots,
     members,
@@ -526,6 +574,8 @@ export function usePosingAdminPanel({
     saveMemberPrice,
     removeMemberPrice,
     confirmPayment,
+    cancelBooking,
+    cancelPackage,
     confirmProgramPayment,
     resendProgramAccess,
     confirmNutritionPayment,

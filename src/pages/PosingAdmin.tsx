@@ -36,6 +36,7 @@ export function PosingAdminPage() {
     activeTab,
     accessToken,
     authorized: authorized === true,
+    locale,
     range,
     bookingStatusFilter,
     duration,
@@ -248,6 +249,8 @@ export function PosingAdminPage() {
             onDeleteMember={admin.deleteMember}
             onSaveMemberPrice={admin.saveMemberPrice}
             onRemoveMemberPrice={admin.removeMemberPrice}
+            onCancelPackage={admin.cancelPackage}
+            onCancelBooking={admin.cancelBooking}
           />
         )
       ) : null}
@@ -305,6 +308,7 @@ export function PosingAdminPage() {
           loading={admin.loading}
           busy={isBusy}
           onConfirmPayment={admin.confirmPayment}
+          onCancelBooking={admin.cancelBooking}
         />
       ) : null}
     </AdminShell>

@@ -2,12 +2,14 @@ import { json, resolveApiPath } from '../_lib.js'
 import { handleAdminBookings } from './_handlers/bookings.js'
 import { handleAdminCalendarSettings } from './_handlers/calendarSettings.js'
 import { handleAdminMembers } from './_handlers/members.js'
+import { handleAdminPackages } from './_handlers/packages.js'
 import { handleAdminSlots } from './_handlers/slots.js'
 
 const BASE_PREFIX = '/api/posing/admin/'
 
 const routes = {
   bookings: handleAdminBookings,
+  packages: handleAdminPackages,
   slots: handleAdminSlots,
   members: handleAdminMembers,
   'calendar-settings': handleAdminCalendarSettings,

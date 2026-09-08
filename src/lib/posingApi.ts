@@ -373,6 +373,32 @@ export async function adminConfirmPayment(accessToken: string, bookingId: string
   return data as { ok: boolean; already?: boolean }
 }
 
+export async function adminCancelBooking(
+  accessToken: string,
+  bookingId: string,
+  locale: string,
+) {
+  const params = new URLSearchParams({ id: bookingId, locale })
+  const res = await fetch(`/api/posing/admin/bookings?${params.toString()}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'booking_cancel_failed'))
+  return data as { ok: boolean; already?: boolean }
+}
+
+export async function adminCancelPackage(accessToken: string, packageId: string, locale: string) {
+  const params = new URLSearchParams({ id: packageId, locale })
+  const res = await fetch(`/api/posing/admin/packages?${params.toString()}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'package_cancel_failed'))
+  return data as { ok: boolean; already?: boolean; cancelledBookings?: number }
+}
+
 export async function fetchAdminBookings(
   accessToken: string,
   status?: string,
