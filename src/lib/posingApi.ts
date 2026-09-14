@@ -162,6 +162,7 @@ export async function fetchPosingMe(accessToken: string) {
     isAdmin: boolean
     packages: UserPackage[]
     bookings: PosingBooking[]
+    september_loyalty_eligible?: boolean
   }
 }
 

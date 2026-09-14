@@ -2,6 +2,7 @@
 
 const SEPTEMBER_OFFER_START = new Date('2026-09-01T00:00:00+03:00')
 const SEPTEMBER_OFFER_END = new Date('2026-10-01T00:00:00+03:00')
+const SEPTEMBER_LOYALTY_END = new Date('2027-04-01T00:00:00+03:00')
 
 const OFFERS_POPUP_STORAGE_KEY = 'posing_offers_popup_session_sept2026_v1'
 
@@ -11,9 +12,28 @@ export function isSeptemberOfferActive(now = new Date()) {
   return now >= SEPTEMBER_OFFER_START && now < SEPTEMBER_OFFER_END
 }
 
+export function isSeptemberLoyaltyPeriodActive(now = new Date()) {
+  return now < SEPTEMBER_LOYALTY_END
+}
+
+export function isSeptemberBonusPlanKey(planKey: string) {
+  return (SEPTEMBER_BONUS_PLAN_KEYS as readonly string[]).includes(planKey)
+}
+
 export function getSeptemberBonusSessions(planKey: string, now = new Date()) {
-  if (!isSeptemberOfferActive(now)) return 0
-  return (SEPTEMBER_BONUS_PLAN_KEYS as readonly string[]).includes(planKey) ? 1 : 0
+  if (!isSeptemberBonusPlanKey(planKey)) return 0
+  if (!isSeptemberLoyaltyPeriodActive(now)) return 0
+  if (isSeptemberOfferActive(now)) return 1
+  return 0
+}
+
+export function shouldShowSeptemberBonusBadge(
+  planKey: string,
+  septemberLoyaltyEligible: boolean,
+  now = new Date(),
+) {
+  if (!isSeptemberBonusPlanKey(planKey)) return false
+  return isSeptemberOfferActive(now) || (septemberLoyaltyEligible && isSeptemberLoyaltyPeriodActive(now))
 }
 
 export function shouldShowOffersPopup(

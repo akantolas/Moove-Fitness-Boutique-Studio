@@ -690,6 +690,7 @@ export const en = {
       title: 'NEW season OFFER',
       subtitle: 'All monthly packages — 4 classes + 1 class free.',
       onlySeptember: 'Only for September purchases',
+      loyaltyHint: 'Sapphire, Ruby, or Diamond purchases in September keep +1 free until 31 Mar 2027.',
       bonusBadge: '+1 FREE',
       flyerAlt: 'Move & Pose — new season offer: 4 classes + 1 class free',
       ctaBook: 'Book now',

@@ -689,6 +689,7 @@ export const el = {
       title: 'NEW season OFFER',
       subtitle: 'Όλα τα μηνιαία πακέτα — 4 συνεδρίες + 1 δωρεάν.',
       onlySeptember: 'Μόνο για αγορές Σεπτεμβρίου',
+      loyaltyHint: 'Οι αγορές Sapphire, Ruby ή Diamond τον Σεπτέμβριο κρατούν το +1 δωρεάν έως 31/3/2027.',
       bonusBadge: '+1 δωρεάν',
       flyerAlt: 'Move & Pose — προσφορά νέας σεζόν: 4 συνεδρίες + 1 δωρεάν',
       ctaBook: 'Κλείσε τώρα',

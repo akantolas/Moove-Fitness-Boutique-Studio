@@ -6,8 +6,10 @@ import { PosingOffersSection } from '../components/PosingOffersSection'
 import { PosingPackagesCarousel } from '../components/PosingPackagesCarousel'
 import { SiteContainer } from '../components/SiteContainer'
 import { ZoomableImage } from '../components/ZoomableImage'
+import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
+import { fetchPosingMe } from '../lib/posingApi'
 import { fetchPackagePlan } from '../lib/posingPackages'
 import { hasSeenOffersPopup, isSeptemberOfferActive, shouldShowOffersPopup } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
@@ -52,6 +54,8 @@ export function PosingPage() {
   )
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
   const [offersModalOpen, setOffersModalOpen] = useState(false)
+  const [septemberLoyaltyEligible, setSeptemberLoyaltyEligible] = useState(false)
+  const { accessToken, sessionReady } = usePosingAuth()
   const bookingSectionRef = useRef<HTMLElement | null>(null)
   const bookingSectionVisible = useBookingSectionVisible(bookingSectionRef)
   const posingBookingSticky = usePosingBookingSticky()
@@ -78,6 +82,26 @@ export function PosingPage() {
       setOffersModalOpen(true)
     }
   }, [])
+
+  useEffect(() => {
+    if (!sessionReady || !accessToken) {
+      setSeptemberLoyaltyEligible(false)
+      return
+    }
+
+    let cancelled = false
+    fetchPosingMe(accessToken)
+      .then((data) => {
+        if (!cancelled) setSeptemberLoyaltyEligible(Boolean(data.september_loyalty_eligible))
+      })
+      .catch(() => {
+        if (!cancelled) setSeptemberLoyaltyEligible(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken, sessionReady])
 
   useEffect(() => {
     const param = searchParams.get('package')
@@ -208,6 +232,7 @@ export function PosingPage() {
             packageKeys={posing.packageKeys}
             activeIndex={selectedPackageIndex}
             onSelect={handleCarouselSelect}
+            septemberLoyaltyEligible={septemberLoyaltyEligible}
           />
 
           <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-fuchsia-100/15 bg-white/[0.035] p-4 shadow-[0_24px_70px_-48px_rgba(244,114,182,0.85)] sm:p-5">

@@ -126,6 +126,9 @@ export function SeptemberOfferFlyer({
           <p className="mt-3 text-center text-[11px] uppercase tracking-[0.16em] text-white/40">
             {t('posing.offers.onlySeptember')}
           </p>
+          <p className="mt-2 text-center text-xs leading-relaxed text-white/50">
+            {t('posing.offers.loyaltyHint')}
+          </p>
         </>
       )}
     </div>
