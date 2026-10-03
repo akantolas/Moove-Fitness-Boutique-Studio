@@ -4,7 +4,33 @@ const SEPTEMBER_OFFER_START = new Date('2026-09-01T00:00:00+03:00')
 const SEPTEMBER_OFFER_END = new Date('2026-10-01T00:00:00+03:00')
 const SEPTEMBER_LOYALTY_END = new Date('2027-04-01T00:00:00+03:00')
 
+const OCTOBER_OFFER_START = new Date('2026-10-01T00:00:00+03:00')
+const OCTOBER_OFFER_END = new Date('2026-11-01T00:00:00+03:00')
+
 export const SEPTEMBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond']
+export const OCTOBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond']
+export const OCTOBER_BONUS_SESSIONS = 2
+
+export function isOctoberOfferActive(now = new Date()) {
+  return now >= OCTOBER_OFFER_START && now < OCTOBER_OFFER_END
+}
+
+/** @param {string} planKey */
+export function getOctoberBonusSessions(planKey, now = new Date()) {
+  if (!isOctoberOfferActive(now)) return 0
+  return OCTOBER_BONUS_PLAN_KEYS.includes(String(planKey)) ? OCTOBER_BONUS_SESSIONS : 0
+}
+
+/**
+ * October promo wins while it is live. September loyalty applies only after that.
+ * @param {string} planKey
+ * @param {{ enrolledInSeptemberOffer: boolean }} state
+ */
+export function computePosingBonusSessions(planKey, state, now = new Date()) {
+  const octoberBonus = getOctoberBonusSessions(planKey, now)
+  if (octoberBonus > 0) return octoberBonus
+  return computeSeptemberBonusSessions(planKey, state, now)
+}
 
 export function isSeptemberOfferActive(now = new Date()) {
   return now >= SEPTEMBER_OFFER_START && now < SEPTEMBER_OFFER_END
@@ -70,7 +96,14 @@ export async function isSeptemberLoyaltyEligible(supabase, userId, now = new Dat
   return userEnrolledInSeptemberOffer(supabase, userId)
 }
 
+/** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId @param {string} planKey */
+export async function resolvePosingBonusSessions(supabase, userId, planKey, now = new Date()) {
+  const octoberBonus = getOctoberBonusSessions(planKey, now)
+  if (octoberBonus > 0) return octoberBonus
+  return resolveSeptemberBonusSessions(supabase, userId, planKey, now)
+}
+
 /** @param {{ seenInSession: boolean }} state */
 export function shouldShowOffersPopup(state, now = new Date()) {
-  return isSeptemberOfferActive(now) && !state.seenInSession
+  return isOctoberOfferActive(now) && !state.seenInSession
 }

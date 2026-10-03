@@ -4,7 +4,13 @@ const SEPTEMBER_OFFER_START = new Date('2026-09-01T00:00:00+03:00')
 const SEPTEMBER_OFFER_END = new Date('2026-10-01T00:00:00+03:00')
 const SEPTEMBER_LOYALTY_END = new Date('2027-04-01T00:00:00+03:00')
 
-const OFFERS_POPUP_STORAGE_KEY = 'posing_offers_popup_session_sept2026_v1'
+const OCTOBER_OFFER_START = new Date('2026-10-01T00:00:00+03:00')
+const OCTOBER_OFFER_END = new Date('2026-11-01T00:00:00+03:00')
+
+const OFFERS_POPUP_STORAGE_KEY = 'posing_offers_popup_session_oct2026_v1'
+
+export const OCTOBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond'] as const
+export const OCTOBER_BONUS_SESSIONS = 2
 
 export const SEPTEMBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond'] as const
 
@@ -36,11 +42,22 @@ export function shouldShowSeptemberBonusBadge(
   return isSeptemberOfferActive(now) || (septemberLoyaltyEligible && isSeptemberLoyaltyPeriodActive(now))
 }
 
+export function isOctoberOfferActive(now = new Date()) {
+  return now >= OCTOBER_OFFER_START && now < OCTOBER_OFFER_END
+}
+
+export function getOctoberBonusSessions(planKey: string, now = new Date()) {
+  if (!isOctoberOfferActive(now)) return 0
+  return (OCTOBER_BONUS_PLAN_KEYS as readonly string[]).includes(planKey)
+    ? OCTOBER_BONUS_SESSIONS
+    : 0
+}
+
 export function shouldShowOffersPopup(
   { seenInSession }: { seenInSession: boolean },
   now = new Date(),
 ) {
-  return isSeptemberOfferActive(now) && !seenInSession
+  return isOctoberOfferActive(now) && !seenInSession
 }
 
 export function hasSeenOffersPopup(): boolean {

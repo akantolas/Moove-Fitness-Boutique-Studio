@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import type { PosingPackageKey } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
-import { shouldShowSeptemberBonusBadge } from '../lib/posingOffers'
+import { getOctoberBonusSessions, shouldShowSeptemberBonusBadge } from '../lib/posingOffers'
 
 export type PosingPackage = {
   label: string
@@ -306,9 +306,12 @@ export function PosingPackagesCarousel({
                   aria-hidden
                 />
                 <div className="relative flex min-h-full w-full flex-col p-4 sm:p-6">
-                  {shouldShowSeptemberBonusBadge(tierKey, septemberLoyaltyEligible) ? (
+                  {getOctoberBonusSessions(tierKey) > 0 ||
+                  shouldShowSeptemberBonusBadge(tierKey, septemberLoyaltyEligible) ? (
                     <span className="absolute right-4 top-4 z-10 inline-flex items-center rounded-full bg-gradient-to-r from-fuchsia-500 via-pink-400 to-rose-300 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#160714] shadow-[0_8px_24px_-8px_rgba(244,114,182,0.8)]">
-                      {t('posing.offers.bonusBadge')}
+                      {getOctoberBonusSessions(tierKey) > 0
+                        ? t('posing.offers.bonusBadge')
+                        : t('posing.offers.loyaltyBadge')}
                     </span>
                   ) : null}
                   <div className="rounded-2xl border border-white/8 bg-black/30 p-4 backdrop-blur-md sm:p-5">

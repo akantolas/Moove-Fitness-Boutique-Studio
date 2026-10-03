@@ -11,7 +11,7 @@ import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
 import { fetchPosingMe } from '../lib/posingApi'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { hasSeenOffersPopup, isSeptemberOfferActive, shouldShowOffersPopup } from '../lib/posingOffers'
+import { hasSeenOffersPopup, isOctoberOfferActive, shouldShowOffersPopup } from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
 import { site, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -167,7 +167,7 @@ export function PosingPage() {
               >
                 {t('posing.hero.viewPackages')}
               </a>
-              {isSeptemberOfferActive() ? (
+              {isOctoberOfferActive() ? (
                 <a href="#offers" className={posingHeroGhostCtaClass}>
                   {t('posing.offers.heroCta')}
                 </a>

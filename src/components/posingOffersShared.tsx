@@ -1,6 +1,6 @@
 import { useTranslation } from '../i18n/useTranslation'
 
-export const SEPTEMBER_OFFER_FLYER_SRC = '/posing-offer-september-2026.jpg'
+export const OCTOBER_OFFER_FLYER_SRC = '/posing-offer-octomber-2026.jpg'
 
 type OffersSectionHeaderProps = {
   titleId?: string
@@ -55,14 +55,14 @@ export function OffersSectionHeader({
       </p>
       {isModal ? (
         <p className="mt-3 text-xs font-medium uppercase tracking-[0.24em] text-fuchsia-200/50">
-          {t('posing.offers.onlySeptember')}
+          {t('posing.offers.onlyOctober')}
         </p>
       ) : null}
     </div>
   )
 }
 
-type SeptemberOfferFlyerProps = {
+type OctoberOfferFlyerProps = {
   onCta?: () => void
   onDismiss?: () => void
   variant?: 'section' | 'modal'
@@ -70,13 +70,13 @@ type SeptemberOfferFlyerProps = {
   className?: string
 }
 
-export function SeptemberOfferFlyer({
+export function OctoberOfferFlyer({
   onCta,
   onDismiss,
   variant = 'section',
   compact = false,
   className = '',
-}: SeptemberOfferFlyerProps) {
+}: OctoberOfferFlyerProps) {
   const { t } = useTranslation()
   const isModal = variant === 'modal'
 
@@ -84,7 +84,7 @@ export function SeptemberOfferFlyer({
     <div className={`mx-auto ${isModal ? 'w-full max-w-sm' : 'max-w-md'} ${className}`.trim()}>
       <div className="overflow-hidden rounded-[1.5rem] border border-white/12 shadow-[0_32px_90px_-40px_rgba(244,114,182,0.45)] ring-1 ring-fuchsia-400/25">
         <img
-          src={SEPTEMBER_OFFER_FLYER_SRC}
+          src={OCTOBER_OFFER_FLYER_SRC}
           alt={t('posing.offers.flyerAlt')}
           className={
             isModal
@@ -124,10 +124,7 @@ export function SeptemberOfferFlyer({
             {t('posing.offers.ctaBook')}
           </button>
           <p className="mt-3 text-center text-[11px] uppercase tracking-[0.16em] text-white/40">
-            {t('posing.offers.onlySeptember')}
-          </p>
-          <p className="mt-2 text-center text-xs leading-relaxed text-white/50">
-            {t('posing.offers.loyaltyHint')}
+            {t('posing.offers.onlyOctober')}
           </p>
         </>
       )}

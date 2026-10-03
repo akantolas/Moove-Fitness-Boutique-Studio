@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from '../i18n/useTranslation'
 import {
-  isSeptemberOfferActive,
+  isOctoberOfferActive,
   markOffersPopupSeen,
   scrollToPosingPackages,
 } from '../lib/posingOffers'
-import { OffersModalBackdrop, SeptemberOfferFlyer } from './posingOffersShared'
+import { OffersModalBackdrop, OctoberOfferFlyer } from './posingOffersShared'
 
 type PosingOffersModalProps = {
   open: boolean
@@ -39,7 +39,7 @@ export function PosingOffersModal({ open, onClose }: PosingOffersModalProps) {
     }
   }, [open, dismiss])
 
-  if (!open || !isSeptemberOfferActive()) return null
+  if (!open || !isOctoberOfferActive()) return null
 
   function handleBookNow() {
     markOffersPopupSeen()
@@ -92,7 +92,7 @@ export function PosingOffersModal({ open, onClose }: PosingOffersModalProps) {
         </button>
 
         <div className="overflow-hidden p-4 pt-10 sm:p-5 sm:pt-11">
-          <SeptemberOfferFlyer
+          <OctoberOfferFlyer
             variant="modal"
             onCta={handleBookNow}
             onDismiss={dismiss}
