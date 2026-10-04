@@ -96,7 +96,11 @@ export function OctoberOfferFlyer({
         />
       </div>
       {isModal && onDismiss ? (
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <>
+          <p className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-fuchsia-200/80">
+            {t('posing.offers.onlyOctober')}
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
             onClick={onCta}
@@ -111,7 +115,8 @@ export function OctoberOfferFlyer({
           >
             {t('posing.offers.modalDismiss')}
           </button>
-        </div>
+          </div>
+        </>
       ) : (
         <>
           <button
