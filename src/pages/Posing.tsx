@@ -55,6 +55,7 @@ export function PosingPage() {
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
   const [offersModalOpen, setOffersModalOpen] = useState(false)
   const [septemberLoyaltyEligible, setSeptemberLoyaltyEligible] = useState(false)
+  const [octoberNewMemberEligible, setOctoberNewMemberEligible] = useState(true)
   const { accessToken, sessionReady } = usePosingAuth()
   const bookingSectionRef = useRef<HTMLElement | null>(null)
   const bookingSectionVisible = useBookingSectionVisible(bookingSectionRef)
@@ -84,18 +85,26 @@ export function PosingPage() {
   }, [])
 
   useEffect(() => {
-    if (!sessionReady || !accessToken) {
+    if (!sessionReady) return
+
+    if (!accessToken) {
       setSeptemberLoyaltyEligible(false)
+      setOctoberNewMemberEligible(true)
       return
     }
 
     let cancelled = false
+    setOctoberNewMemberEligible(false)
     fetchPosingMe(accessToken)
       .then((data) => {
-        if (!cancelled) setSeptemberLoyaltyEligible(Boolean(data.september_loyalty_eligible))
+        if (cancelled) return
+        setSeptemberLoyaltyEligible(Boolean(data.september_loyalty_eligible))
+        setOctoberNewMemberEligible(Boolean(data.october_new_member_eligible))
       })
       .catch(() => {
-        if (!cancelled) setSeptemberLoyaltyEligible(false)
+        if (cancelled) return
+        setSeptemberLoyaltyEligible(false)
+        setOctoberNewMemberEligible(false)
       })
 
     return () => {
@@ -233,6 +242,7 @@ export function PosingPage() {
             activeIndex={selectedPackageIndex}
             onSelect={handleCarouselSelect}
             septemberLoyaltyEligible={septemberLoyaltyEligible}
+            octoberNewMemberEligible={octoberNewMemberEligible}
           />
 
           <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-fuchsia-100/15 bg-white/[0.035] p-4 shadow-[0_24px_70px_-48px_rgba(244,114,182,0.85)] sm:p-5">

@@ -163,6 +163,7 @@ export async function fetchPosingMe(accessToken: string) {
     packages: UserPackage[]
     bookings: PosingBooking[]
     september_loyalty_eligible?: boolean
+    october_new_member_eligible?: boolean
   }
 }
 

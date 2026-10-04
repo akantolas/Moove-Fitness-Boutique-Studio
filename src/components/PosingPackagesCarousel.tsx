@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import type { PosingPackageKey } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
-import { getOctoberBonusSessions, shouldShowSeptemberBonusBadge } from '../lib/posingOffers'
+import { shouldShowOctoberBonusBadge, shouldShowSeptemberBonusBadge } from '../lib/posingOffers'
 
 export type PosingPackage = {
   label: string
@@ -17,6 +17,7 @@ type PosingPackagesCarouselProps = {
   activeIndex: number
   onSelect: (index: number) => void
   septemberLoyaltyEligible?: boolean
+  octoberNewMemberEligible?: boolean
 }
 
 const CARD_TRANSITION = 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), filter 700ms cubic-bezier(0.22, 1, 0.36, 1)'
@@ -158,6 +159,7 @@ export function PosingPackagesCarousel({
   activeIndex,
   onSelect,
   septemberLoyaltyEligible = false,
+  octoberNewMemberEligible = true,
 }: PosingPackagesCarouselProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -306,10 +308,10 @@ export function PosingPackagesCarousel({
                   aria-hidden
                 />
                 <div className="relative flex min-h-full w-full flex-col p-4 sm:p-6">
-                  {getOctoberBonusSessions(tierKey) > 0 ||
+                  {shouldShowOctoberBonusBadge(tierKey, octoberNewMemberEligible) ||
                   shouldShowSeptemberBonusBadge(tierKey, septemberLoyaltyEligible) ? (
                     <span className="absolute right-4 top-4 z-10 inline-flex items-center rounded-full bg-gradient-to-r from-fuchsia-500 via-pink-400 to-rose-300 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#160714] shadow-[0_8px_24px_-8px_rgba(244,114,182,0.8)]">
-                      {getOctoberBonusSessions(tierKey) > 0
+                      {shouldShowOctoberBonusBadge(tierKey, octoberNewMemberEligible)
                         ? t('posing.offers.bonusBadge')
                         : t('posing.offers.loyaltyBadge')}
                     </span>

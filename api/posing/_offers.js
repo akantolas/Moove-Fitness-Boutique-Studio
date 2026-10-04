@@ -22,13 +22,16 @@ export function getOctoberBonusSessions(planKey, now = new Date()) {
 }
 
 /**
- * October promo wins while it is live. September loyalty applies only after that.
+ * October +2 applies only to first-time buyers. Existing members fall through
+ * to September loyalty.
  * @param {string} planKey
- * @param {{ enrolledInSeptemberOffer: boolean }} state
+ * @param {{ enrolledInSeptemberOffer: boolean, isNewMember: boolean }} state
  */
 export function computePosingBonusSessions(planKey, state, now = new Date()) {
-  const octoberBonus = getOctoberBonusSessions(planKey, now)
-  if (octoberBonus > 0) return octoberBonus
+  if (state.isNewMember) {
+    const octoberBonus = getOctoberBonusSessions(planKey, now)
+    if (octoberBonus > 0) return octoberBonus
+  }
   return computeSeptemberBonusSessions(planKey, state, now)
 }
 
@@ -96,10 +99,28 @@ export async function isSeptemberLoyaltyEligible(supabase, userId, now = new Dat
   return userEnrolledInSeptemberOffer(supabase, userId)
 }
 
+/** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId */
+export async function userIsNewPosingMember(supabase, userId) {
+  const { count, error } = await supabase
+    .from('user_packages')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('new posing member check failed:', { userId, error: error.message })
+    return false
+  }
+
+  return (count ?? 0) === 0
+}
+
 /** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId @param {string} planKey */
 export async function resolvePosingBonusSessions(supabase, userId, planKey, now = new Date()) {
-  const octoberBonus = getOctoberBonusSessions(planKey, now)
-  if (octoberBonus > 0) return octoberBonus
+  const isNewMember = await userIsNewPosingMember(supabase, userId)
+  if (isNewMember) {
+    const octoberBonus = getOctoberBonusSessions(planKey, now)
+    if (octoberBonus > 0) return octoberBonus
+  }
   return resolveSeptemberBonusSessions(supabase, userId, planKey, now)
 }
 

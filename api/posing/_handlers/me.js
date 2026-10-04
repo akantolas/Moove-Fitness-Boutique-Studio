@@ -5,7 +5,7 @@ import {
   getUserFromRequest,
   json,
 } from '../_lib.js'
-import { isSeptemberLoyaltyEligible } from '../_offers.js'
+import { isOctoberOfferActive, isSeptemberLoyaltyEligible, userIsNewPosingMember } from '../_offers.js'
 
 export async function handleMe(req, res) {
   cors(res)
@@ -44,7 +44,10 @@ export async function handleMe(req, res) {
       sessions_remaining: Math.max(0, p.sessions_total - p.sessions_used),
     }))
 
-    const septemberLoyaltyEligible = await isSeptemberLoyaltyEligible(supabase, user.id)
+    const [septemberLoyaltyEligible, isNewMember] = await Promise.all([
+      isSeptemberLoyaltyEligible(supabase, user.id),
+      userIsNewPosingMember(supabase, user.id),
+    ])
 
     return json(res, 200, {
       ok: true,
@@ -53,6 +56,7 @@ export async function handleMe(req, res) {
       packages,
       bookings: bookingsRes.data ?? [],
       september_loyalty_eligible: septemberLoyaltyEligible,
+      october_new_member_eligible: isOctoberOfferActive() && isNewMember,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'server_error'

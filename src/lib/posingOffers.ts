@@ -53,6 +53,15 @@ export function getOctoberBonusSessions(planKey: string, now = new Date()) {
     : 0
 }
 
+export function shouldShowOctoberBonusBadge(
+  planKey: string,
+  octoberNewMemberEligible: boolean,
+  now = new Date(),
+) {
+  if (!octoberNewMemberEligible) return false
+  return getOctoberBonusSessions(planKey, now) > 0
+}
+
 export function shouldShowOffersPopup(
   { seenInSession }: { seenInSession: boolean },
   now = new Date(),

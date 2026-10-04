@@ -688,7 +688,7 @@ export const el = {
       eyebrow: 'Οκτώβριος',
       title: 'NEW OCTOBER OFFER',
       subtitle: 'Όλα τα μηνιαία πακέτα — 4 συνεδρίες + 2 δωρεάν.',
-      onlyOctober: 'Μόνο για αγορές Οκτωβρίου',
+      onlyOctober: 'Μόνο για νέα μέλη',
       loyaltyHint: 'Οι αγορές Sapphire, Ruby ή Diamond τον Σεπτέμβριο κρατούν το +1 δωρεάν έως 31/3/2027.',
       loyaltyBadge: '+1 δωρεάν',
       bonusBadge: '+2 δωρεάν',

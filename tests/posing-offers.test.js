@@ -127,24 +127,62 @@ describe('isOctoberOfferActive', () => {
 })
 
 describe('computePosingBonusSessions', () => {
-  it('returns 2 during October even for September loyalty members', () => {
+  it('returns 2 during October only for new members', () => {
     assert.equal(
-      computePosingBonusSessions('ruby', { enrolledInSeptemberOffer: true }, OCT_MID),
+      computePosingBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: false, isNewMember: true },
+        OCT_MID,
+      ),
       2,
     )
     assert.equal(
-      computePosingBonusSessions('diamond', { enrolledInSeptemberOffer: false }, OCT_MID),
+      computePosingBonusSessions(
+        'diamond',
+        { enrolledInSeptemberOffer: true, isNewMember: true },
+        OCT_MID,
+      ),
       2,
+    )
+  })
+
+  it('returns September loyalty during October for existing enrolled members', () => {
+    assert.equal(
+      computePosingBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: true, isNewMember: false },
+        OCT_MID,
+      ),
+      1,
+    )
+  })
+
+  it('returns 0 during October for existing members without September enrollment', () => {
+    assert.equal(
+      computePosingBonusSessions(
+        'diamond',
+        { enrolledInSeptemberOffer: false, isNewMember: false },
+        OCT_MID,
+      ),
+      0,
     )
   })
 
   it('falls back to September loyalty after October', () => {
     assert.equal(
-      computePosingBonusSessions('ruby', { enrolledInSeptemberOffer: true }, JAN_2027),
+      computePosingBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: true, isNewMember: false },
+        JAN_2027,
+      ),
       1,
     )
     assert.equal(
-      computePosingBonusSessions('ruby', { enrolledInSeptemberOffer: false }, JAN_2027),
+      computePosingBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: false, isNewMember: true },
+        JAN_2027,
+      ),
       0,
     )
   })

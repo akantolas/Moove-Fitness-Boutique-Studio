@@ -689,7 +689,7 @@ export const en = {
       eyebrow: 'October',
       title: 'NEW OCTOBER OFFER',
       subtitle: 'All monthly packages — 4 classes + 2 free.',
-      onlyOctober: 'Only for October purchases',
+      onlyOctober: 'New members only',
       loyaltyHint: 'Sapphire, Ruby, or Diamond purchases in September keep +1 free until 31 Mar 2027.',
       loyaltyBadge: '+1 FREE',
       bonusBadge: '+2 FREE',
