@@ -82,10 +82,12 @@ slot διέφερε από τη διάρκεια του πακέτου.
 χειροκίνητη προσαρμογή. Οι browser ρόλοι δεν μπορούν να εκτελέσουν billing RPC
 ή να γράψουν απευθείας πακέτα.
 
-Υποψήφια production έκδοση: `dpl_EdfJHynfCWVHgCyEE12sK5mAYiBN`,
+Ενεργή production έκδοση: `dpl_EdfJHynfCWVHgCyEE12sK5mAYiBN`,
 `https://moove-fitness-boutique-studio-nfsnt1imb.vercel.app`.
 Το δημόσιο availability endpoint επέστρεψε 200 και διάρκεια Diamond 40 λεπτών.
 Το admin stats endpoint χωρίς σύνδεση επέστρεψε 401.
-Η τελική ενεργοποίηση στο κύριο domain περιμένει ρητή έγκριση: ο αυτόματος
-έλεγχος απέρριψε το `vercel promote` με αιτιολογία ότι το «κάν' τα όλα» δεν
-επαρκεί ως συγκεκριμένη έγκριση αλλαγής του live site.
+Με τη ρητή έγκριση του χρήστη «Ναι, δημοσίευσέ την στο live moovefitness.gr»
+ολοκληρώθηκε το `vercel promote`. Το `https://www.moovefitness.gr/posing`
+επιστρέφει 200 και φορτώνει το νέο asset `index-C0ptqNJS.js`.
+Το live availability endpoint επέστρεψε 200 και οι διαθέσιμες συνεδρίες Diamond
+είχαν όλες διάρκεια 40 λεπτών. Το live admin stats χωρίς σύνδεση επέστρεψε 401.
