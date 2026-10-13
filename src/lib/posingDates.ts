@@ -82,7 +82,10 @@ export function sortTimeStrings(times: string[]): string[] {
   })
 }
 
-export function mergeGridTimes(baseTimes: string[], extraTimes: string[]): string[] {
+export function mergeGridTimes(
+  baseTimes: string[],
+  extraTimes: string[],
+): string[] {
   const merged = new Set(baseTimes)
   for (const time of extraTimes) {
     const normalized = normalizeTimeInput(time)
@@ -135,21 +138,36 @@ export function getAthensWeekday(dayKey: string): WeekdayKey {
   if (mapped) return mapped
 
   if (import.meta.env.DEV) {
-    console.warn(`getAthensWeekday: unmapped weekday "${longName}" for ${dayKey}, using ISO fallback`)
+    console.warn(
+      `getAthensWeekday: unmapped weekday "${longName}" for ${dayKey}, using ISO fallback`,
+    )
   }
   return isoWeekdayFromDayKey(dayKey)
 }
 
-export function getWeekdayTemplate(settings: CalendarSettings, weekday: WeekdayKey): WeekdayTemplate {
-  const fallback = createDefaultWeekdayTemplates(settings.grid_start_hour, settings.grid_end_hour)[weekday]
+export function getWeekdayTemplate(
+  settings: CalendarSettings,
+  weekday: WeekdayKey,
+): WeekdayTemplate {
+  const fallback = createDefaultWeekdayTemplates(
+    settings.grid_start_hour,
+    settings.grid_end_hour,
+  )[weekday]
   return settings.weekday_templates[weekday] ?? fallback
 }
 
-export function getWeekdayTemplateForDay(dayKey: string, settings: CalendarSettings): WeekdayTemplate {
+export function getWeekdayTemplateForDay(
+  dayKey: string,
+  settings: CalendarSettings,
+): WeekdayTemplate {
   return getWeekdayTemplate(settings, getAthensWeekday(dayKey))
 }
 
-export function isActiveCell(dayKey: string, time: string, settings: CalendarSettings): boolean {
+export function isActiveCell(
+  dayKey: string,
+  time: string,
+  settings: CalendarSettings,
+): boolean {
   const { start_hour, end_hour } = getWeekdayTemplateForDay(dayKey, settings)
   const minutes = timeToMinutes(time)
   return minutes >= start_hour * 60 && minutes < end_hour * 60
@@ -177,10 +195,18 @@ function normalizeWeekdayTemplateEntry(
 
   let start_hour = Number(entry.start_hour)
   let end_hour = Number(entry.end_hour)
-  if (!Number.isInteger(start_hour) || start_hour < gridStart || start_hour > 23) {
+  if (
+    !Number.isInteger(start_hour) ||
+    start_hour < gridStart ||
+    start_hour > 23
+  ) {
     start_hour = def.start_hour
   }
-  if (!Number.isInteger(end_hour) || end_hour <= start_hour || end_hour > gridEnd) {
+  if (
+    !Number.isInteger(end_hour) ||
+    end_hour <= start_hour ||
+    end_hour > gridEnd
+  ) {
     end_hour = def.end_hour
   }
   start_hour = Math.max(gridStart, Math.min(start_hour, end_hour - 1))
@@ -196,11 +222,13 @@ export function normalizeCalendarSettings(raw: unknown): CalendarSettings {
       : {}
 
   const grid_start_hour =
-    Number.isInteger(Number(obj.grid_start_hour)) && Number(obj.grid_start_hour) >= 0
+    Number.isInteger(Number(obj.grid_start_hour)) &&
+    Number(obj.grid_start_hour) >= 0
       ? Number(obj.grid_start_hour)
       : POSE_GRID_START_HOUR
   const grid_end_hour =
-    Number.isInteger(Number(obj.grid_end_hour)) && Number(obj.grid_end_hour) > grid_start_hour
+    Number.isInteger(Number(obj.grid_end_hour)) &&
+    Number(obj.grid_end_hour) > grid_start_hour
       ? Number(obj.grid_end_hour)
       : POSE_GRID_END_HOUR
   const grid_step_minutes = [15, 30, 60].includes(Number(obj.grid_step_minutes))
@@ -231,7 +259,13 @@ export function normalizeCalendarSettings(raw: unknown): CalendarSettings {
   const weekday_templates = Object.fromEntries(
     WEEKDAY_KEYS.map((key) => [
       key,
-      normalizeWeekdayTemplateEntry(coerced[key], key, grid_start_hour, grid_end_hour, defaults),
+      normalizeWeekdayTemplateEntry(
+        coerced[key],
+        key,
+        grid_start_hour,
+        grid_end_hour,
+        defaults,
+      ),
     ]),
   ) as WeekdayTemplates
 
@@ -248,7 +282,10 @@ export function normalizeCalendarSettings(raw: unknown): CalendarSettings {
   }
 }
 
-export function formatActiveHoursRange(startHour: number, endHour: number): string {
+export function formatActiveHoursRange(
+  startHour: number,
+  endHour: number,
+): string {
   const pad = (h: number) => `${String(h).padStart(2, '0')}:00`
   return `${pad(startHour)}–${pad(endHour)}`
 }
@@ -263,18 +300,21 @@ export function buildAdminGridTimes(
 }
 
 export function startOfWeek(date: Date) {
-  const d = new Date(date)
-  const day = d.getDay()
+  const dayKey = athensDateKey(date)
+  const d = new Date(`${dayKey}T12:00:00Z`)
+  const day = d.getUTCDay()
   const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  d.setHours(0, 0, 0, 0)
-  return d
+  d.setUTCDate(d.getUTCDate() + diff)
+  return athensWallTimeToUtc(d.toISOString().slice(0, 10), '00:00')
 }
 
 export function addDays(date: Date, days: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
+  const d = new Date(`${athensDateKey(date)}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return athensWallTimeToUtc(
+    d.toISOString().slice(0, 10),
+    athensTimeKey(date.toISOString()),
+  )
 }
 
 export function athensDateKey(date: Date) {
@@ -353,10 +393,16 @@ export function generateGridTimes(config: Partial<CalendarGridConfig> = {}) {
   const stepMinutes = config.grid_step_minutes ?? POSE_GRID_STEP_MINUTES
   const times: string[] = []
 
-  for (let totalMinutes = startHour * 60; totalMinutes < endHour * 60; totalMinutes += stepMinutes) {
+  for (
+    let totalMinutes = startHour * 60;
+    totalMinutes < endHour * 60;
+    totalMinutes += stepMinutes
+  ) {
     const hour = Math.floor(totalMinutes / 60)
     const minute = totalMinutes % 60
-    times.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`)
+    times.push(
+      `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    )
   }
 
   return times
@@ -380,14 +426,21 @@ export function athensWallTimeToUtc(dayKey: string, time: string): Date {
 
   for (let i = 0; i < 5; i++) {
     const parts = formatter.formatToParts(new Date(utcMs))
-    const val = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+    const val = (type: string) =>
+      parts.find((p) => p.type === type)?.value ?? ''
     const ay = Number(val('year'))
     const am = Number(val('month'))
     const ad = Number(val('day'))
     const ah = Number(val('hour'))
     const amin = Number(val('minute'))
 
-    if (ay === year && am === month && ad === day && ah === hour && amin === minute) {
+    if (
+      ay === year &&
+      am === month &&
+      ad === day &&
+      ah === hour &&
+      amin === minute
+    ) {
       return new Date(utcMs)
     }
 
@@ -395,20 +448,28 @@ export function athensWallTimeToUtc(dayKey: string, time: string): Date {
     utcMs -= (ad - day) * 24 * 60 * 60_000
   }
 
-  return new Date(utcMs)
+  throw new RangeError('invalid_time')
 }
 
 export function buildSlotIso(dayKey: string, time: string) {
   return athensWallTimeToUtc(dayKey, time).toISOString()
 }
 
-export function buildSlotEndIso(dayKey: string, time: string, durationMinutes: number) {
+export function buildSlotEndIso(
+  dayKey: string,
+  time: string,
+  durationMinutes: number,
+) {
   const start = athensWallTimeToUtc(dayKey, time)
   return new Date(start.getTime() + durationMinutes * 60_000).toISOString()
 }
 
 export function isPastCell(dayKey: string, gridTime: string) {
-  return athensWallTimeToUtc(dayKey, gridTime).getTime() < Date.now()
+  try {
+    return athensWallTimeToUtc(dayKey, gridTime).getTime() < Date.now()
+  } catch {
+    return true
+  }
 }
 
 export function isBookingSlotUpcoming(
@@ -420,9 +481,14 @@ export function isBookingSlotUpcoming(
 }
 
 export function slotDurationMinutes(startAt: string, endAt: string) {
-  return Math.round((new Date(endAt).getTime() - new Date(startAt).getTime()) / 60_000)
+  return Math.round(
+    (new Date(endAt).getTime() - new Date(startAt).getTime()) / 60_000,
+  )
 }
 
-export function slotSpansRows(durationMinutes: number, stepMinutes = POSE_GRID_STEP_MINUTES) {
+export function slotSpansRows(
+  durationMinutes: number,
+  stepMinutes = POSE_GRID_STEP_MINUTES,
+) {
   return Math.max(1, Math.ceil(durationMinutes / stepMinutes))
 }

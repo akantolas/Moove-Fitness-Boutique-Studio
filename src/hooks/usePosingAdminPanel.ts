@@ -6,8 +6,14 @@ import {
   fetchAdminNutritionPayments,
   fetchAdminNutritionPreviewUrl,
 } from '../lib/nutritionApi'
-import type { NutritionOrderPayment, NutritionPaidOrder } from '../lib/nutritionTypes'
+import type {
+  NutritionOrderPayment,
+  NutritionPaidOrder,
+} from '../lib/nutritionTypes'
 import {
+  adminAdjustSessions,
+  adminBatchSlots,
+  adminCompleteBooking,
   adminCancelBooking,
   adminCancelPackage,
   adminConfirmPayment,
@@ -25,6 +31,7 @@ import {
   fetchAdminSlots,
   saveAdminCalendarSettings,
   type AdminBookingRow,
+  type AdminBookingFilters,
   type AdminCalendarSlot,
   type AdminMember,
   type AdminOverviewStats,
@@ -52,7 +59,15 @@ import {
 } from '../lib/posingDates'
 import type { Locale } from '../i18n/types'
 
-export const ADMIN_TABS = ['overview', 'calendar', 'members', 'payments', 'programs', 'nutrition', 'bookings'] as const
+export const ADMIN_TABS = [
+  'overview',
+  'calendar',
+  'members',
+  'payments',
+  'programs',
+  'nutrition',
+  'bookings',
+] as const
 export type AdminTab = (typeof ADMIN_TABS)[number]
 
 export function isAdminTab(value: string | null): value is AdminTab {
@@ -64,7 +79,10 @@ export type CalendarFeedback = {
   count?: number
 } | null
 
-export function translateAdminError(code: string, t: (key: string) => string): string {
+export function translateAdminError(
+  code: string,
+  t: (key: string) => string,
+): string {
   const keys = [
     `posing.admin.adminErrors.${code}`,
     `posing.admin.memberErrors.${code}`,
@@ -82,8 +100,9 @@ type UsePosingAdminPanelOptions = {
   authorized: boolean
   locale: Locale
   range: { from: string; to: string }
-  bookingStatusFilter: string
-  duration: number
+  bookingFilters: AdminBookingFilters
+  paidPage: number
+  duration: number | null
   translate: (key: string) => string
 }
 
@@ -95,25 +114,45 @@ export function usePosingAdminPanel({
   authorized,
   locale,
   range,
-  bookingStatusFilter,
-  duration,
+  bookingFilters,
+  paidPage,
+  duration: durationOverride,
   translate,
 }: UsePosingAdminPanelOptions) {
   const [slots, setSlots] = useState<AdminCalendarSlot[]>([])
   const [members, setMembers] = useState<AdminMember[]>([])
   const [payments, setPayments] = useState<AdminPayment[]>([])
-  const [programPayments, setProgramPayments] = useState<ProgramPurchasePayment[]>([])
-  const [programPurchases, setProgramPurchases] = useState<ProgramPaidPurchase[]>([])
-  const [nutritionPayments, setNutritionPayments] = useState<NutritionOrderPayment[]>([])
-  const [nutritionOrders, setNutritionOrders] = useState<NutritionPaidOrder[]>([])
+  const [programPayments, setProgramPayments] = useState<
+    ProgramPurchasePayment[]
+  >([])
+  const [programPurchases, setProgramPurchases] = useState<
+    ProgramPaidPurchase[]
+  >([])
+  const [nutritionPayments, setNutritionPayments] = useState<
+    NutritionOrderPayment[]
+  >([])
+  const [nutritionOrders, setNutritionOrders] = useState<NutritionPaidOrder[]>(
+    [],
+  )
   const [bookings, setBookings] = useState<AdminBookingRow[]>([])
+  const [bookingTotal, setBookingTotal] = useState(0)
+  const [programTotal, setProgramTotal] = useState(0)
+  const [nutritionTotal, setNutritionTotal] = useState(0)
   const [stats, setStats] = useState<AdminOverviewStats | null>(null)
-  const [calendarSettings, setCalendarSettings] = useState<CalendarSettings>(DEFAULT_CALENDAR_SETTINGS)
+  const [calendarSettings, setCalendarSettings] = useState<CalendarSettings>(
+    DEFAULT_CALENDAR_SETTINGS,
+  )
+  const duration = durationOverride ?? calendarSettings.default_duration_minutes
   const [calendarSettingsLoaded, setCalendarSettingsLoaded] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [calendarFeedback, setCalendarFeedback] = useState<CalendarFeedback>(null)
+  const [calendarFeedback, setCalendarFeedback] =
+    useState<CalendarFeedback>(null)
+  const bookingRequestRef = useRef(0)
+  const loadingRequestRef = useRef(0)
+  const programRequestRef = useRef(0)
+  const nutritionRequestRef = useRef(0)
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const slotByCell = useMemo(() => {
@@ -126,10 +165,21 @@ export function usePosingAdminPanel({
     return map
   }, [slots])
 
-  const showCalendarFeedback = useCallback((feedback: NonNullable<CalendarFeedback>) => {
-    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
-    setCalendarFeedback(feedback)
-    feedbackTimerRef.current = setTimeout(() => setCalendarFeedback(null), 3200)
+  const showCalendarFeedback = useCallback(
+    (feedback: NonNullable<CalendarFeedback>) => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current)
+      setCalendarFeedback(feedback)
+      feedbackTimerRef.current = setTimeout(
+        () => setCalendarFeedback(null),
+        3200,
+      )
+    },
+    [],
+  )
+
+  const invalidateLoads = useCallback(() => {
+    loadingRequestRef.current++
+    bookingRequestRef.current++
   }, [])
 
   useEffect(() => {
@@ -163,31 +213,38 @@ export function usePosingAdminPanel({
 
   const loadProgramPayments = useCallback(async () => {
     if (!accessToken) return
+    const request = ++programRequestRef.current
     const [pending, paid] = await Promise.all([
       fetchAdminProgramPayments(accessToken),
-      fetchAdminProgramPurchases(accessToken),
+      fetchAdminProgramPurchases(accessToken, paidPage),
     ])
+    if (request !== programRequestRef.current) return
     setProgramPayments(pending)
-    setProgramPurchases(paid)
-  }, [accessToken])
+    setProgramPurchases(paid.purchases)
+    setProgramTotal(paid.total)
+  }, [accessToken, paidPage])
 
   const loadNutritionOrders = useCallback(async () => {
     if (!accessToken) return
+    const request = ++nutritionRequestRef.current
     const [pending, paid] = await Promise.all([
       fetchAdminNutritionPayments(accessToken),
-      fetchAdminNutritionOrders(accessToken),
+      fetchAdminNutritionOrders(accessToken, paidPage),
     ])
+    if (request !== nutritionRequestRef.current) return
     setNutritionPayments(pending)
-    setNutritionOrders(paid)
-  }, [accessToken])
+    setNutritionOrders(paid.orders)
+    setNutritionTotal(paid.total)
+  }, [accessToken, paidPage])
 
-  const loadBookings = useCallback(
-    async (status?: string) => {
-      if (!accessToken) return
-      setBookings(await fetchAdminBookings(accessToken, status || undefined))
-    },
-    [accessToken],
-  )
+  const loadBookings = useCallback(async () => {
+    if (!accessToken) return
+    const request = ++bookingRequestRef.current
+    const result = await fetchAdminBookings(accessToken, bookingFilters)
+    if (request !== bookingRequestRef.current) return
+    setBookings(result.bookings)
+    setBookingTotal(result.total)
+  }, [accessToken, bookingFilters])
 
   const loadStats = useCallback(async () => {
     if (!accessToken) return
@@ -197,6 +254,7 @@ export function usePosingAdminPanel({
   const loadTab = useCallback(
     async (tab: AdminTab) => {
       if (!accessToken) return
+      const request = ++loadingRequestRef.current
       setLoading(true)
       setError('')
       try {
@@ -213,18 +271,18 @@ export function usePosingAdminPanel({
         } else if (tab === 'nutrition') {
           await loadNutritionOrders()
         } else if (tab === 'bookings') {
-          await loadBookings(bookingStatusFilter)
+          await loadBookings()
         }
       } catch (err) {
         const code = err instanceof Error ? err.message : 'load_failed'
-        setError(translateAdminError(code, translate))
+        if (request === loadingRequestRef.current)
+          setError(translateAdminError(code, translate))
       } finally {
-        setLoading(false)
+        if (request === loadingRequestRef.current) setLoading(false)
       }
     },
     [
       accessToken,
-      bookingStatusFilter,
       loadBookings,
       loadCalendarSettings,
       loadMembers,
@@ -240,32 +298,43 @@ export function usePosingAdminPanel({
   const refresh = useCallback(() => loadTab(activeTab), [activeTab, loadTab])
 
   const refreshAfterPayment = useCallback(async () => {
-    await Promise.all([loadPayments(), loadStats(), loadBookings(bookingStatusFilter)])
-  }, [bookingStatusFilter, loadBookings, loadPayments, loadStats])
+    await Promise.all([loadPayments(), loadStats(), loadBookings()])
+  }, [loadBookings, loadPayments, loadStats])
 
   const refreshAfterCancel = useCallback(async () => {
     await Promise.all([
       loadMembers(),
       loadStats(),
-      loadBookings(bookingStatusFilter),
+      loadBookings(),
       loadPayments(),
     ])
-  }, [bookingStatusFilter, loadBookings, loadMembers, loadPayments, loadStats])
+  }, [loadBookings, loadMembers, loadPayments, loadStats])
 
   useEffect(() => {
     if (!authorized) return
-    void loadTab(activeTab)
-  }, [authorized, activeTab, range.from, range.to, accessToken, loadTab])
-
-  useEffect(() => {
-    if (!authorized || activeTab !== 'bookings') return
-    void loadBookings(bookingStatusFilter).catch((err) => {
-      const code = err instanceof Error ? err.message : 'load_failed'
-      setError(translateAdminError(code, translate))
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) void loadTab(activeTab)
     })
-  }, [authorized, activeTab, bookingStatusFilter, loadBookings, translate])
+    return () => {
+      cancelled = true
+      invalidateLoads()
+    }
+  }, [
+    authorized,
+    activeTab,
+    range.from,
+    range.to,
+    accessToken,
+    loadTab,
+    invalidateLoads,
+  ])
 
-  async function setCellState(dayKey: string, time: string, state: AdminCellState) {
+  async function setCellState(
+    dayKey: string,
+    time: string,
+    state: AdminCellState,
+  ) {
     if (!accessToken || isPastCell(dayKey, time)) return
     const existing = slotByCell.get(cellKey(dayKey, time))
     if (existing?.booking) return
@@ -278,7 +347,9 @@ export function usePosingAdminPanel({
       } else if (state === 'available') {
         if (existing) {
           if (existing.is_blocked) {
-            await adminUpdateSlot(accessToken, existing.id, { is_blocked: false })
+            await adminUpdateSlot(accessToken, existing.id, {
+              is_blocked: false,
+            })
           }
         } else {
           await adminCreateSlot(
@@ -291,7 +362,9 @@ export function usePosingAdminPanel({
       } else if (state === 'inactive') {
         if (existing) {
           if (!existing.is_blocked) {
-            await adminUpdateSlot(accessToken, existing.id, { is_blocked: true })
+            await adminUpdateSlot(accessToken, existing.id, {
+              is_blocked: true,
+            })
           }
         } else {
           await adminCreateSlot(
@@ -347,20 +420,23 @@ export function usePosingAdminPanel({
     setBusy(true)
     setError('')
     try {
-      const templateTimes = getWeekdayTemplateForDay(dayKey, calendarSettings).times
+      const templateTimes = getWeekdayTemplateForDay(
+        dayKey,
+        calendarSettings,
+      ).times
       const toCreate = templateTimes.filter((time) => {
         if (isPastCell(dayKey, time)) return false
         return !slotByCell.has(cellKey(dayKey, time))
       })
-      await Promise.all(
-        toCreate.map((time) =>
-          adminCreateSlot(
-            accessToken,
-            buildSlotIso(dayKey, time),
-            buildSlotEndIso(dayKey, time, duration),
-          ),
-        ),
-      )
+      if (toCreate.length)
+        await adminBatchSlots(
+          accessToken,
+          'create',
+          toCreate.map((time) => ({
+            start_at: buildSlotIso(dayKey, time),
+            end_at: buildSlotEndIso(dayKey, time, duration),
+          })),
+        )
       await loadSlots()
       if (toCreate.length > 0) {
         showCalendarFeedback({ type: 'slots_created', count: toCreate.length })
@@ -382,7 +458,12 @@ export function usePosingAdminPanel({
         if (athensDateKey(new Date(slot.start_at)) !== dayKey) return false
         return !slot.booking
       })
-      await Promise.all(toDelete.map((slot) => adminDeleteSlot(accessToken, slot.id)))
+      if (toDelete.length)
+        await adminBatchSlots(
+          accessToken,
+          'archive',
+          toDelete.map((slot) => ({ id: slot.id })),
+        )
       await loadSlots()
       if (toDelete.length > 0) {
         showCalendarFeedback({ type: 'slots_deleted', count: toDelete.length })
@@ -410,7 +491,7 @@ export function usePosingAdminPanel({
       const code = err instanceof Error ? err.message : 'settings_save_failed'
       const message = translateAdminError(code, translate)
       setError(message)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
@@ -428,13 +509,17 @@ export function usePosingAdminPanel({
       const code = err instanceof Error ? err.message : 'delete_member_failed'
       const message = translateAdminError(code, translate)
       setError(message)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
   }
 
-  async function saveMemberPrice(userId: string, planKey: string, priceEur: number) {
+  async function saveMemberPrice(
+    userId: string,
+    planKey: string,
+    priceEur: number,
+  ) {
     if (!accessToken) throw new Error('unauthorized')
     await adminUpsertMemberPrice(accessToken, userId, planKey, priceEur)
     await loadMembers()
@@ -451,12 +536,18 @@ export function usePosingAdminPanel({
     setBusy(true)
     setError('')
     try {
-      await adminConfirmProgramPayment(accessToken, purchaseId)
-      await loadProgramPayments()
+      const result = await adminConfirmProgramPayment(accessToken, purchaseId)
+      await Promise.all([
+        loadProgramPayments(),
+        loadNutritionOrders(),
+        loadStats(),
+      ])
+      if (result.delivery_failed)
+        setError(translate('posing.admin.paymentRecordedDeliveryFailed'))
     } catch (err) {
       const code = err instanceof Error ? err.message : 'payment_confirm_failed'
       const message = translateAdminError(code, translate)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
@@ -464,8 +555,15 @@ export function usePosingAdminPanel({
 
   async function resendProgramAccess(purchaseId: string) {
     if (!accessToken) throw new Error('unauthorized')
-    await adminResendProgramAccess(accessToken, purchaseId)
-    await loadProgramPayments()
+    try {
+      await adminResendProgramAccess(accessToken, purchaseId)
+    } catch (error) {
+      throw new Error(translate('posing.admin.adminErrors.delivery_failed'), {
+        cause: error,
+      })
+    } finally {
+      await loadProgramPayments()
+    }
   }
 
   async function confirmNutritionPayment(orderId: string) {
@@ -473,13 +571,19 @@ export function usePosingAdminPanel({
     setBusy(true)
     setError('')
     try {
-      await adminConfirmNutritionPayment(accessToken, orderId)
-      await loadNutritionOrders()
+      const result = await adminConfirmNutritionPayment(accessToken, orderId)
+      await Promise.all([
+        loadNutritionOrders(),
+        loadProgramPayments(),
+        loadStats(),
+      ])
+      if (result.delivery_failed)
+        setError(translate('posing.admin.paymentRecordedDeliveryFailed'))
     } catch (err) {
       const code = err instanceof Error ? err.message : 'payment_confirm_failed'
       const message = translateAdminError(code, translate)
       setError(message)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
@@ -487,14 +591,29 @@ export function usePosingAdminPanel({
 
   async function resendNutritionPlan(orderId: string) {
     if (!accessToken) throw new Error('unauthorized')
-    await adminResendNutritionPlan(accessToken, orderId)
-    await loadNutritionOrders()
+    try {
+      await adminResendNutritionPlan(accessToken, orderId)
+    } catch {
+      throw new Error(translate('posing.admin.adminErrors.delivery_failed'))
+    } finally {
+      await loadNutritionOrders()
+    }
   }
 
   async function previewNutritionPdf(orderId: string) {
     if (!accessToken) throw new Error('unauthorized')
-    const url = await fetchAdminNutritionPreviewUrl(accessToken, orderId)
-    if (url) window.open(url, '_blank', 'noopener,noreferrer')
+    const preview = window.open('about:blank', '_blank')
+    if (!preview)
+      throw new Error(translate('posing.admin.adminErrors.preview_blocked'))
+    preview.opener = null
+    try {
+      const url = await fetchAdminNutritionPreviewUrl(accessToken, orderId)
+      if (!url) throw new Error('pdf_not_found')
+      preview.location.replace(url)
+    } catch (error) {
+      preview.close()
+      throw error
+    }
   }
 
   async function confirmPayment(bookingId: string) {
@@ -502,13 +621,63 @@ export function usePosingAdminPanel({
     setBusy(true)
     setError('')
     try {
-      await adminConfirmPayment(accessToken, bookingId)
+      const result = await adminConfirmPayment(accessToken, bookingId)
       await refreshAfterPayment()
+      if (result.delivery_failed) setError(translate('posing.admin.paymentRecordedDeliveryFailed'))
     } catch (err) {
       const code = err instanceof Error ? err.message : 'payment_confirm_failed'
       const message = translateAdminError(code, translate)
       setError(message)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function adjustSessions(
+    packageId: string,
+    delta: number,
+    reason: string,
+    requestId: string,
+  ) {
+    if (!accessToken) throw new Error('unauthorized')
+    setBusy(true)
+    setError('')
+    try {
+      await adminAdjustSessions(
+        accessToken,
+        packageId,
+        delta,
+        reason,
+        requestId,
+      )
+      await Promise.all([loadMembers(), loadStats()])
+    } catch (err) {
+      const message = translateAdminError(
+        err instanceof Error ? err.message : 'operation_failed',
+        translate,
+      )
+      setError(message)
+      throw new Error(message, { cause: err })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function completeBooking(bookingId: string) {
+    if (!accessToken) throw new Error('unauthorized')
+    setBusy(true)
+    setError('')
+    try {
+      await adminCompleteBooking(accessToken, bookingId)
+      await refreshAfterCancel()
+    } catch (err) {
+      const message = translateAdminError(
+        err instanceof Error ? err.message : 'operation_failed',
+        translate,
+      )
+      setError(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
@@ -525,7 +694,7 @@ export function usePosingAdminPanel({
       const code = err instanceof Error ? err.message : 'booking_cancel_failed'
       const message = translateAdminError(code, translate)
       setError(message)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
@@ -542,7 +711,7 @@ export function usePosingAdminPanel({
       const code = err instanceof Error ? err.message : 'package_cancel_failed'
       const message = translateAdminError(code, translate)
       setError(message)
-      throw new Error(message)
+      throw new Error(message, { cause: err })
     } finally {
       setBusy(false)
     }
@@ -557,6 +726,9 @@ export function usePosingAdminPanel({
     nutritionPayments,
     nutritionOrders,
     bookings,
+    bookingTotal,
+    programTotal,
+    nutritionTotal,
     stats,
     calendarSettings,
     calendarSettingsLoaded,
@@ -574,6 +746,8 @@ export function usePosingAdminPanel({
     saveMemberPrice,
     removeMemberPrice,
     confirmPayment,
+    adjustSessions,
+    completeBooking,
     cancelBooking,
     cancelPackage,
     confirmProgramPayment,

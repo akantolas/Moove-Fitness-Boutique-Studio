@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test": "node --test tests/*.test.js",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test:pricing": "node --test tests/posing-pricing.test.js tests/program-pricing.test.js tests/nutrition-engine.test.js",
@@ -22,6 +23,7 @@
     "react-router-dom": "^7.14.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.9",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.2.4",
     "@types/node": "^24.12.2",

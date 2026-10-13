@@ -1,4 +1,8 @@
-import { readJsonBody, ensureAdmin, getUserFromRequest, hasEmailTransportConfig } from '../../../posing/_lib.js'
+import {
+  readJsonBody,
+  ensureAdmin,
+  getUserFromRequest,
+} from '../../../posing/_lib.js'
 import {
   activateProgramPurchase,
   cors,
@@ -9,169 +13,124 @@ import {
   normalizeBookingLocale,
   sendProgramAccessFlowEmail,
 } from '../../_lib.js'
-
-async function fetchPendingProgramPayments(supabase) {
-  const { data, error } = await supabase
-    .from('moove_program_purchases')
-    .select('*')
-    .eq('status', 'pending_payment')
-    .order('created_at', { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return data ?? []
-}
-
-async function fetchRecentPaidPurchases(supabase) {
-  const { data, error } = await supabase
-    .from('moove_program_purchases')
-    .select('*')
-    .eq('status', 'paid')
-    .order('created_at', { ascending: false })
-    .limit(50)
-
-  if (error) throw new Error(error.message)
-  return data ?? []
-}
+import { generateAndSendNutritionPlan } from '../../../nutrition/_lib.js'
+import { parsePagination } from '../../../_pagination.js'
 
 export async function handleAdminPrograms(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
-
   const user = await getUserFromRequest(req)
   if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
-  if (!(await ensureAdmin(user))) return json(res, 403, { ok: false, error: 'forbidden' })
-
+  if (!(await ensureAdmin(user)))
+    return json(res, 403, { ok: false, error: 'forbidden' })
   const supabase = getSupabaseAdmin()
-
-  if (req.method === 'POST') {
-    try {
+  try {
+    if (req.method === 'POST') {
       const body = await readJsonBody(req)
-      const action = body?.action
-
-      if (action === 'confirm') {
-        const purchaseId = body?.purchase_id
-        if (!purchaseId || typeof purchaseId !== 'string') {
-          return json(res, 400, { ok: false, error: 'missing_purchase_id' })
-        }
-
-        const { data: existing } = await supabase
-          .from('moove_program_purchases')
-          .select('locale, status, access_email_sent_at')
-          .eq('id', purchaseId)
-          .maybeSingle()
-
-        if (!existing) return json(res, 404, { ok: false, error: 'purchase_not_found' })
-
-        const emailStillPending = !existing.access_email_sent_at
-        const isPendingPayment = existing.status === 'pending_payment'
-
-        if (emailStillPending && !hasEmailTransportConfig()) {
-          return json(res, 503, { ok: false, error: 'missing_email_config' })
-        }
-
-        let result
-        if (isPendingPayment) {
-          const paymentRef = `manual:${user.id}:${Date.now()}`
-          result = await activateProgramPurchase(supabase, {
-            purchaseId,
-            paymentRef,
-            paymentMethod: 'manual',
-            confirmedBy: user.id,
-          })
-        } else if (existing.status === 'paid' && emailStillPending) {
-          const { data: paidPurchase } = await supabase
-            .from('moove_program_purchases')
-            .select('*')
-            .eq('id', purchaseId)
-            .maybeSingle()
-          if (!paidPurchase) return json(res, 404, { ok: false, error: 'purchase_not_found' })
-          result = { ok: true, already: true, purchase: paidPurchase }
-        } else if (existing.status === 'paid') {
-          return json(res, 200, { ok: true, already: true })
-        } else {
-          return json(res, 409, { ok: false, error: 'invalid_purchase_status' })
-        }
-
-        if (!result.ok) {
-          const status = result.error === 'invalid_purchase_status' ? 409 : 500
-          return json(res, status, { ok: false, error: result.error })
-        }
-
-        if (emailStillPending && result.purchase) {
-          const locale = normalizeBookingLocale(existing.locale)
+      const id = body.purchase_id
+      if (!id || typeof id !== 'string')
+        return json(res, 400, { ok: false, error: 'missing_purchase_id' })
+      if (body.action === 'confirm') {
+        const result = await activateProgramPurchase(supabase, {
+          purchaseId: id,
+          paymentRef: 'manual:' + user.id + ':' + Date.now(),
+          paymentMethod: 'manual',
+          confirmedBy: user.id,
+          includeNutrition: true,
+        })
+        if (!result.ok) return json(res, 409, result)
+        let failed = false
+        if (
+          !result.purchase.access_email_sent_at ||
+          result.purchase.delivery_status === 'failed'
+        ) {
           try {
-            await sendProgramAccessFlowEmail(result.purchase, locale)
-            await supabase
-              .from('moove_program_purchases')
-              .update({
-                access_email_sent_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              })
-              .eq('id', purchaseId)
-          } catch (emailError) {
-            const emailMessage = emailError instanceof Error ? emailError.message : 'email_failed'
-            return json(res, 502, {
-              ok: false,
-              error:
-                emailMessage === 'missing_email_config'
-                  ? 'missing_email_config'
-                  : 'payment_confirmed_email_failed',
-              email_sent: false,
-            })
+            await sendProgramAccessFlowEmail(
+              result.purchase,
+              normalizeBookingLocale(result.purchase.locale),
+              { supabase },
+            )
+          } catch {
+            failed = true
           }
         }
-
-        return json(res, 200, { ok: true, already: result.already ?? false, email_sent: emailStillPending })
-      }
-
-      if (action === 'resend-access') {
-        const purchaseId = body?.purchase_id
-        if (!purchaseId || typeof purchaseId !== 'string') {
-          return json(res, 400, { ok: false, error: 'missing_purchase_id' })
+        for (const order of result.nutritionOrders ?? []) {
+          if (order.plan_email_sent_at && order.delivery_status !== 'failed')
+            continue
+          try {
+            const delivered = await generateAndSendNutritionPlan(
+              supabase,
+              order,
+              normalizeBookingLocale(order.locale),
+            )
+            if (!delivered.ok) failed = true
+          } catch {
+            failed = true
+          }
         }
-
-        const { data: purchase } = await supabase
+        return json(res, 200, {
+          ok: true,
+          already: result.already,
+          payment_confirmed: true,
+          delivery_failed: failed,
+        })
+      }
+      if (body.action === 'resend-access') {
+        const { data: purchase, error } = await supabase
           .from('moove_program_purchases')
           .select('*')
-          .eq('id', purchaseId)
+          .eq('id', id)
           .maybeSingle()
-
-        if (!purchase) return json(res, 404, { ok: false, error: 'purchase_not_found' })
-        if (purchase.status !== 'paid' || !purchase.access_token) {
-          return json(res, 400, { ok: false, error: 'not_paid' })
-        }
-
-        if (!hasEmailTransportConfig()) {
-          return json(res, 503, { ok: false, error: 'missing_email_config' })
-        }
-
-        const locale = normalizeBookingLocale(purchase.locale)
-        await sendProgramAccessFlowEmail(purchase, locale)
-        await supabase
-          .from('moove_program_purchases')
-          .update({
-            access_email_sent_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', purchaseId)
-
+        if (error) throw new Error(error.message)
+        if (!purchase)
+          return json(res, 404, { ok: false, error: 'purchase_not_found' })
+        if (purchase.status !== 'paid')
+          return json(res, 409, { ok: false, error: 'not_paid' })
+        await sendProgramAccessFlowEmail(
+          purchase,
+          normalizeBookingLocale(purchase.locale),
+          { supabase, resend: true },
+        )
         return json(res, 200, { ok: true })
       }
-
       return json(res, 400, { ok: false, error: 'invalid_action' })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'server_error'
-      return json(res, 500, { ok: false, error: message })
     }
-  }
-
-  if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'method_not_allowed' })
-
-  const view = req.query?.view
-  try {
-    if (view === 'payments') {
-      const payments = await fetchPendingProgramPayments(supabase)
-      const enriched = payments.map((p) => ({
+    if (req.method !== 'GET')
+      return json(res, 405, { ok: false, error: 'method_not_allowed' })
+    const view = req.query?.view
+    if (!['payments', 'purchases'].includes(view))
+      return json(res, 400, { ok: false, error: 'invalid_view' })
+    const pagination = parsePagination(req.query)
+    let query = supabase
+      .from('moove_program_purchases')
+      .select('*', { count: 'exact' })
+      .eq('status', view === 'payments' ? 'pending_payment' : 'paid')
+      .order('created_at', { ascending: false })
+    if (view === 'purchases')
+      query = query.range(pagination.from, pagination.to)
+    const { data, count, error } = await query
+    if (error) throw new Error(error.message)
+    const rows = data ?? []
+    const bundles = rows.length
+      ? await supabase
+          .from('nutrition_plan_orders')
+          .select('program_purchase_id,amount_eur,status')
+          .in(
+            'program_purchase_id',
+            rows.map((p) => p.id),
+          )
+          .neq('status', 'cancelled')
+      : { data: [] }
+    if (bundles.error) throw new Error(bundles.error.message)
+    const enriched = rows.map((p) => {
+      const linked = (bundles.data ?? []).filter(
+        (n) => n.program_purchase_id === p.id,
+      )
+      const nutritionAmount = linked.reduce(
+        (sum, n) => sum + Number(n.amount_eur),
+        0,
+      )
+      return {
         id: p.id,
         program_key: p.program_key,
         email: p.email,
@@ -180,30 +139,24 @@ export async function handleAdminPrograms(req, res) {
         created_at: p.created_at,
         purchase_ref: formatPurchaseRef(p.id),
         program_name: getProgramName(p.program_key, p.locale),
-      }))
-      return json(res, 200, { ok: true, payments: enriched })
-    }
-
-    if (view === 'purchases') {
-      const purchases = await fetchRecentPaidPurchases(supabase)
-      const enriched = purchases.map((p) => ({
-        id: p.id,
-        program_key: p.program_key,
-        email: p.email,
-        amount_eur: p.amount_eur,
-        status: p.status,
         payment_method: p.payment_method,
-        created_at: p.created_at,
-        purchase_ref: formatPurchaseRef(p.id),
-        program_name: getProgramName(p.program_key, p.locale),
         access_email_sent_at: p.access_email_sent_at,
-      }))
-      return json(res, 200, { ok: true, purchases: enriched })
-    }
-
-    return json(res, 400, { ok: false, error: 'invalid_view' })
+        delivery_status: p.delivery_status,
+        includes_nutrition: linked.length > 0,
+        total_amount_eur: Number(p.amount_eur) + nutritionAmount,
+      }
+    })
+    return json(res, 200, {
+      ok: true,
+      [view === 'payments' ? 'payments' : 'purchases']: enriched,
+      total: count ?? 0,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'server_error'
-    return json(res, 500, { ok: false, error: message })
+    return json(res, 500, {
+      ok: false,
+      error: error instanceof Error ? error.message : 'operation_failed',
+    })
   }
 }

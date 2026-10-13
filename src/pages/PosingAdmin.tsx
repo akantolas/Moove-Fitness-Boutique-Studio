@@ -5,13 +5,40 @@ import { AdminMembersList } from '../components/AdminMembersList'
 import { AdminPaymentsQueue } from '../components/AdminPaymentsQueue'
 import { AdminNutritionQueue } from '../components/AdminNutritionQueue'
 import { AdminProgramPaymentsQueue } from '../components/AdminProgramPaymentsQueue'
-import { AdminShell, AdminPanelSkeleton, AdminStatCard, AdminStatsSkeleton } from '../components/AdminShell'
+import {
+  AdminShell,
+  AdminPanelSkeleton,
+  AdminStatCard,
+  AdminStatsSkeleton,
+} from '../components/AdminShell'
 import { AdminWeekCalendar } from '../components/AdminWeekCalendar'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { fetchPosingIsAdmin } from '../lib/posingAccount'
-import { addDays, POSE_WEEK_DAYS, startOfWeek } from '../lib/posingDates'
+import {
+  addDays,
+  athensDateKey,
+  buildSlotIso,
+  POSE_WEEK_DAYS,
+  startOfWeek,
+} from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
-import { isAdminTab, usePosingAdminPanel, type AdminTab } from '../hooks/usePosingAdminPanel'
+import {
+  isAdminTab,
+  usePosingAdminPanel,
+  type AdminTab,
+} from '../hooks/usePosingAdminPanel'
+
+function dateBoundary(value: string | null, exclusiveEnd = false) {
+  if (!value) return undefined
+  const date = new Date(`${value}T12:00:00Z`)
+  if (
+    !Number.isFinite(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value
+  )
+    return value
+  if (exclusiveEnd) date.setUTCDate(date.getUTCDate() + 1)
+  return buildSlotIso(date.toISOString().slice(0, 10), '00:00')
+}
 
 export function PosingAdminPage() {
   const { t, locale } = useTranslation()
@@ -22,8 +49,9 @@ export function PosingAdminPage() {
 
   const { loading, user, accessToken } = usePosingAuth()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
-  const [bookingStatusFilter, setBookingStatusFilter] = useState('')
-  const [duration, setDuration] = useState(30)
+  const bookingStatusFilter = searchParams.get('status') ?? ''
+  const page = Math.max(1, Number(searchParams.get('page')) || 1)
+  const [durationChoice, setDurationChoice] = useState<number | null>(null)
   const [authorized, setAuthorized] = useState<boolean | null>(null)
 
   const range = useMemo(() => {
@@ -32,14 +60,29 @@ export function PosingAdminPage() {
     return { from, to }
   }, [weekStart])
 
+  const bookingFilters = useMemo(
+    () => ({
+      status: searchParams.get('status') ?? '',
+      member: searchParams.get('member') ?? undefined,
+      booking: searchParams.get('booking') ?? undefined,
+      search: searchParams.get('search') ?? '',
+      from: dateBoundary(searchParams.get('from')),
+      to: dateBoundary(searchParams.get('to'), true),
+      page: Math.max(1, Number(searchParams.get('page')) || 1),
+      pageSize: 20,
+    }),
+    [searchParams],
+  )
+
   const admin = usePosingAdminPanel({
     activeTab,
     accessToken,
     authorized: authorized === true,
     locale,
     range,
-    bookingStatusFilter,
-    duration,
+    bookingFilters,
+    paidPage: page,
+    duration: durationChoice,
     translate: t,
   })
 
@@ -50,11 +93,6 @@ export function PosingAdminPage() {
   }, [loading, navigate, user])
 
   useEffect(() => {
-    if (!admin.calendarSettingsLoaded) return
-    setDuration(admin.calendarSettings.default_duration_minutes)
-  }, [admin.calendarSettingsLoaded, admin.calendarSettings.default_duration_minutes])
-
-  useEffect(() => {
     const userId = user?.id
     if (!userId) return
     fetchPosingIsAdmin(userId)
@@ -62,13 +100,44 @@ export function PosingAdminPage() {
       .catch(() => setAuthorized(false))
   }, [user?.id])
 
-  function setActiveTab(tab: AdminTab) {
-    setSearchParams({ tab })
+  function setActiveTab(tab: AdminTab, filters: Record<string, string> = {}) {
+    setSearchParams({ tab, ...filters })
+  }
+  function updateBookingFilters(filters: Record<string, string>) {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.set('tab', 'bookings')
+      next.delete('page')
+      for (const [key, value] of Object.entries(filters)) {
+        if (value) next.set(key, value)
+        else next.delete(key)
+      }
+      return next
+    })
+  }
+  function showWeekBookings() {
+    const monday = startOfWeek(new Date())
+    setActiveTab('bookings', {
+      status: 'non_cancelled',
+      from: athensDateKey(monday),
+      to: athensDateKey(addDays(monday, 6)),
+    })
+  }
+  function changePage(nextPage: number) {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.set('page', String(nextPage))
+      return next
+    })
   }
 
+  const duration =
+    durationChoice ?? admin.calendarSettings.default_duration_minutes
   const pendingBadge = admin.stats?.pendingPayments ?? admin.payments.length
-  const programPendingBadge = admin.programPayments.length
-  const nutritionPendingBadge = admin.nutritionPayments.length
+  const programPendingBadge =
+    admin.stats?.programPending ?? admin.programPayments.length
+  const nutritionPendingBadge =
+    admin.stats?.nutritionPending ?? admin.nutritionPayments.length
 
   const tabs = [
     {
@@ -107,8 +176,13 @@ export function PosingAdminPage() {
   if (!authorized) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="font-display text-2xl font-semibold text-white">{t('posing.admin.forbidden')}</h1>
-        <Link to="/posing" className="mt-6 inline-block text-fuchsia-200 hover:underline">
+        <h1 className="font-display text-2xl font-semibold text-white">
+          {t('posing.admin.forbidden')}
+        </h1>
+        <Link
+          to="/posing"
+          className="mt-6 inline-block text-fuchsia-200 hover:underline"
+        >
           {t('nav.home')}
         </Link>
       </div>
@@ -150,7 +224,7 @@ export function PosingAdminPage() {
               <AdminStatCard
                 label={t('posing.admin.statMembers')}
                 value={admin.stats?.members ?? '—'}
-                onClick={() => setActiveTab('members')}
+                onClick={() => setActiveTab('members', { role: 'client' })}
               />
               <AdminStatCard
                 label={t('posing.admin.statPendingPayments')}
@@ -162,13 +236,13 @@ export function PosingAdminPage() {
                 label={t('posing.admin.statActivePackages')}
                 value={admin.stats?.activePackages ?? '—'}
                 accent="emerald"
-                onClick={() => setActiveTab('members')}
+                onClick={() => setActiveTab('members', { packages: 'active' })}
               />
               <AdminStatCard
                 label={t('posing.admin.statWeekBookings')}
                 value={admin.stats?.weekBookings ?? '—'}
                 accent="cyan"
-                onClick={() => setActiveTab('bookings')}
+                onClick={showWeekBookings}
               />
             </div>
           )}
@@ -197,7 +271,9 @@ export function PosingAdminPage() {
           ) : admin.payments.length > 0 ? (
             <div>
               <div className="mb-4 flex items-center justify-between gap-4">
-                <h2 className="text-lg font-semibold text-white">{t('posing.admin.pendingPaymentsTitle')}</h2>
+                <h2 className="text-lg font-semibold text-white">
+                  {t('posing.admin.pendingPaymentsTitle')}
+                </h2>
                 <button
                   type="button"
                   onClick={() => setActiveTab('payments')}
@@ -211,6 +287,7 @@ export function PosingAdminPage() {
                 locale={locale}
                 busy={isBusy}
                 onConfirm={admin.confirmPayment}
+                onCancel={admin.cancelBooking}
               />
             </div>
           ) : null}
@@ -228,12 +305,17 @@ export function PosingAdminPage() {
           loading={admin.loading}
           feedback={admin.calendarFeedback}
           onWeekStartChange={setWeekStart}
-          onDurationChange={setDuration}
+          onDurationChange={setDurationChoice}
           onSetCellState={admin.setCellState}
           onAddSlotTime={admin.addSlotAtTime}
           onOpenDayPreset={admin.openDayPreset}
           onClearDay={admin.clearDay}
-          onSaveCalendarSettings={admin.saveCalendarSettings}
+          onSaveCalendarSettings={async (payload) => {
+            const result = await admin.saveCalendarSettings(payload)
+            setDurationChoice(null)
+            return result
+          }}
+          onViewBooking={(booking) => setActiveTab('bookings', { booking })}
         />
       ) : null}
 
@@ -251,6 +333,11 @@ export function PosingAdminPage() {
             onRemoveMemberPrice={admin.removeMemberPrice}
             onCancelPackage={admin.cancelPackage}
             onCancelBooking={admin.cancelBooking}
+            onAdjustSessions={admin.adjustSessions}
+            onlyActivePackages={searchParams.get('packages') === 'active'}
+            clientsOnly={searchParams.get('role') === 'client'}
+            onClearFilter={() => setActiveTab('members')}
+            onViewBookings={(member) => setActiveTab('bookings', { member })}
           />
         )
       ) : null}
@@ -264,6 +351,7 @@ export function PosingAdminPage() {
             locale={locale}
             busy={isBusy}
             onConfirm={admin.confirmPayment}
+            onCancel={admin.cancelBooking}
           />
         )
       ) : null}
@@ -279,6 +367,9 @@ export function PosingAdminPage() {
             busy={isBusy}
             onConfirm={admin.confirmProgramPayment}
             onResendAccess={admin.resendProgramAccess}
+            page={page}
+            total={admin.programTotal}
+            onPageChange={changePage}
           />
         )
       ) : null}
@@ -295,6 +386,9 @@ export function PosingAdminPage() {
             onConfirm={admin.confirmNutritionPayment}
             onResend={admin.resendNutritionPlan}
             onPreview={admin.previewNutritionPdf}
+            page={page}
+            total={admin.nutritionTotal}
+            onPageChange={changePage}
           />
         )
       ) : null}
@@ -304,11 +398,23 @@ export function PosingAdminPage() {
           bookings={admin.bookings}
           locale={locale}
           statusFilter={bookingStatusFilter}
-          onStatusFilterChange={setBookingStatusFilter}
+          onStatusFilterChange={(status) => updateBookingFilters({ status })}
+          search={searchParams.get('search') ?? ''}
+          from={searchParams.get('from') ?? ''}
+          to={searchParams.get('to') ?? ''}
+          memberFiltered={Boolean(
+            searchParams.get('member') || searchParams.get('booking'),
+          )}
+          onFilterChange={updateBookingFilters}
+          onClearFilters={() => setActiveTab('bookings')}
+          page={page}
+          total={admin.bookingTotal}
+          onPageChange={changePage}
           loading={admin.loading}
           busy={isBusy}
           onConfirmPayment={admin.confirmPayment}
           onCancelBooking={admin.cancelBooking}
+          onCompleteBooking={admin.completeBooking}
         />
       ) : null}
     </AdminShell>

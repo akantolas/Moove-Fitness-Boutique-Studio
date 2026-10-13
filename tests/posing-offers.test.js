@@ -18,7 +18,7 @@ const SEPT_MID = new Date('2026-09-15T12:00:00+03:00')
 const AUG_END = new Date('2026-08-31T23:59:59+03:00')
 const OCT_START = new Date('2026-10-01T00:00:00+03:00')
 const OCT_MID = new Date('2026-10-15T12:00:00+03:00')
-const NOV_START = new Date('2026-11-01T00:00:00+03:00')
+const NOV_START = new Date('2026-11-01T00:00:00+02:00')
 const JAN_2027 = new Date('2027-01-15T12:00:00+03:00')
 const MAR_31_2027 = new Date('2027-03-31T23:59:59+03:00')
 const APR_1_2027 = new Date('2027-04-01T00:00:00+03:00')
@@ -26,8 +26,14 @@ const APR_1_2027 = new Date('2027-04-01T00:00:00+03:00')
 describe('isSeptemberOfferActive', () => {
   it('is active during September 2026 (Athens)', () => {
     assert.equal(isSeptemberOfferActive(SEPT_MID), true)
-    assert.equal(isSeptemberOfferActive(new Date('2026-09-01T00:00:00+03:00')), true)
-    assert.equal(isSeptemberOfferActive(new Date('2026-09-30T23:59:59+03:00')), true)
+    assert.equal(
+      isSeptemberOfferActive(new Date('2026-09-01T00:00:00+03:00')),
+      true,
+    )
+    assert.equal(
+      isSeptemberOfferActive(new Date('2026-09-30T23:59:59+03:00')),
+      true,
+    )
   })
 
   it('is inactive before September and from October', () => {
@@ -65,35 +71,55 @@ describe('getSeptemberBonusSessions', () => {
 describe('computeSeptemberBonusSessions', () => {
   it('returns 1 during September for eligible plans', () => {
     assert.equal(
-      computeSeptemberBonusSessions('ruby', { enrolledInSeptemberOffer: false }, SEPT_MID),
+      computeSeptemberBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: false },
+        SEPT_MID,
+      ),
       1,
     )
   })
 
   it('returns 1 after September for enrolled users within loyalty period', () => {
     assert.equal(
-      computeSeptemberBonusSessions('diamond', { enrolledInSeptemberOffer: true }, JAN_2027),
+      computeSeptemberBonusSessions(
+        'diamond',
+        { enrolledInSeptemberOffer: true },
+        JAN_2027,
+      ),
       1,
     )
   })
 
   it('returns 0 after September for users not enrolled in September', () => {
     assert.equal(
-      computeSeptemberBonusSessions('ruby', { enrolledInSeptemberOffer: false }, JAN_2027),
+      computeSeptemberBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: false },
+        JAN_2027,
+      ),
       0,
     )
   })
 
   it('returns 0 after loyalty period even if enrolled', () => {
     assert.equal(
-      computeSeptemberBonusSessions('ruby', { enrolledInSeptemberOffer: true }, APR_1_2027),
+      computeSeptemberBonusSessions(
+        'ruby',
+        { enrolledInSeptemberOffer: true },
+        APR_1_2027,
+      ),
       0,
     )
   })
 
   it('returns 0 for single plan', () => {
     assert.equal(
-      computeSeptemberBonusSessions('single', { enrolledInSeptemberOffer: true }, JAN_2027),
+      computeSeptemberBonusSessions(
+        'single',
+        { enrolledInSeptemberOffer: true },
+        JAN_2027,
+      ),
       0,
     )
   })
@@ -102,7 +128,10 @@ describe('computeSeptemberBonusSessions', () => {
 describe('getOctoberBonusSessions', () => {
   it('returns 2 for sapphire, ruby, diamond during October', () => {
     for (const planKey of OCTOBER_BONUS_PLAN_KEYS) {
-      assert.equal(getOctoberBonusSessions(planKey, OCT_MID), OCTOBER_BONUS_SESSIONS)
+      assert.equal(
+        getOctoberBonusSessions(planKey, OCT_MID),
+        OCTOBER_BONUS_SESSIONS,
+      )
     }
   })
 
@@ -117,7 +146,14 @@ describe('isOctoberOfferActive', () => {
   it('is active during October 2026 (Athens)', () => {
     assert.equal(isOctoberOfferActive(OCT_START), true)
     assert.equal(isOctoberOfferActive(OCT_MID), true)
-    assert.equal(isOctoberOfferActive(new Date('2026-10-31T23:59:59+03:00')), true)
+    assert.equal(
+      isOctoberOfferActive(new Date('2026-10-31T23:59:59+03:00')),
+      true,
+    )
+    assert.equal(
+      isOctoberOfferActive(new Date('2026-10-31T23:59:59+02:00')),
+      true,
+    )
   })
 
   it('is inactive before October and from November', () => {
@@ -198,7 +234,13 @@ describe('shouldShowOffersPopup', () => {
   })
 
   it('hides when the October offer is inactive', () => {
-    assert.equal(shouldShowOffersPopup({ seenInSession: false }, SEPT_MID), false)
-    assert.equal(shouldShowOffersPopup({ seenInSession: false }, NOV_START), false)
+    assert.equal(
+      shouldShowOffersPopup({ seenInSession: false }, SEPT_MID),
+      false,
+    )
+    assert.equal(
+      shouldShowOffersPopup({ seenInSession: false }, NOV_START),
+      false,
+    )
   })
 })

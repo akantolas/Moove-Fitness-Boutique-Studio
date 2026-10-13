@@ -1,4 +1,6 @@
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
+import { runPosingTransaction } from '../posing/_transactions.js'
+import { trackDelivery } from '../../lib/email/delivery.js'
 import {
   cors,
   getSupabaseAdmin,
@@ -30,19 +32,26 @@ const ORDER_RATE_WINDOW_MS = 60 * 60 * 1000
 const DEDUP_WINDOW_MS = 15 * 60 * 1000
 
 export function programsAccessUrl(token) {
-  const base = process.env.SITE_URL?.trim()?.replace(/\/$/, '') ?? 'https://moovefitness.gr'
+  const base =
+    process.env.SITE_URL?.trim()?.replace(/\/$/, '') ??
+    'https://moovefitness.gr'
   return `${base}/programmata/access/${token}`
 }
 
 export function programsSuccessUrl(purchaseRef) {
-  const base = process.env.MOOVE_PROGRAM_SUCCESS_URL?.trim() ?? 'https://moovefitness.gr/programmata?payment=success'
+  const base =
+    process.env.MOOVE_PROGRAM_SUCCESS_URL?.trim() ??
+    'https://moovefitness.gr/programmata?payment=success'
   const url = new URL(base)
   if (purchaseRef) url.searchParams.set('purchase', purchaseRef)
   return url.toString()
 }
 
 export function programsCancelUrl() {
-  return process.env.MOOVE_PROGRAM_CANCEL_URL?.trim() ?? 'https://moovefitness.gr/programmata'
+  return (
+    process.env.MOOVE_PROGRAM_CANCEL_URL?.trim() ??
+    'https://moovefitness.gr/programmata'
+  )
 }
 
 export function generateAccessToken() {
@@ -131,44 +140,24 @@ export async function countRecentOrders(supabase, email) {
 
 export async function activateProgramPurchase(
   supabase,
-  { purchaseId, paymentRef, paymentMethod = 'stripe', confirmedBy = null },
+  {
+    purchaseId,
+    paymentRef,
+    paymentMethod = 'stripe',
+    confirmedBy = null,
+    includeNutrition = false,
+    nutritionOrderId = null,
+  },
 ) {
-  const now = new Date().toISOString()
-
-  const { data: purchase } = await supabase
-    .from('moove_program_purchases')
-    .select('*')
-    .eq('id', purchaseId)
-    .maybeSingle()
-
-  if (!purchase) return { ok: false, error: 'purchase_not_found' }
-  if (purchase.status === 'paid') return { ok: true, already: true, purchase }
-  if (purchase.status !== 'pending_payment') {
-    return { ok: false, error: 'invalid_purchase_status' }
-  }
-
-  const accessToken = generateAccessToken()
-  const update = {
-    status: 'paid',
-    payment_method: paymentMethod,
-    access_token: accessToken,
-    stripe_session_id: paymentMethod === 'stripe' ? paymentRef : purchase.stripe_session_id,
-    updated_at: now,
-  }
-  if (confirmedBy) update.confirmed_by = confirmedBy
-
-  const { data: updated, error } = await supabase
-    .from('moove_program_purchases')
-    .update(update)
-    .eq('id', purchaseId)
-    .eq('status', 'pending_payment')
-    .select('*')
-    .maybeSingle()
-
-  if (error) return { ok: false, error: error.message }
-  if (!updated) return { ok: false, error: 'activate_conflict' }
-
-  return { ok: true, purchase: updated }
+  return runPosingTransaction(supabase, 'confirm_program_bundle', {
+    p_purchase_id: purchaseId,
+    p_payment_ref: paymentRef,
+    p_method: paymentMethod,
+    p_actor_id: confirmedBy,
+    p_include_nutrition: includeNutrition,
+    p_access_token: generateAccessToken(),
+    p_expected_nutrition_id: nutritionOrderId,
+  })
 }
 
 export async function sendProgramPaymentFlowEmails({
@@ -204,15 +193,28 @@ export async function sendProgramPaymentFlowEmails({
   })
 }
 
-export async function sendProgramAccessFlowEmail(purchase, locale) {
-  if (!purchase.access_token) return
+export async function sendProgramAccessFlowEmail(
+  purchase,
+  locale,
+  { supabase = getSupabaseAdmin(), resend = false } = {},
+) {
+  if (!purchase.access_token) throw new Error('missing_access_token')
   const programName = getProgramName(purchase.program_key, locale)
-  await sendMooveProgramAccessEmail({
-    email: purchase.email,
-    programName,
-    accessUrl: programsAccessUrl(purchase.access_token),
-    locale,
-  })
+  const result = await trackDelivery(
+    supabase,
+    'moove_program_purchases',
+    purchase.id,
+    'access_email_sent_at',
+    () =>
+      sendMooveProgramAccessEmail({
+        email: purchase.email,
+        programName,
+        accessUrl: programsAccessUrl(purchase.access_token),
+        locale,
+        requestId: resend ? randomUUID() : undefined,
+      }),
+  )
+  if (!result.ok) throw new Error(result.error)
 }
 
 export {

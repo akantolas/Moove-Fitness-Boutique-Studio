@@ -46,7 +46,8 @@ export const en = {
   },
   footer: {
     studioBlurb: 'Pilates & Reformer studio in Volos, led by {{owner}}.',
-    posingBlurb: 'Online posing coaching for bodybuilding shows — by {{coach}}.',
+    posingBlurb:
+      'Online posing coaching for bodybuilding shows — by {{coach}}.',
     posingSubtitle: 'The Posing Academy',
     backToStudio: '← Back to {{name}} studio',
     nav: 'Navigation',
@@ -144,7 +145,8 @@ export const en = {
     sent: 'Got it! We will get back to you as soon as possible.',
     sending: 'Sending…',
     sendError: "Your message couldn't be sent. Please try again or call us.",
-    sendUnavailable: 'Sending is unavailable right now. Please call us or email info@moovefitness.gr.',
+    sendUnavailable:
+      'Sending is unavailable right now. Please call us or email info@moovefitness.gr.',
     name: 'Full name',
     namePlaceholder: 'e.g. Maria Papadopoulou',
     emailPlaceholder: 'your email',
@@ -211,10 +213,8 @@ export const en = {
     processing: {
       eyebrow: 'Coming soon',
       title: 'Programs are under processing',
-      body:
-        'We are preparing new workout programs. The purchase page is temporarily closed and will be available again soon.',
-      note:
-        'If you have already purchased a program, the access link in your email continues to work as usual.',
+      body: 'We are preparing new workout programs. The purchase page is temporarily closed and will be available again soon.',
+      note: 'If you have already purchased a program, the access link in your email continues to work as usual.',
       cta: 'Contact us',
       backHome: 'Back to home',
     },
@@ -242,7 +242,8 @@ export const en = {
       title: 'Four options. One clear goal.',
       body: 'Every purchase includes all workouts in that program and one private access link.',
       selectorLabel: 'Choose a package',
-      selectorHint: 'There are 4 packages available — select one to see its details.',
+      selectorHint:
+        'There are 4 packages available — select one to see its details.',
     },
     nutritionUpsell: {
       eyebrow: 'Optional add-on',
@@ -290,14 +291,18 @@ export const en = {
       foundation: 'Build confident technique and strength in the fundamentals.',
       shape: 'Train control, stability, and clean execution.',
       sculpt: 'Prioritise activation and complete glute-focused work.',
-      definition: 'Maximise glute definition with supersets, unilateral work, and pump sessions.',
-      symmetry: 'Boost activation and glute symmetry with unilateral pump work.',
+      definition:
+        'Maximise glute definition with supersets, unilateral work, and pump sessions.',
+      symmetry:
+        'Boost activation and glute symmetry with unilateral pump work.',
       strength: 'Raise intensity with structured heavy glute training.',
       unilateral: 'Build strength and control on each side independently.',
       posterior: 'Train your posterior chain for meaningful progression.',
       volume: 'Add volume and pump through higher training volume.',
-      conditioning: 'Boost conditioning and calorie burn with metabolic circuits and high-rep glute work.',
-      complete: 'Progress from solid foundations to strength, volume, definition, and conditioning with all 12 workouts.',
+      conditioning:
+        'Boost conditioning and calorie burn with metabolic circuits and high-rep glute work.',
+      complete:
+        'Progress from solid foundations to strength, volume, definition, and conditioning with all 12 workouts.',
     },
     featured: 'Popular choice',
     includes: {
@@ -314,9 +319,18 @@ export const en = {
       eyebrow: 'How it works',
       title: 'From selection to training',
       steps: [
-        { title: 'Choose your program', body: 'Compare the goal, level, and duration.' },
-        { title: 'Complete payment', body: 'You will receive secure payment options by email.' },
-        { title: 'Start training', body: 'After confirmation, we send your private access link.' },
+        {
+          title: 'Choose your program',
+          body: 'Compare the goal, level, and duration.',
+        },
+        {
+          title: 'Complete payment',
+          body: 'You will receive secure payment options by email.',
+        },
+        {
+          title: 'Start training',
+          body: 'After confirmation, we send your private access link.',
+        },
       ],
     },
     sculptGuidelines: {
@@ -408,21 +422,25 @@ export const en = {
       cta: 'Continue to secure payment',
       submitting: 'Opening Stripe…',
       successTitle: 'Check your email',
-      successBody: 'We sent payment links. After payment you will receive your access link.',
+      successBody:
+        'We sent payment links. After payment you will receive your access link.',
       refLabel: 'Order ref',
       invalidEmail: 'Enter a valid email.',
       nutritionAddon: 'Add personalized nutrition (+{{price}}€)',
       nutritionAddonHint: 'Available only when purchasing a program.',
       nutritionQuestionnaireTitle: 'Nutrition questionnaire',
-      nutritionQuestionnaireHint: 'Fill in your details to generate your personalized plan.',
+      nutritionQuestionnaireHint:
+        'Fill in your details to generate your personalized plan.',
       cancelNutrition: 'Cancel nutrition add-on',
       errors: {
         order_failed: 'Order failed. Please try again.',
         rate_limit: 'Too many orders — try again later.',
         invalid_email: 'Invalid email.',
         invalid_program: 'Invalid program.',
-        stripe_unavailable: 'Secure payment is temporarily unavailable. Please try again later.',
-        stripe_not_configured: 'Stripe is not configured locally. Add STRIPE_SECRET_KEY to .env.local and restart vercel dev.',
+        stripe_unavailable:
+          'Secure payment is temporarily unavailable. Please try again later.',
+        stripe_not_configured:
+          'Stripe is not configured locally. Add STRIPE_SECRET_KEY to .env.local and restart vercel dev.',
       },
     },
     paymentSuccess: {
@@ -480,7 +498,8 @@ export const en = {
       noPending: 'No pending program payments.',
       recentPaidTitle: 'Recent paid orders',
       noPaid: 'No recent paid orders.',
-      confirmBody: 'Confirm payment (PayPal/Revolut) — an access email will be sent.',
+      confirmBody:
+        'Confirm payment (PayPal/Revolut) — an access email will be sent.',
       resendAccess: 'Resend access email',
       resending: 'Sending…',
     },
@@ -528,8 +547,7 @@ export const en = {
     ],
     apiKeyHint:
       'To load reviews automatically: Vercel + GOOGLE_PLACES_API_KEY (see .env.example).',
-    tempHint:
-      'Showing sample comments for now — all reviews remain on Google.',
+    tempHint: 'Showing sample comments for now — all reviews remain on Google.',
     legal:
       'Google reviews are shown according to Google’s terms and are sometimes unavailable via API. All comments always remain on our',
     mapsProfile: 'Google Maps profile',
@@ -542,7 +560,12 @@ export const en = {
       viewPackages: 'View packages',
       openCal: 'Open Cal.com',
       byCoach: 'by {{coach}}',
-      chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Email confirmation'],
+      chips: [
+        '1:1 coaching',
+        'Stage presence',
+        'Greek & English',
+        'Email confirmation',
+      ],
     },
     about: {
       eyebrow: 'About us',
@@ -597,7 +620,10 @@ export const en = {
     how: {
       title: 'How it works',
       steps: [
-        { title: 'Booking', body: 'Choose a package and reserve an available slot in the calendar.' },
+        {
+          title: 'Booking',
+          body: 'Choose a package and reserve an available slot in the calendar.',
+        },
         {
           title: 'Email & payment',
           body: 'You receive an email with the price and payment links (Stripe, PayPal, or Revolut).',
@@ -619,7 +645,11 @@ export const en = {
       swipeHint: 'Swipe for another package · ',
       counter: '{{current}} of {{total}}',
       includedTitle: 'Every session includes',
-      included: ['Personalised walks', 'T-walks by federation', 'Comparison rounds'],
+      included: [
+        'Personalised walks',
+        'T-walks by federation',
+        'Comparison rounds',
+      ],
       packages: [
         {
           label: 'Single session',
@@ -665,11 +695,14 @@ export const en = {
       ],
     },
     booking: {
+      offerCheckFailed:
+        'The offer check could not be completed. Please try again.',
       eyebrow: 'Booking & payment',
       title: 'Book your session',
       body: 'Sign in, pick an available slot — the price and payment links will be sent to your email.',
       selectedLabel: 'Selected package',
-      paymentSuccess: 'Payment completed. Thank you — you will receive confirmation from Stripe.',
+      paymentSuccess:
+        'Payment completed. Thank you — you will receive confirmation from Stripe.',
       sessionsIncluded: '{{count}} sessions',
       sessionsRemaining: '{{remaining}} remaining of {{total}}',
       sessionsRemainingShort: '{{remaining}} bookings available',
@@ -690,7 +723,8 @@ export const en = {
       title: 'NEW OCTOBER OFFER',
       subtitle: 'All monthly packages — 4 classes + 2 free.',
       onlyOctober: 'New members only',
-      loyaltyHint: 'Sapphire, Ruby, or Diamond purchases in September keep +1 free until 31 Mar 2027.',
+      loyaltyHint:
+        'Sapphire, Ruby, or Diamond purchases in September keep +1 free until 31 Mar 2027.',
       loyaltyBadge: '+1 FREE',
       bonusBadge: '+2 FREE',
       flyerAlt: 'Move & Pose — October offer: 4 classes + 2 free',
@@ -718,12 +752,15 @@ export const en = {
       signingIn: 'Signing in…',
       signingUp: 'Signing up…',
       signupSuccessTitle: 'Check your email',
-      signupSuccessBody: 'We sent a confirmation email. After verifying, sign in to book a session.',
+      signupSuccessBody:
+        'We sent a confirmation email. After verifying, sign in to book a session.',
       errorGeneric: 'Something went wrong. Please try again.',
       invalidCredentials:
         'Wrong email or password. If you just signed up, confirm your email first (check spam too).',
-      emailNotConfirmed: 'Confirm your email before signing in. Check your inbox and spam folder.',
-      rateLimit: 'Too many emails from Supabase. Try later or create the user manually in the dashboard.',
+      emailNotConfirmed:
+        'Confirm your email before signing in. Check your inbox and spam folder.',
+      rateLimit:
+        'Too many emails from Supabase. Try later or create the user manually in the dashboard.',
       notConfigured: 'The booking system is being set up. Contact us to book.',
       forgotPassword: 'Forgot password?',
       forgotPasswordTitle: 'Reset password',
@@ -738,9 +775,12 @@ export const en = {
       resetPasswordBody: 'Choose a new password (at least 8 characters).',
       setNewPassword: 'Save password',
       settingPassword: 'Saving…',
-      resetPasswordSuccess: 'Password updated. You can sign in with your new password.',
-      resetLinkInvalid: 'This link has expired or is invalid. Request a new one from the reset page.',
-      samePassword: 'The new password must be different from your previous one.',
+      resetPasswordSuccess:
+        'Password updated. You can sign in with your new password.',
+      resetLinkInvalid:
+        'This link has expired or is invalid. Request a new one from the reset page.',
+      samePassword:
+        'The new password must be different from your previous one.',
       weakPassword: 'Password is too weak or too short.',
       backToLogin: 'Back to log in',
       continueWithGoogle: 'Continue with Google',
@@ -751,7 +791,8 @@ export const en = {
       title: 'My account',
       loading: 'Loading…',
       profileTitle: 'My profile',
-      profileBody: 'Add your contact details — used for bookings and coach communication.',
+      profileBody:
+        'Add your contact details — used for bookings and coach communication.',
       fullName: 'Full name',
       phone: 'Phone',
       division: 'Division / category',
@@ -776,7 +817,8 @@ export const en = {
       dangerZoneTitle: 'Advanced',
       dangerZoneExpand: 'Show',
       passwordTitle: 'Change password',
-      passwordBody: 'Enter your current password and a new one (at least 8 characters).',
+      passwordBody:
+        'Enter your current password and a new one (at least 8 characters).',
       currentPassword: 'Current password',
       newPassword: 'New password',
       confirmPassword: 'Confirm new password',
@@ -785,7 +827,8 @@ export const en = {
       passwordChanged: 'Password updated.',
       passwordMismatch: 'New passwords do not match.',
       deleteTitle: 'Delete account',
-      deleteBody: 'This is permanent. You will lose access to bookings and packages.',
+      deleteBody:
+        'This is permanent. You will lose access to bookings and packages.',
       deletePassword: 'Password to confirm',
       deleteConfirm: 'Delete account',
       deleting: 'Deleting…',
@@ -808,23 +851,29 @@ export const en = {
       addToCalendar: 'Add to calendar',
       downloadingCalendar: 'Downloading…',
       cancelOrderTitle: 'Cancel order?',
-      cancelOrderBody: 'The booking and package will be cancelled. The slot will become available again.',
+      cancelOrderBody:
+        'The booking and package will be cancelled. The slot will become available again.',
       cancelBookingTitle: 'Cancel booking?',
-      cancelBookingBody: 'The session will be cancelled and 1 session will be returned to your package.',
+      cancelBookingBody:
+        'The session will be cancelled and 1 session will be returned to your package.',
       status: {
+        non_cancelled: 'All except cancelled',
         pending_payment: 'Pending payment',
         confirmed: 'Confirmed',
         cancelled: 'Cancelled',
         completed: 'Completed',
       },
       errors: {
-        server_config_error: 'Server configuration issue (check SUPABASE_SERVICE_ROLE_KEY on Vercel).',
+        server_config_error:
+          'Server configuration issue (check SUPABASE_SERVICE_ROLE_KEY on Vercel).',
         invalid_password: 'Incorrect password.',
         admin_cannot_delete: 'Admin accounts cannot be deleted here.',
-        active_bookings: 'You have an active booking. Cancel it first or contact us.',
+        active_bookings:
+          'You have an active booking. Cancel it first or contact us.',
         password_required: 'Enter your password.',
         password_too_short: 'New password must be at least 8 characters.',
-        password_same_as_current: 'New password must be different from the current one.',
+        password_same_as_current:
+          'New password must be different from the current one.',
         password_change_failed: 'Password change failed. Please try again.',
         delete_failed: 'Deletion failed. Please try again.',
         avatar_invalid_type: 'Only JPG, PNG, or WebP images.',
@@ -836,12 +885,14 @@ export const en = {
         cannot_cancel: 'You cannot cancel this booking.',
         cancel_failed: 'Cancellation failed. Please try again.',
         booking_not_found: 'Booking not found.',
-        calendar_download_failed: 'Could not download calendar file. Please try again.',
+        calendar_download_failed:
+          'Could not download calendar file. Please try again.',
         not_confirmed: 'Calendar is only available for confirmed sessions.',
         calendar_unavailable: 'Session details for calendar are unavailable.',
         calendar_failed: 'Could not download calendar file. Please try again.',
         unauthorized: 'Sign in to download your calendar file.',
-        method_not_allowed: 'Calendar download is not available yet. Please try again shortly.',
+        method_not_allowed:
+          'Calendar download is not available yet. Please try again shortly.',
       },
     },
     calendar: {
@@ -855,17 +906,80 @@ export const en = {
       error: 'Booking failed. Please try again.',
       slotTaken: 'This slot was just taken. Pick another.',
       loginRequired: 'Sign in to book a slot.',
-      sessionExpired: 'Your session expired. Sign in again to complete your booking.',
+      sessionExpired:
+        'Your session expired. Sign in again to complete your booking.',
       errors: {
+        slot_in_past: 'Select a future time.',
+        outside_package_period:
+          'This session is after your package expires. Select an earlier time.',
+        offer_check_failed:
+          'The offer check could not be completed. Please try again.',
+        price_check_failed:
+          'The package price could not be loaded. Please try again.',
+        slot_not_available:
+          'This time is not available for the full session duration.',
+        operation_failed: 'The change failed. Please try again.',
         server_config_error:
           'Server configuration issue. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on Vercel, then redeploy.',
         missing_supabase_admin_config:
           'SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing on Vercel. Redeploy after adding them.',
-        invalid_api_response: 'Invalid server response. Please try again shortly.',
+        invalid_api_response:
+          'Invalid server response. Please try again shortly.',
         slots_fetch_failed: 'Could not load available times. Please try again.',
       },
     },
     admin: {
+      pageSummary: 'Page {{page}} of {{pages}} · {{total}} records',
+      previousPage: 'Previous',
+      nextPage: 'Next',
+      statusFilter: 'Booking status',
+      searchBookings: 'Search name or email',
+      fromDate: 'From date',
+      toDate: 'To date',
+      dateFilterHint: 'Sessions {{from}} – {{to}} · Greece time',
+      memberFilterActive: 'Selected member bookings',
+      searchMembers: 'Search members',
+      activePackagesFilter: 'With active package',
+      clientsFilter: 'Clients',
+      clearFilter: 'Clear filter',
+      memberAllBookings: 'All member bookings',
+      packageExpiry: 'Expires: {{date}}',
+      packageBreakdown:
+        'Base: {{base}} · Bonus: {{bonus}} · Adjustment: {{adjustment}}',
+      addSession: '+1 session',
+      removeSession: '−1 session',
+      adjustmentHistory: 'Adjustment history',
+      adjustmentReason: 'Reason (at least 3 characters)',
+      adjustmentExplanation:
+        'Total sessions: {{before}} → {{after}}. This adjustment applies to available sessions.',
+      saveAdjustment: 'Save adjustment',
+      completeBooking: 'Complete session',
+      completeBookingBody:
+        'Mark this session as completed. It has already been charged to the package.',
+      deliverySent: 'Email sent',
+      deliveryFailed: 'Delivery failed',
+      deliveryPending: 'Delivery pending',
+      deliveryUnknown: 'No delivery record',
+      paymentRecordedDeliveryFailed:
+        'Payment was recorded, but delivery failed. Use the resend action to retry.',
+      pastPayment:
+        'This session date has passed. Check the payment before confirming.',
+      cancelPending: 'Cancel pending booking',
+      weekdayTemplate: 'Day template',
+      weekdays: [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ],
+      sessionReservationsHint:
+        'The balance includes future bookings that have already reserved a session.',
+      bundleIncludesNutrition: 'Includes a linked nutrition plan',
+      paidBundleConfirmation:
+        'Confirmation covers the linked products in this combined order.',
       title: 'Admin',
       subtitle: 'Move & Pose bookings, members, and payments',
       eyebrow: 'Admin panel',
@@ -876,7 +990,8 @@ export const en = {
       reviewPayments: 'Review pending payments',
       actions: 'Actions',
       confirmDeleteMemberTitle: 'Delete member?',
-      confirmDeleteMemberBody: 'This permanently removes the account and related data. This cannot be undone.',
+      confirmDeleteMemberBody:
+        'This permanently removes the account and related data. This cannot be undone.',
       tabOverview: 'Overview',
       tabCalendar: 'Calendar',
       tabMembers: 'Members',
@@ -895,7 +1010,8 @@ export const en = {
       confirmPayment: 'Confirm payment',
       confirmingPayment: 'Confirming…',
       confirmPaymentTitle: 'Confirm payment?',
-      confirmPaymentBody: 'The booking will be confirmed manually (e.g. cash or bank transfer).',
+      confirmPaymentBody:
+        'The booking will be confirmed manually (e.g. cash or bank transfer).',
       cancelBooking: 'Cancel booking',
       cancelPackage: 'Cancel package',
       cancellingBooking: 'Cancelling…',
@@ -962,8 +1078,9 @@ export const en = {
       openSettings: 'Settings',
       closeSettings: 'Close',
       cancelSettings: 'Cancel',
-      cellMenuHint: 'Right-click or long-press a time slot to change its state.',
-      cellMenuHintMobile: 'Long-press a time slot to change its state.',
+      cellMenuHint:
+        'Click a time to change its state or a booking to open its details.',
+      cellMenuHintMobile: 'Tap a time to change its state or a booking to open its details.',
       weekdayActiveFrom: 'Active from',
       weekdayActiveUntil: 'Active until',
       activeHoursSummary: '{{weekday}}: active {{from}}–{{until}}',
@@ -989,7 +1106,8 @@ export const en = {
       you: 'you',
       deleteMember: 'Delete',
       customPricesTitle: 'Custom pricing',
-      customPricesBody: 'Prices apply only to this client and appear in their booking email.',
+      customPricesBody:
+        'Prices apply only to this client and appear in their booking email.',
       catalogPrice: 'Standard: {{price}}',
       customPriceActive: 'Custom: {{price}}',
       savePrice: 'Save',
@@ -1009,6 +1127,31 @@ export const en = {
         invalid_price: 'Invalid price.',
       },
       adminErrors: {
+        slot_not_available:
+          'This time is not available for the full session duration.',
+        delivery_failed: 'Delivery failed. Try resending.',
+        preview_blocked:
+          'Your browser blocked the preview window. Allow pop-ups for this site.',
+        operation_failed: 'The change failed. Please try again.',
+        invalid_adjustment: 'Enter a valid reason for the session adjustment.',
+        no_available_sessions: 'There is no available session to remove.',
+        package_not_active:
+          'Session adjustments require an active package that has not expired.',
+        adjustment_conflict:
+          'This action was already recorded with different details.',
+        session_not_finished: 'The session has not finished yet.',
+        slot_overlap: 'This time overlaps existing availability or a booking.',
+        slot_in_past: 'Select a future time.',
+        outside_package_period:
+          'This session is after your package expires. Select an earlier time.',
+        invalid_times: 'Select valid future times.',
+        invalid_date_range: 'Check the date range.',
+        invalid_pagination: 'Invalid results page.',
+        invalid_filter: 'Invalid filter.',
+        member_details_failed:
+          'Member details could not be loaded. Please try again.',
+        offer_check_failed:
+          'The offer check could not be completed. Please try again.',
         load_failed: 'Failed to load data.',
         slots_failed: 'Failed to load calendar slots.',
         toggle_failed: 'Failed to update slot.',
@@ -1033,9 +1176,10 @@ export const en = {
         invalid_time: 'Invalid time format.',
         time_exists: 'A slot already exists at this time.',
         invalid_weekday_templates: 'Invalid weekday schedule settings.',
-        outside_active_hours: 'This time is outside the active hours for this day.',
+        outside_active_hours:
+          'This time is outside the active hours for this day.',
         migration_required:
-          'Database migration required. Run supabase/scripts/apply_posing_calendar_settings.sql in the Supabase SQL Editor.',
+          'The database needs to be updated before this action can be used.',
       },
     },
     faq: {
@@ -1077,7 +1221,8 @@ export const en = {
       preferredDate: 'Preferred date / time',
       sessionType: 'Session type',
       message: 'Notes',
-      messagePlaceholder: 'Division, level, show date, or anything we should know.',
+      messagePlaceholder:
+        'Division, level, show date, or anything we should know.',
       submit: 'Request appointment',
       options: {
         online: 'Online posing session',
@@ -1133,7 +1278,8 @@ export const en = {
     page: {
       eyebrow: 'Legal',
       title: 'Cookie policy',
-      description: 'How {{name}} uses cookies and similar technology on the studio website.',
+      description:
+        'How {{name}} uses cookies and similar technology on the studio website.',
       lastUpdated: 'Last updated: June 2026',
       backHome: 'Back to home',
       sections: [
@@ -1167,7 +1313,8 @@ export const en = {
     page: {
       eyebrow: 'Legal',
       title: 'Privacy policy',
-      description: 'How {{name}} collects, uses, and protects your personal data.',
+      description:
+        'How {{name}} collects, uses, and protects your personal data.',
       lastUpdated: 'Last updated: June 2026',
       backHome: 'Back to home',
       viewCookies: 'Cookie policy',
@@ -1335,7 +1482,8 @@ export const en = {
       cta: 'Buy nutrition plan',
       submitting: 'Sending…',
       successTitle: 'Check your email',
-      successBody: 'We sent payment links. After payment you will receive your PDF.',
+      successBody:
+        'We sent payment links. After payment you will receive your PDF.',
       refLabel: 'Order ref',
       errors: {
         order_failed: 'Order failed. Please try again.',
@@ -1347,7 +1495,8 @@ export const en = {
     paymentSuccess: {
       title: 'Payment completed',
       body: 'Processing your order…',
-      generating: 'Generating your plan — you will receive it by email shortly.',
+      generating:
+        'Generating your plan — you will receive it by email shortly.',
       sent: 'Your nutrition plan was sent to your email.',
     },
     admin: {
@@ -1355,7 +1504,8 @@ export const en = {
       noPending: 'No pending nutrition payments.',
       recentPaidTitle: 'Recent nutrition orders',
       noPaid: 'No recent orders.',
-      confirmBody: 'Confirm payment (PayPal/Revolut) — PDF will be generated and sent.',
+      confirmBody:
+        'Confirm payment (PayPal/Revolut) — PDF will be generated and sent.',
       resendPlan: 'Resend PDF',
       resending: 'Sending…',
       previewPdf: 'Preview PDF',
@@ -1372,7 +1522,8 @@ export const en = {
     page: {
       eyebrow: 'Legal',
       title: 'Terms of service',
-      description: 'Terms for participating in classes and services at {{name}} · {{address}}.',
+      description:
+        'Terms for participating in classes and services at {{name}} · {{address}}.',
       lastUpdated: 'Last updated: June 2026',
       backHome: 'Back to home',
       sections: [

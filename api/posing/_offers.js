@@ -5,7 +5,7 @@ const SEPTEMBER_OFFER_END = new Date('2026-10-01T00:00:00+03:00')
 const SEPTEMBER_LOYALTY_END = new Date('2027-04-01T00:00:00+03:00')
 
 const OCTOBER_OFFER_START = new Date('2026-10-01T00:00:00+03:00')
-const OCTOBER_OFFER_END = new Date('2026-11-01T00:00:00+03:00')
+const OCTOBER_OFFER_END = new Date('2026-11-01T00:00:00+02:00')
 
 export const SEPTEMBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond']
 export const OCTOBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond']
@@ -18,7 +18,9 @@ export function isOctoberOfferActive(now = new Date()) {
 /** @param {string} planKey */
 export function getOctoberBonusSessions(planKey, now = new Date()) {
   if (!isOctoberOfferActive(now)) return 0
-  return OCTOBER_BONUS_PLAN_KEYS.includes(String(planKey)) ? OCTOBER_BONUS_SESSIONS : 0
+  return OCTOBER_BONUS_PLAN_KEYS.includes(String(planKey))
+    ? OCTOBER_BONUS_SESSIONS
+    : 0
 }
 
 /**
@@ -40,7 +42,7 @@ export function isSeptemberOfferActive(now = new Date()) {
 }
 
 export function isSeptemberLoyaltyPeriodActive(now = new Date()) {
-  return now < SEPTEMBER_LOYALTY_END
+  return now >= SEPTEMBER_OFFER_START && now < SEPTEMBER_LOYALTY_END
 }
 
 /** @param {string} planKey */
@@ -52,7 +54,11 @@ export function isSeptemberBonusPlanKey(planKey) {
  * Pure bonus resolution for tests and server.
  * @param {{ enrolledInSeptemberOffer: boolean }} state
  */
-export function computeSeptemberBonusSessions(planKey, state, now = new Date()) {
+export function computeSeptemberBonusSessions(
+  planKey,
+  state,
+  now = new Date(),
+) {
   if (!isSeptemberBonusPlanKey(planKey)) return 0
   if (!isSeptemberLoyaltyPeriodActive(now)) return 0
   if (isSeptemberOfferActive(now)) return 1
@@ -62,7 +68,11 @@ export function computeSeptemberBonusSessions(planKey, state, now = new Date()) 
 
 /** @param {string} planKey */
 export function getSeptemberBonusSessions(planKey, now = new Date()) {
-  return computeSeptemberBonusSessions(planKey, { enrolledInSeptemberOffer: false }, now)
+  return computeSeptemberBonusSessions(
+    planKey,
+    { enrolledInSeptemberOffer: false },
+    now,
+  )
 }
 
 /** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId */
@@ -72,28 +82,42 @@ export async function userEnrolledInSeptemberOffer(supabase, userId) {
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
     .in('plan_key', SEPTEMBER_BONUS_PLAN_KEYS)
-    .gte('created_at', SEPTEMBER_OFFER_START.toISOString())
-    .lt('created_at', SEPTEMBER_OFFER_END.toISOString())
+    .in('status', ['active', 'expired'])
+    .gte('paid_at', SEPTEMBER_OFFER_START.toISOString())
+    .lt('paid_at', SEPTEMBER_OFFER_END.toISOString())
 
   if (error) {
-    console.error('september offer enrollment check failed:', { userId, error: error.message })
-    return false
+    throw new Error('offer_check_failed')
   }
 
   return (count ?? 0) > 0
 }
 
 /** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId @param {string} planKey */
-export async function resolveSeptemberBonusSessions(supabase, userId, planKey, now = new Date()) {
-  if (!isSeptemberBonusPlanKey(planKey) || !isSeptemberLoyaltyPeriodActive(now)) return 0
+export async function resolveSeptemberBonusSessions(
+  supabase,
+  userId,
+  planKey,
+  now = new Date(),
+) {
+  if (!isSeptemberBonusPlanKey(planKey) || !isSeptemberLoyaltyPeriodActive(now))
+    return 0
   if (isSeptemberOfferActive(now)) return 1
 
   const enrolled = await userEnrolledInSeptemberOffer(supabase, userId)
-  return computeSeptemberBonusSessions(planKey, { enrolledInSeptemberOffer: enrolled }, now)
+  return computeSeptemberBonusSessions(
+    planKey,
+    { enrolledInSeptemberOffer: enrolled },
+    now,
+  )
 }
 
 /** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId */
-export async function isSeptemberLoyaltyEligible(supabase, userId, now = new Date()) {
+export async function isSeptemberLoyaltyEligible(
+  supabase,
+  userId,
+  now = new Date(),
+) {
   if (!isSeptemberLoyaltyPeriodActive(now)) return false
   if (isSeptemberOfferActive(now)) return true
   return userEnrolledInSeptemberOffer(supabase, userId)
@@ -105,17 +129,22 @@ export async function userIsNewPosingMember(supabase, userId) {
     .from('user_packages')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
+    .not('paid_at', 'is', null)
 
   if (error) {
-    console.error('new posing member check failed:', { userId, error: error.message })
-    return false
+    throw new Error('offer_check_failed')
   }
 
   return (count ?? 0) === 0
 }
 
 /** @param {import('@supabase/supabase-js').SupabaseClient} supabase @param {string} userId @param {string} planKey */
-export async function resolvePosingBonusSessions(supabase, userId, planKey, now = new Date()) {
+export async function resolvePosingBonusSessions(
+  supabase,
+  userId,
+  planKey,
+  now = new Date(),
+) {
   const isNewMember = await userIsNewPosingMember(supabase, userId)
   if (isNewMember) {
     const octoberBonus = getOctoberBonusSessions(planKey, now)

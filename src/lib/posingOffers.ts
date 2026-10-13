@@ -5,21 +5,25 @@ const SEPTEMBER_OFFER_END = new Date('2026-10-01T00:00:00+03:00')
 const SEPTEMBER_LOYALTY_END = new Date('2027-04-01T00:00:00+03:00')
 
 const OCTOBER_OFFER_START = new Date('2026-10-01T00:00:00+03:00')
-const OCTOBER_OFFER_END = new Date('2026-11-01T00:00:00+03:00')
+const OCTOBER_OFFER_END = new Date('2026-11-01T00:00:00+02:00')
 
 const OFFERS_POPUP_STORAGE_KEY = 'posing_offers_popup_session_oct2026_v1'
 
 export const OCTOBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond'] as const
 export const OCTOBER_BONUS_SESSIONS = 2
 
-export const SEPTEMBER_BONUS_PLAN_KEYS = ['sapphire', 'ruby', 'diamond'] as const
+export const SEPTEMBER_BONUS_PLAN_KEYS = [
+  'sapphire',
+  'ruby',
+  'diamond',
+] as const
 
 export function isSeptemberOfferActive(now = new Date()) {
   return now >= SEPTEMBER_OFFER_START && now < SEPTEMBER_OFFER_END
 }
 
 export function isSeptemberLoyaltyPeriodActive(now = new Date()) {
-  return now < SEPTEMBER_LOYALTY_END
+  return now >= SEPTEMBER_OFFER_START && now < SEPTEMBER_LOYALTY_END
 }
 
 export function isSeptemberBonusPlanKey(planKey: string) {
@@ -39,7 +43,10 @@ export function shouldShowSeptemberBonusBadge(
   now = new Date(),
 ) {
   if (!isSeptemberBonusPlanKey(planKey)) return false
-  return isSeptemberOfferActive(now) || (septemberLoyaltyEligible && isSeptemberLoyaltyPeriodActive(now))
+  return (
+    isSeptemberOfferActive(now) ||
+    (septemberLoyaltyEligible && isSeptemberLoyaltyPeriodActive(now))
+  )
 }
 
 export function isOctoberOfferActive(now = new Date()) {
@@ -97,9 +104,13 @@ export function clearOffersPopupSeen(): void {
 }
 
 export function scrollToPosingPackages() {
-  document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  document
+    .getElementById('packages')
+    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 export function scrollToPosingBooking() {
-  document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  document
+    .getElementById('booking')
+    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }

@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import type { NutritionOrderPayment, NutritionPaidOrder } from '../lib/nutritionTypes'
+import type {
+  NutritionOrderPayment,
+  NutritionPaidOrder,
+} from '../lib/nutritionTypes'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { ConfirmDialog } from './ConfirmDialog'
+import { AdminPagination } from './AdminPagination'
+import { DeliveryStatus } from './DeliveryStatus'
 
 type AdminNutritionQueueProps = {
   payments: NutritionOrderPayment[]
@@ -12,6 +17,9 @@ type AdminNutritionQueueProps = {
   onConfirm: (orderId: string) => Promise<void>
   onResend: (orderId: string) => Promise<void>
   onPreview: (orderId: string) => Promise<void>
+  page: number
+  total: number
+  onPageChange: (page: number) => void
 }
 
 function formatDateTime(iso: string, locale: Locale) {
@@ -33,6 +41,9 @@ export function AdminNutritionQueue({
   onConfirm,
   onResend,
   onPreview,
+  page,
+  total,
+  onPageChange,
 }: AdminNutritionQueueProps) {
   const { t } = useTranslation()
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -92,7 +103,9 @@ export function AdminNutritionQueue({
           {t('nutrition.admin.pendingTitle')}
         </h2>
         {payments.length === 0 ? (
-          <p className="mt-4 text-sm text-white/50">{t('nutrition.admin.noPending')}</p>
+          <p className="mt-4 text-sm text-white/50">
+            {t('nutrition.admin.noPending')}
+          </p>
         ) : (
           <ul className="mt-4 space-y-3">
             {payments.map((payment) => (
@@ -104,9 +117,20 @@ export function AdminNutritionQueue({
                   <div>
                     <p className="font-medium text-white">{payment.email}</p>
                     <p className="mt-1 text-white/60">
-                      {payment.order_ref} · {payment.amount_eur}€ ·{' '}
-                      {formatDateTime(payment.created_at, locale)}
+                      {payment.order_ref} ·{' '}
+                      {new Intl.NumberFormat(
+                        locale === 'el' ? 'el-GR' : 'en-IE',
+                        { style: 'currency', currency: 'EUR' },
+                      ).format(
+                        payment.total_amount_eur ?? payment.amount_eur,
+                      )}{' '}
+                      · {formatDateTime(payment.created_at, locale)}
                     </p>
+                    {payment.confirms_bundle ? (
+                      <p className="mt-2 text-xs text-fuchsia-200">
+                        {t('posing.admin.paidBundleConfirmation')}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-xs text-white/50">
                       {payment.purchase_type === 'program_addon'
                         ? t('nutrition.admin.typeAddon')
@@ -135,7 +159,9 @@ export function AdminNutritionQueue({
           {t('nutrition.admin.recentPaidTitle')}
         </h2>
         {paidOrders.length === 0 ? (
-          <p className="mt-4 text-sm text-white/50">{t('nutrition.admin.noPaid')}</p>
+          <p className="mt-4 text-sm text-white/50">
+            {t('nutrition.admin.noPaid')}
+          </p>
         ) : (
           <ul className="mt-4 space-y-3">
             {paidOrders.map((order) => (
@@ -150,18 +176,19 @@ export function AdminNutritionQueue({
                       {order.order_ref} · {order.amount_eur}€ ·{' '}
                       {formatDateTime(order.created_at, locale)}
                     </p>
-                    <p className="mt-1 text-xs text-white/50">
-                      {order.status === 'generation_failed'
-                        ? t('nutrition.admin.statusFailed')
-                        : order.plan_email_sent_at
-                          ? '✓ PDF sent'
-                          : '—'}
-                    </p>
+                    {order.status === 'generation_failed' ? (
+                      <p className="mt-1 text-xs text-rose-200">
+                        {t('nutrition.admin.statusFailed')}
+                      </p>
+                    ) : null}
+                    <DeliveryStatus status={order.delivery_status} />
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      disabled={busy || previewingId === order.id}
+                      disabled={
+                        busy || previewingId === order.id || !order.has_pdf
+                      }
                       onClick={() => void handlePreview(order.id)}
                       className="rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 disabled:opacity-50"
                     >
@@ -181,7 +208,9 @@ export function AdminNutritionQueue({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
+                      onClick={() =>
+                        setExpandedId(expandedId === order.id ? null : order.id)
+                      }
                       className="rounded-full border border-white/20 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10"
                     >
                       {t('nutrition.admin.viewResponses')}
@@ -199,10 +228,21 @@ export function AdminNutritionQueue({
         )}
       </section>
 
+      <AdminPagination
+        page={page}
+        total={total}
+        busy={busy}
+        onChange={onPageChange}
+      />
+
       <ConfirmDialog
         open={confirmId !== null}
         title={t('posing.admin.confirmPaymentTitle')}
-        body={t('nutrition.admin.confirmBody')}
+        body={t(
+          payments.find((p) => p.id === confirmId)?.confirms_bundle
+            ? 'posing.admin.paidBundleConfirmation'
+            : 'nutrition.admin.confirmBody',
+        )}
         confirmLabel={t('posing.admin.confirmPayment')}
         cancelLabel={t('posing.admin.cancelDeleteMember')}
         busy={confirmingId !== null}

@@ -10,7 +10,11 @@ export type PackagePlan = {
   duration_minutes: number
 }
 
-export type PackageQuotaStatus = 'none' | 'pending_payment' | 'active' | 'exhausted'
+export type PackageQuotaStatus =
+  | 'none'
+  | 'pending_payment'
+  | 'active'
+  | 'exhausted'
 
 export type PackageQuota = {
   planKey: string
@@ -21,11 +25,15 @@ export type PackageQuota = {
   userPackageId: string | null
 }
 
-export async function fetchPackagePlan(planKey: PosingPlanKey): Promise<PackagePlan | null> {
+export async function fetchPackagePlan(
+  planKey: PosingPlanKey,
+): Promise<PackagePlan | null> {
   const supabase = createSupabaseClient()
   const { data, error } = await supabase
     .from('package_plans')
-    .select('key, name_en, name_el, sessions_total, period_days, duration_minutes')
+    .select(
+      'key, name_en, name_el, sessions_total, period_days, duration_minutes',
+    )
     .eq('key', planKey)
     .maybeSingle()
 
@@ -49,6 +57,7 @@ export async function fetchUserPackageQuota(
     .eq('user_id', userId)
     .eq('plan_key', planKey)
     .eq('status', 'pending_payment')
+    .gt('period_end', now)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -100,9 +109,22 @@ export async function fetchUserPackageQuota(
 }
 
 export function sumActiveSessionsRemaining(
-  packages: Array<{ status: string; sessions_total: number; sessions_used: number }>,
+  packages: Array<{
+    status: string
+    sessions_total: number
+    sessions_used: number
+    period_end: string | null
+  }>,
 ) {
   return packages
-    .filter((p) => p.status === 'active')
-    .reduce((sum, p) => sum + Math.max(0, p.sessions_total - p.sessions_used), 0)
+    .filter(
+      (p) =>
+        p.status === 'active' &&
+        p.period_end &&
+        Date.parse(p.period_end) > Date.now(),
+    )
+    .reduce(
+      (sum, p) => sum + Math.max(0, p.sessions_total - p.sessions_used),
+      0,
+    )
 }

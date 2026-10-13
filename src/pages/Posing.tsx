@@ -1,3 +1,4 @@
+import { useCurrentTime } from '../hooks/useCurrentTime'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { PoseBookingCalendar } from '../components/PoseBookingCalendar'
@@ -9,9 +10,15 @@ import { ZoomableImage } from '../components/ZoomableImage'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
-import { fetchPosingMe } from '../lib/posingApi'
+import { fetchPosingMe, type UserPackage } from '../lib/posingApi'
 import { fetchPackagePlan } from '../lib/posingPackages'
-import { hasSeenOffersPopup, isOctoberOfferActive, shouldShowOffersPopup } from '../lib/posingOffers'
+import {
+  getOctoberBonusSessions,
+  getSeptemberBonusSessions,
+  hasSeenOffersPopup,
+  isOctoberOfferActive,
+  shouldShowOffersPopup,
+} from '../lib/posingOffers'
 import { isPosingPlanKey, planKeyLabel } from '../lib/posingLabels'
 import { site, type PosingPackageKey, type PosingPlanKey } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
@@ -19,7 +26,10 @@ import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 const posingHeroGhostCtaClass =
   'inline-flex items-center justify-center rounded-full border border-white/14 bg-white/[0.035] px-7 py-3 text-sm font-semibold text-white/78 shadow-[0_10px_30px_-24px_rgba(244,114,182,0.55)] backdrop-blur-md transition-all duration-200 hover:border-fuchsia-100/28 hover:bg-white/[0.06] hover:text-white'
 
-function packageIndexFromParam(param: string | null, keys: readonly PosingPackageKey[]) {
+function packageIndexFromParam(
+  param: string | null,
+  keys: readonly PosingPackageKey[],
+) {
   if (!param) return 0
   const idx = keys.indexOf(param as PosingPackageKey)
   return idx >= 0 ? idx : 0
@@ -46,16 +56,40 @@ export function PosingPage() {
   const accountDeleted = Boolean(
     (location.state as { accountDeleted?: boolean } | null)?.accountDeleted,
   )
-  const [selectedPackageIndex, setSelectedPackageIndex] = useState(() =>
-    packageIndexFromParam(searchParams.get('package'), posing.packageKeys),
-  )
-  const [selectedPlanKey, setSelectedPlanKey] = useState<PosingPlanKey>(() =>
-    planKeyFromSearchParams(searchParams, posing.packageKeys),
-  )
+  const queryKey = searchParams.toString()
+  const [selection, setSelection] = useState<{
+    key: PosingPlanKey
+    index: number
+    query: string
+  } | null>(null)
+  const selectedPlanKey =
+    selection?.query === queryKey
+      ? selection.key
+      : planKeyFromSearchParams(searchParams, posing.packageKeys)
+  const selectedPackageIndex =
+    selection?.query === queryKey
+      ? selection.index
+      : Math.max(
+          0,
+          posing.packageKeys.findIndex(
+            (key) =>
+              selectedPlanKey === key || selectedPlanKey.startsWith(key + '_'),
+          ),
+        )
+  const now = useCurrentTime()
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
-  const [offersModalOpen, setOffersModalOpen] = useState(false)
-  const [septemberLoyaltyEligible, setSeptemberLoyaltyEligible] = useState(false)
+  const [offersModalOpen, setOffersModalOpen] = useState(() =>
+    shouldShowOffersPopup({ seenInSession: hasSeenOffersPopup() }),
+  )
+  const [septemberLoyaltyEligible, setSeptemberLoyaltyEligible] =
+    useState(false)
   const [octoberNewMemberEligible, setOctoberNewMemberEligible] = useState(true)
+  const [bonusByPlan, setBonusByPlan] = useState<Record<string, number> | null>(
+    null,
+  )
+  const [memberPackages, setMemberPackages] = useState<UserPackage[]>([])
+  const [memberDataToken, setMemberDataToken] = useState<string | null>(null)
+  const [offerError, setOfferError] = useState(false)
   const { accessToken, sessionReady } = usePosingAuth()
   const bookingSectionRef = useRef<HTMLElement | null>(null)
   const bookingSectionVisible = useBookingSectionVisible(bookingSectionRef)
@@ -63,7 +97,11 @@ export function PosingPage() {
 
   const selectedPackageName = useMemo(
     () =>
-      planKeyLabel(selectedPlanKey, (i) => dictionary.posing.pricing.packages[i]?.name, t),
+      planKeyLabel(
+        selectedPlanKey,
+        (i) => dictionary.posing.pricing.packages[i]?.name,
+        t,
+      ),
     [selectedPlanKey, dictionary.posing.pricing.packages, t],
   )
 
@@ -71,59 +109,52 @@ export function PosingPage() {
     posingBookingSticky?.setBookingSectionVisible(bookingSectionVisible)
   }, [bookingSectionVisible, posingBookingSticky])
 
+  const resetSticky = posingBookingSticky?.resetSticky
   useEffect(() => {
-    const resetSticky = posingBookingSticky?.resetSticky
     return () => {
       resetSticky?.()
     }
-  }, [])
+  }, [resetSticky])
 
   useEffect(() => {
-    if (shouldShowOffersPopup({ seenInSession: hasSeenOffersPopup() })) {
-      setOffersModalOpen(true)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!sessionReady) return
-
-    if (!accessToken) {
-      setSeptemberLoyaltyEligible(false)
-      setOctoberNewMemberEligible(true)
-      return
-    }
-
     let cancelled = false
-    setOctoberNewMemberEligible(false)
-    fetchPosingMe(accessToken)
-      .then((data) => {
-        if (cancelled) return
-        setSeptemberLoyaltyEligible(Boolean(data.september_loyalty_eligible))
-        setOctoberNewMemberEligible(Boolean(data.october_new_member_eligible))
-      })
-      .catch(() => {
-        if (cancelled) return
-        setSeptemberLoyaltyEligible(false)
-        setOctoberNewMemberEligible(false)
-      })
+    queueMicrotask(() => {
+      if (cancelled || !sessionReady) return
 
+      if (!accessToken) {
+        setSeptemberLoyaltyEligible(false)
+        setOctoberNewMemberEligible(true)
+        setBonusByPlan(null)
+        setMemberPackages([])
+        setOfferError(false)
+        return
+      }
+
+      setOctoberNewMemberEligible(false)
+      setBonusByPlan(null)
+      setOfferError(false)
+      fetchPosingMe(accessToken)
+        .then((data) => {
+          if (cancelled) return
+          setSeptemberLoyaltyEligible(Boolean(data.september_loyalty_eligible))
+          setOctoberNewMemberEligible(Boolean(data.october_new_member_eligible))
+          setBonusByPlan(data.bonus_by_plan)
+          setMemberPackages(data.packages)
+          setMemberDataToken(accessToken)
+        })
+        .catch(() => {
+          if (cancelled) return
+          setSeptemberLoyaltyEligible(false)
+          setOctoberNewMemberEligible(false)
+          setBonusByPlan(null)
+          setMemberPackages([])
+          setOfferError(true)
+        })
+    })
     return () => {
       cancelled = true
     }
   }, [accessToken, sessionReady])
-
-  useEffect(() => {
-    const param = searchParams.get('package')
-    const idx = packageIndexFromParam(param, posing.packageKeys)
-    setSelectedPackageIndex(idx)
-
-    const planParam = searchParams.get('plan')
-    if (planParam && isPosingPlanKey(planParam)) {
-      setSelectedPlanKey(planParam)
-    } else if (param) {
-      setSelectedPlanKey(posing.packageKeys[idx] ?? posing.packageKeys[0])
-    }
-  }, [searchParams, posing.packageKeys])
 
   useEffect(() => {
     let cancelled = false
@@ -136,9 +167,33 @@ export function PosingPage() {
   }, [selectedPlanKey])
 
   function handleCarouselSelect(index: number) {
-    setSelectedPackageIndex(index)
-    setSelectedPlanKey(posing.packageKeys[index] ?? posing.packageKeys[0])
+    setSelection({
+      index,
+      key: posing.packageKeys[index] ?? posing.packageKeys[0],
+      query: queryKey,
+    })
   }
+
+  const existingPackage =
+    memberDataToken === accessToken && accessToken
+      ? memberPackages.find(
+          (pkg) =>
+            pkg.plan_key === selectedPlanKey &&
+            ['active', 'pending_payment'].includes(pkg.status) &&
+            pkg.period_end &&
+            Date.parse(pkg.period_end) > now &&
+            (pkg.status === 'pending_payment' || pkg.sessions_remaining > 0),
+        )
+      : undefined
+  const bonus = accessToken
+    ? memberDataToken === accessToken
+      ? bonusByPlan?.[selectedPlanKey]
+      : undefined
+    : getOctoberBonusSessions(selectedPlanKey, new Date(now)) ||
+      getSeptemberBonusSessions(selectedPlanKey, new Date(now))
+  const offeredSessionsTotal =
+    existingPackage?.sessions_total ??
+    (sessionsTotal != null && bonus != null ? sessionsTotal + bonus : null)
 
   return (
     <div className="bg-[#08080c] text-white">
@@ -198,7 +253,10 @@ export function PosingPage() {
           </div>
 
           <div className="moove-hero-breakout relative order-1 mx-auto w-full max-w-md lg:order-2 lg:max-w-none">
-            <div className="absolute -inset-8 rounded-full bg-fuchsia-500/18 blur-3xl" aria-hidden />
+            <div
+              className="absolute -inset-8 rounded-full bg-fuchsia-500/18 blur-3xl"
+              aria-hidden
+            />
             <div className="relative overflow-hidden rounded-[2rem] border border-fuchsia-100/18 bg-white/[0.04] p-2 shadow-[0_32px_90px_-42px_rgba(244,114,182,0.9)]">
               <ZoomableImage
                 src={posing.heroImage}
@@ -222,7 +280,10 @@ export function PosingPage() {
         </SiteContainer>
       </section>
 
-      <section id="packages" className="scroll-mt-20 border-b border-white/10 bg-black/20 py-16 sm:py-20">
+      <section
+        id="packages"
+        className="scroll-mt-20 border-b border-white/10 bg-black/20 py-16 sm:py-20"
+      >
         <SiteContainer>
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-fuchsia-300/90">
@@ -251,7 +312,10 @@ export function PosingPage() {
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {dictionary.posing.pricing.included.map((item) => (
-                <div key={item} className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/68">
+                <div
+                  key={item}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-white/68"
+                >
                   <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-fuchsia-200/45 text-[0.65rem] text-fuchsia-100">
                     ✓
                   </span>
@@ -281,8 +345,12 @@ export function PosingPage() {
                 key={item.title}
                 className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-sm"
               >
-                <h3 className="font-display text-xl font-semibold text-white">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-white/60">{item.body}</p>
+                <h3 className="font-display text-xl font-semibold text-white">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-white/60">
+                  {item.body}
+                </p>
               </article>
             ))}
           </div>
@@ -332,14 +400,20 @@ export function PosingPage() {
                 <h3 className="font-display mt-3 text-lg font-semibold text-white">
                   {step.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/60">{step.body}</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/60">
+                  {step.body}
+                </p>
               </div>
             ))}
           </div>
         </SiteContainer>
       </section>
 
-      <section id="booking" ref={bookingSectionRef} className="scroll-mt-20 py-16 sm:py-20">
+      <section
+        id="booking"
+        ref={bookingSectionRef}
+        className="scroll-mt-20 py-16 sm:py-20"
+      >
         <SiteContainer>
           {paymentSuccess ? (
             <div className="mx-auto mb-8 max-w-2xl rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-5 py-4 text-center text-sm leading-relaxed text-emerald-100">
@@ -362,10 +436,19 @@ export function PosingPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
                 {t('posing.booking.selectedLabel')}
               </p>
-              <p className="font-display mt-1 text-xl font-semibold text-white">{selectedPackageName}</p>
-              {sessionsTotal != null ? (
+              <p className="font-display mt-1 text-xl font-semibold text-white">
+                {selectedPackageName}
+              </p>
+              {offeredSessionsTotal != null ? (
                 <p className="mt-1 text-sm text-fuchsia-100/75">
-                  {t('posing.booking.sessionsIncluded', { count: sessionsTotal })}
+                  {t('posing.booking.sessionsIncluded', {
+                    count: offeredSessionsTotal,
+                  })}
+                </p>
+              ) : null}
+              {offerError ? (
+                <p role="alert" className="mt-2 text-sm text-amber-100">
+                  {t('posing.booking.offerCheckFailed')}
                 </p>
               ) : null}
             </div>
@@ -373,6 +456,7 @@ export function PosingPage() {
               selectedPlanKey={selectedPlanKey}
               selectedPackageName={selectedPackageName}
               locale={locale}
+              offeredSessionsTotal={offeredSessionsTotal}
             />
           </div>
         </SiteContainer>
@@ -381,20 +465,22 @@ export function PosingPage() {
       <section className="border-t border-white/10 bg-black/30 py-16 sm:py-20">
         <SiteContainer>
           <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-center text-2xl font-semibold text-white sm:text-3xl">
-            {t('posing.faq.title')}
-          </h2>
-          <dl className="mt-10 space-y-6">
-            {dictionary.posing.faq.items.map((item) => (
-              <div
-                key={item.q}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5"
-              >
-                <dt className="font-medium text-white">{item.q}</dt>
-                <dd className="mt-2 text-sm leading-relaxed text-white/60">{item.a}</dd>
-              </div>
-            ))}
-          </dl>
+            <h2 className="font-display text-center text-2xl font-semibold text-white sm:text-3xl">
+              {t('posing.faq.title')}
+            </h2>
+            <dl className="mt-10 space-y-6">
+              {dictionary.posing.faq.items.map((item) => (
+                <div
+                  key={item.q}
+                  className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5"
+                >
+                  <dt className="font-medium text-white">{item.q}</dt>
+                  <dd className="mt-2 text-sm leading-relaxed text-white/60">
+                    {item.a}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </SiteContainer>
       </section>

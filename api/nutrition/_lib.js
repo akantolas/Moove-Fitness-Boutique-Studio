@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+import { trackDelivery } from '../../lib/email/delivery.js'
 import mealLibrary from './_mealLibrary.json' with { type: 'json' }
 import { calculateNutritionPlan } from './_engine.js'
 import { buildWeeklyMealPlan } from './_matcher.js'
@@ -47,7 +49,10 @@ export async function createCombinedStripeCheckout({
   const params = new URLSearchParams()
   params.set('mode', 'payment')
   params.set('line_items[0][price_data][currency]', 'eur')
-  params.set('line_items[0][price_data][unit_amount]', String(resolvedProgramCents))
+  params.set(
+    'line_items[0][price_data][unit_amount]',
+    String(resolvedProgramCents),
+  )
   params.set('line_items[0][price_data][product_data][name]', programName)
   params.set('line_items[0][quantity]', '1')
 
@@ -56,8 +61,14 @@ export async function createCombinedStripeCheckout({
     params.set('line_items[1][quantity]', '1')
   } else {
     params.set('line_items[1][price_data][currency]', 'eur')
-    params.set('line_items[1][price_data][unit_amount]', String(resolvedNutrition * 100))
-    params.set('line_items[1][price_data][product_data][name]', nutritionProductName)
+    params.set(
+      'line_items[1][price_data][unit_amount]',
+      String(resolvedNutrition * 100),
+    )
+    params.set(
+      'line_items[1][price_data][product_data][name]',
+      nutritionProductName,
+    )
     params.set('line_items[1][quantity]', '1')
   }
 
@@ -100,7 +111,12 @@ export async function countRecentNutritionOrders(supabase, email) {
 
 export async function activateNutritionOrder(
   supabase,
-  { nutritionOrderId, paymentRef, paymentMethod = 'stripe', confirmedBy = null },
+  {
+    nutritionOrderId,
+    paymentRef,
+    paymentMethod = 'stripe',
+    confirmedBy = null,
+  },
 ) {
   const now = new Date().toISOString()
 
@@ -118,8 +134,10 @@ export async function activateNutritionOrder(
 
   const update = {
     status: 'paid',
+    delivery_status: 'pending',
     payment_method: paymentMethod,
-    stripe_session_id: paymentMethod === 'stripe' ? paymentRef : order.stripe_session_id,
+    stripe_session_id:
+      paymentMethod === 'stripe' ? paymentRef : order.stripe_session_id,
     updated_at: now,
   }
   if (confirmedBy) update.confirmed_by = confirmedBy
@@ -133,17 +151,28 @@ export async function activateNutritionOrder(
     .maybeSingle()
 
   if (error) return { ok: false, error: error.message }
-  if (!updated) return { ok: false, error: 'activate_conflict' }
+  if (!updated) {
+    const current = await supabase
+      .from('nutrition_plan_orders')
+      .select('*')
+      .eq('id', nutritionOrderId)
+      .maybeSingle()
+    if (current.data?.status === 'paid')
+      return { ok: true, already: true, order: current.data }
+    return { ok: false, error: 'activate_conflict' }
+  }
 
   return { ok: true, order: updated }
 }
 
 export async function uploadNutritionPdf(supabase, orderId, locale, pdfBuffer) {
   const path = `${orderId}/${locale}.pdf`
-  const { error } = await supabase.storage.from('nutrition-pdfs').upload(path, pdfBuffer, {
-    contentType: 'application/pdf',
-    upsert: true,
-  })
+  const { error } = await supabase.storage
+    .from('nutrition-pdfs')
+    .upload(path, pdfBuffer, {
+      contentType: 'application/pdf',
+      upsert: true,
+    })
   if (error) {
     console.error('nutrition pdf upload failed:', error.message)
     return null
@@ -167,7 +196,42 @@ export function buildNutritionPlanFromResponses(responses, locale = 'el') {
   }
 }
 
-export async function generateAndSendNutritionPlan(supabase, order, locale) {
+export async function generateAndSendNutritionPlan(
+  supabase,
+  order,
+  locale,
+  { resend = false } = {},
+) {
+  return trackDelivery(
+    supabase,
+    'nutrition_plan_orders',
+    order.id,
+    'plan_email_sent_at',
+    () => generateNutritionDelivery(supabase, order, locale, resend),
+  )
+}
+
+async function generateNutritionDelivery(supabase, order, locale, resend) {
+  if (resend && order.pdf_storage_path) {
+    const file = await supabase.storage
+      .from('nutrition-pdfs')
+      .download(order.pdf_storage_path)
+    if (file.error) throw new Error('pdf_download_failed')
+    await sendNutritionPlanEmail({
+      email: order.email,
+      locale,
+      name: order.responses?.name,
+      pdfBuffer: Buffer.from(await file.data.arrayBuffer()),
+      orderId: order.id,
+      requestId: randomUUID(),
+    })
+    const saved = await supabase
+      .from('nutrition_plan_orders')
+      .update({ status: 'paid' })
+      .eq('id', order.id)
+    if (saved.error) throw new Error('plan_store_failed')
+    return { ok: true }
+  }
   const responses = order.responses ?? {}
   const plan = buildNutritionPlanFromResponses(responses, locale)
 
@@ -198,17 +262,26 @@ export async function generateAndSendNutritionPlan(supabase, order, locale) {
     shoppingList: plan.shoppingList,
   })
 
-  const storagePath = await uploadNutritionPdf(supabase, order.id, locale, pdfBuffer)
+  const storagePath = await uploadNutritionPdf(
+    supabase,
+    order.id,
+    locale,
+    pdfBuffer,
+  )
+  if (!storagePath) throw new Error('pdf_upload_failed')
 
-  await supabase
+  const stored = await supabase
     .from('nutrition_plan_orders')
     .update({
+      status: 'paid',
       calculated: plan.calculated,
       meal_plan: plan.mealPlan,
       pdf_storage_path: storagePath,
       updated_at: new Date().toISOString(),
     })
     .eq('id', order.id)
+
+  if (stored.error) throw new Error('plan_store_failed')
 
   const filename =
     locale === 'en' ? 'moove-nutrition-plan.pdf' : 'moove-diatrofiko-plan.pdf'
@@ -220,6 +293,7 @@ export async function generateAndSendNutritionPlan(supabase, order, locale) {
     pdfBuffer,
     filename,
     orderId: order.id,
+    requestId: resend ? randomUUID() : undefined,
   })
 
   await supabase

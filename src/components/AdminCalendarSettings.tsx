@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   sortTimeStrings,
   WEEKDAY_KEYS,
   type CalendarSettings,
-  type WeekdayTemplates,
+  type WeekdayKey,
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 
@@ -12,7 +12,9 @@ type AdminCalendarSettingsProps = {
   onClose: () => void
   settings: CalendarSettings
   busy: boolean
-  onSave: (payload: Omit<CalendarSettings, 'updated_at'>) => Promise<CalendarSettings>
+  onSave: (
+    payload: Omit<CalendarSettings, 'updated_at'>,
+  ) => Promise<CalendarSettings>
 }
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => i)
@@ -38,17 +40,6 @@ function cloneSettings(settings: CalendarSettings): CalendarSettings {
   }
 }
 
-function syncWeekdayTemplates(
-  times: string[],
-  gridStart: number,
-  gridEnd: number,
-): WeekdayTemplates {
-  const entry = { times: [...times], start_hour: gridStart, end_hour: gridEnd }
-  return Object.fromEntries(
-    WEEKDAY_KEYS.map((key) => [key, { ...entry, times: [...entry.times] }]),
-  ) as WeekdayTemplates
-}
-
 export function AdminCalendarSettings({
   open,
   onClose,
@@ -56,23 +47,35 @@ export function AdminCalendarSettings({
   busy,
   onSave,
 }: AdminCalendarSettingsProps) {
-  const { t } = useTranslation()
+  const { t, dictionary } = useTranslation()
   const [draft, setDraft] = useState(() => cloneSettings(settings))
-  const [templateTimes, setTemplateTimes] = useState(() => [...settings.weekday_templates['1'].times])
+  const [templateDay, setTemplateDay] = useState<WeekdayKey>('1')
+  const [error, setError] = useState('')
+  const templateTimes = draft.weekday_templates[templateDay].times
+  function setTemplateTimes(times: string[]) {
+    setDraft((previous) => ({
+      ...previous,
+      weekday_templates: {
+        ...previous.weekday_templates,
+        [templateDay]: { ...previous.weekday_templates[templateDay], times },
+      },
+    }))
+  }
   const [newTime, setNewTime] = useState('')
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    setDraft(cloneSettings(settings))
-    setTemplateTimes([...settings.weekday_templates['1'].times])
-  }, [open, settings])
 
   function addTemplateTime() {
     if (!newTime || templateTimes.includes(newTime)) {
       setNewTime('')
       return
     }
+    const hour = Number(newTime.split(':')[0])
+    const day = draft.weekday_templates[templateDay]
+    if (hour < day.start_hour || hour >= day.end_hour) {
+      setError(t('posing.admin.adminErrors.outside_active_hours'))
+      return
+    }
+    setError('')
     setTemplateTimes(sortTimeStrings([...templateTimes, newTime]))
     setNewTime('')
   }
@@ -83,12 +86,31 @@ export function AdminCalendarSettings({
 
   async function handleSave() {
     setSaving(true)
+    setError('')
     try {
-      const weekday_templates = syncWeekdayTemplates(
-        templateTimes,
-        draft.grid_start_hour,
-        draft.grid_end_hour,
-      )
+      const weekday_templates = Object.fromEntries(
+        WEEKDAY_KEYS.map((key) => {
+          const day = draft.weekday_templates[key]
+          const start_hour = Math.max(draft.grid_start_hour, day.start_hour)
+          const end_hour = Math.min(draft.grid_end_hour, day.end_hour)
+          if (end_hour <= start_hour)
+            throw new Error(
+              t('posing.admin.adminErrors.invalid_weekday_templates'),
+            )
+          return [
+            key,
+            {
+              ...day,
+              start_hour,
+              end_hour,
+              times: day.times.filter((time) => {
+                const hour = Number(time.split(':')[0])
+                return hour >= start_hour && hour < end_hour
+              }),
+            },
+          ]
+        }),
+      ) as CalendarSettings['weekday_templates']
       await onSave({
         weekday_templates,
         default_duration_minutes: draft.default_duration_minutes,
@@ -97,6 +119,12 @@ export function AdminCalendarSettings({
         grid_step_minutes: draft.grid_step_minutes,
       })
       onClose()
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : t('posing.admin.adminErrors.operation_failed'),
+      )
     } finally {
       setSaving(false)
     }
@@ -105,7 +133,9 @@ export function AdminCalendarSettings({
   if (!open) return null
 
   const isDisabled = busy || saving
-  const endHourOptions = HOUR_OPTIONS.filter((hour) => hour > draft.grid_start_hour)
+  const endHourOptions = HOUR_OPTIONS.filter(
+    (hour) => hour > draft.grid_start_hour,
+  )
 
   return (
     <div
@@ -120,7 +150,9 @@ export function AdminCalendarSettings({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-5">
-          <h3 className="text-sm font-semibold text-white">{t('posing.admin.calendarSettings')}</h3>
+          <h3 className="text-sm font-semibold text-white">
+            {t('posing.admin.calendarSettings')}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -132,7 +164,9 @@ export function AdminCalendarSettings({
         </div>
 
         <div className="space-y-5 px-4 py-4 sm:px-5">
-          <p className="text-xs text-white/45">{t('posing.admin.gridEnvelopeHint')}</p>
+          <p className="text-xs text-white/45">
+            {t('posing.admin.gridEnvelopeHint')}
+          </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-xs text-white/55">
@@ -143,7 +177,10 @@ export function AdminCalendarSettings({
                 value={draft.grid_start_hour}
                 disabled={isDisabled}
                 onChange={(e) =>
-                  setDraft((prev) => ({ ...prev, grid_start_hour: Number(e.target.value) }))
+                  setDraft((prev) => ({
+                    ...prev,
+                    grid_start_hour: Number(e.target.value),
+                  }))
                 }
                 className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
               >
@@ -163,7 +200,10 @@ export function AdminCalendarSettings({
                 value={draft.grid_end_hour}
                 disabled={isDisabled}
                 onChange={(e) =>
-                  setDraft((prev) => ({ ...prev, grid_end_hour: Number(e.target.value) }))
+                  setDraft((prev) => ({
+                    ...prev,
+                    grid_end_hour: Number(e.target.value),
+                  }))
                 }
                 className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
               >
@@ -183,7 +223,10 @@ export function AdminCalendarSettings({
                 value={draft.grid_step_minutes}
                 disabled={isDisabled}
                 onChange={(e) =>
-                  setDraft((prev) => ({ ...prev, grid_step_minutes: Number(e.target.value) }))
+                  setDraft((prev) => ({
+                    ...prev,
+                    grid_step_minutes: Number(e.target.value),
+                  }))
                 }
                 className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white"
               >
@@ -219,11 +262,106 @@ export function AdminCalendarSettings({
             </label>
           </div>
 
+          {error ? (
+            <p role="alert" className="text-sm text-rose-200">
+              {error}
+            </p>
+          ) : null}
           <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+            <label className="mb-3 block text-xs text-white/65">
+              {t('posing.admin.weekdayTemplate')}
+              <select
+                value={templateDay}
+                disabled={isDisabled}
+                onChange={(event) => {
+                  setTemplateDay(event.target.value as WeekdayKey)
+                  setNewTime('')
+                }}
+                className="mt-1.5 block w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white"
+              >
+                {WEEKDAY_KEYS.map((key, index) => (
+                  <option key={key} value={key}>
+                    {dictionary.posing.admin.weekdays[index]}
+                  </option>
+                ))}
+              </select>
+            </label>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/50">
               {t('posing.admin.dayTemplate')}
             </p>
-            <p className="mt-1 text-xs text-white/45">{t('posing.admin.dayTemplateHint')}</p>
+            <p className="mt-1 text-xs text-white/45">
+              {t('posing.admin.dayTemplateHint')}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="text-xs text-white/60">
+                {t('posing.admin.gridEnvelopeStart')}
+                <select
+                  value={Math.max(
+                    draft.grid_start_hour,
+                    draft.weekday_templates[templateDay].start_hour,
+                  )}
+                  disabled={isDisabled}
+                  onChange={(event) =>
+                    setDraft((previous) => ({
+                      ...previous,
+                      weekday_templates: {
+                        ...previous.weekday_templates,
+                        [templateDay]: {
+                          ...previous.weekday_templates[templateDay],
+                          start_hour: Number(event.target.value),
+                        },
+                      },
+                    }))
+                  }
+                  className="mt-1 block w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-white"
+                >
+                  {HOUR_OPTIONS.filter(
+                    (hour) =>
+                      hour >= draft.grid_start_hour &&
+                      hour < draft.grid_end_hour,
+                  ).map((hour) => (
+                    <option key={hour} value={hour}>
+                      {formatHourLabel(hour)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs text-white/60">
+                {t('posing.admin.gridEnvelopeEnd')}
+                <select
+                  value={Math.min(
+                    draft.grid_end_hour,
+                    draft.weekday_templates[templateDay].end_hour,
+                  )}
+                  disabled={isDisabled}
+                  onChange={(event) =>
+                    setDraft((previous) => ({
+                      ...previous,
+                      weekday_templates: {
+                        ...previous.weekday_templates,
+                        [templateDay]: {
+                          ...previous.weekday_templates[templateDay],
+                          end_hour: Number(event.target.value),
+                        },
+                      },
+                    }))
+                  }
+                  className="mt-1 block w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-white"
+                >
+                  {Array.from({ length: 24 }, (_, index) => index + 1)
+                    .filter(
+                      (hour) =>
+                        hour > draft.grid_start_hour &&
+                        hour <= draft.grid_end_hour,
+                    )
+                    .map((hour) => (
+                      <option key={hour} value={hour}>
+                        {formatHourLabel(hour)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {templateTimes.map((time) => (
                 <span
@@ -243,7 +381,9 @@ export function AdminCalendarSettings({
                 </span>
               ))}
               {templateTimes.length === 0 ? (
-                <span className="text-xs text-white/35">{t('posing.admin.noTemplateTimes')}</span>
+                <span className="text-xs text-white/35">
+                  {t('posing.admin.noTemplateTimes')}
+                </span>
               ) : null}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -281,7 +421,9 @@ export function AdminCalendarSettings({
               onClick={() => void handleSave()}
               className="rounded-full border border-fuchsia-200/30 bg-fuchsia-500/15 px-5 py-2 text-xs font-semibold text-fuchsia-100 transition hover:bg-fuchsia-500/20 disabled:opacity-40"
             >
-              {saving ? t('posing.admin.savingSettings') : t('posing.admin.saveSettings')}
+              {saving
+                ? t('posing.admin.savingSettings')
+                : t('posing.admin.saveSettings')}
             </button>
           </div>
         </div>

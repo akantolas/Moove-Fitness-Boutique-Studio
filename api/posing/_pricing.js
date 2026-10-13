@@ -52,7 +52,9 @@ export function getPayPalUrl(amountEur) {
   const base = getPayPalBaseUrl()
   const amount = Number(amountEur)
   if (!Number.isFinite(amount) || amount <= 0) return base
-  const amountLabel = Number.isInteger(amount) ? String(amount) : amount.toFixed(2)
+  const amountLabel = Number.isInteger(amount)
+    ? String(amount)
+    : amount.toFixed(2)
   return `${base}/${amountLabel}EUR`
 }
 
@@ -71,12 +73,14 @@ export async function resolvePlanPrice(supabase, planKey, userId) {
     return { amountEur: null, source: 'unknown', catalogPriceEur: null }
   }
 
-  const { data: override } = await supabase
+  const { data: override, error } = await supabase
     .from('profile_plan_prices')
     .select('price_eur, note')
     .eq('user_id', userId)
     .eq('plan_key', planKey)
     .maybeSingle()
+
+  if (error) throw new Error('price_check_failed')
 
   if (override?.price_eur) {
     return {

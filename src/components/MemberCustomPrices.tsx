@@ -28,7 +28,8 @@ export function MemberCustomPrices({
   const overrideMap = new Map(planPrices.map((p) => [p.plan_key, p]))
 
   async function handleSave(planKey: PosingPlanKey) {
-    const raw = drafts[planKey] ?? ''
+    const raw =
+      drafts[planKey] ?? String(overrideMap.get(planKey)?.price_eur ?? '')
     const price = Math.round(Number(raw))
     if (!price || price <= 0) {
       setError(t('posing.admin.customPriceInvalid'))
@@ -44,7 +45,11 @@ export function MemberCustomPrices({
         return next
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('posing.admin.customPriceSaveFailed'))
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('posing.admin.customPriceSaveFailed'),
+      )
     } finally {
       setSavingKey(null)
     }
@@ -56,7 +61,11 @@ export function MemberCustomPrices({
     try {
       await onRemove(planKey)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('posing.admin.customPriceSaveFailed'))
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('posing.admin.customPriceSaveFailed'),
+      )
     } finally {
       setSavingKey(null)
     }
@@ -67,7 +76,9 @@ export function MemberCustomPrices({
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
         {t('posing.admin.customPricesTitle')}
       </p>
-      <p className="mt-1 text-xs text-white/45">{t('posing.admin.customPricesBody')}</p>
+      <p className="mt-1 text-xs text-white/45">
+        {t('posing.admin.customPricesBody')}
+      </p>
 
       {error ? (
         <p className="mt-3 rounded-lg border border-rose-300/25 bg-rose-400/10 px-3 py-2 text-xs text-rose-100">
@@ -79,8 +90,12 @@ export function MemberCustomPrices({
         {ALL_PLAN_KEYS.map((planKey) => {
           const override = overrideMap.get(planKey)
           const catalog = CATALOG_PRICES_EUR[planKey]
-          const label = planKeyLabel(planKey, (i) => dictionary.posing.pricing.packages[i]?.name)
-          const draft = drafts[planKey] ?? (override ? String(override.price_eur) : '')
+          const label = planKeyLabel(
+            planKey,
+            (i) => dictionary.posing.pricing.packages[i]?.name,
+          )
+          const draft =
+            drafts[planKey] ?? (override ? String(override.price_eur) : '')
 
           return (
             <li
@@ -93,7 +108,10 @@ export function MemberCustomPrices({
                   {t('posing.admin.catalogPrice', { price: `${catalog}€` })}
                   {override ? (
                     <span className="ml-2 text-fuchsia-200/80">
-                      · {t('posing.admin.customPriceActive', { price: `${override.price_eur}€` })}
+                      ·{' '}
+                      {t('posing.admin.customPriceActive', {
+                        price: `${override.price_eur}€`,
+                      })}
                     </span>
                   ) : null}
                 </p>
@@ -105,7 +123,10 @@ export function MemberCustomPrices({
                   step={1}
                   value={draft}
                   onChange={(e) =>
-                    setDrafts((prev) => ({ ...prev, [planKey]: e.target.value }))
+                    setDrafts((prev) => ({
+                      ...prev,
+                      [planKey]: e.target.value,
+                    }))
                   }
                   placeholder={`${catalog}`}
                   className="w-24 rounded-lg border border-white/15 bg-black/40 px-2 py-1.5 text-sm text-white outline-none focus:border-fuchsia-300/40"
