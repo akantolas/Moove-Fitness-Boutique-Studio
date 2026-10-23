@@ -13,7 +13,9 @@ import {
   getUserFromRequest,
   json,
   normalizeBookingLocale,
+  readJsonBody,
 } from '../../_lib.js'
+import { runPosingTransaction } from '../../_transactions.js'
 
 export async function handleAdminPackages(req, res) {
   cors(res)
@@ -21,9 +23,30 @@ export async function handleAdminPackages(req, res) {
 
   const user = await getUserFromRequest(req)
   if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
-  if (!(await ensureAdmin(user))) return json(res, 403, { ok: false, error: 'forbidden' })
+  if (!(await ensureAdmin(user)))
+    return json(res, 403, { ok: false, error: 'forbidden' })
 
-  if (req.method !== 'DELETE') return json(res, 405, { ok: false, error: 'method_not_allowed' })
+  if (req.method === 'PATCH') {
+    try {
+      const body = await readJsonBody(req)
+      const result = await runPosingTransaction(
+        getSupabaseAdmin(),
+        'posing_adjust_sessions',
+        {
+          p_package_id: body.package_id,
+          p_actor_id: user.id,
+          p_delta: body.delta,
+          p_reason: body.reason,
+          p_request_id: body.request_id,
+        },
+      )
+      return json(res, result.ok ? 200 : 409, result)
+    } catch {
+      return json(res, 400, { ok: false, error: 'invalid_adjustment' })
+    }
+  }
+  if (req.method !== 'DELETE')
+    return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
   const packageId = req.query?.id
   if (!packageId || typeof packageId !== 'string') {
@@ -44,10 +67,15 @@ export async function handleAdminPackages(req, res) {
 
     const toCancel = await getCancellableBookingsForPackage(supabase, packageId)
     const snapshots = await Promise.all(
-      toCancel.map((booking) => fetchBookingCancellationSnapshot(supabase, booking.id)),
+      toCancel.map((booking) =>
+        fetchBookingCancellationSnapshot(supabase, booking.id),
+      ),
     )
 
-    const result = await cancelUserPackage(supabase, { packageId })
+    const result = await cancelUserPackage(supabase, {
+      packageId,
+      actorId: user.id,
+    })
 
     if (!result.ok) {
       const status =
@@ -92,7 +120,8 @@ export async function handleAdminPackages(req, res) {
       cancelledBookings: result.cancelledBookingIds?.length ?? 0,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'package_cancel_failed'
+    const message =
+      error instanceof Error ? error.message : 'package_cancel_failed'
     return json(res, 500, { ok: false, error: message })
   }
 }

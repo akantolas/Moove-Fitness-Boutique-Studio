@@ -7,11 +7,14 @@ export type ProgramPurchasePayment = {
   created_at: string
   purchase_ref: string
   program_name: string
+  includes_nutrition?: boolean
+  total_amount_eur?: number
 }
 
 export type ProgramPaidPurchase = ProgramPurchasePayment & {
   payment_method: string | null
   access_email_sent_at: string | null
+  delivery_status: 'unknown' | 'pending' | 'sent' | 'failed'
 }
 
 export type ProgramAccessExercise = {
@@ -51,7 +54,11 @@ async function parseApiJson(res: Response) {
   try {
     return JSON.parse(text) as Record<string, unknown>
   } catch {
-    throw new Error(text.startsWith('A server error') ? 'server_config_error' : 'invalid_api_response')
+    throw new Error(
+      text.startsWith('A server error')
+        ? 'server_config_error'
+        : 'invalid_api_response',
+    )
   }
 }
 
@@ -79,40 +86,66 @@ export async function createProgramOrder(payload: {
 }
 
 export async function fetchProgramOrderStatus(ref: string) {
-  const res = await fetch(`/api/programs/order-status?ref=${encodeURIComponent(ref)}`)
+  const res = await fetch(
+    `/api/programs/order-status?ref=${encodeURIComponent(ref)}`,
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'status_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'status_failed'))
   return data as { ok: boolean; status: string; purchaseRef: string }
 }
 
-export async function fetchProgramAccess(token: string, locale: string, workoutKey?: string) {
+export async function fetchProgramAccess(
+  token: string,
+  locale: string,
+  workoutKey?: string,
+) {
   const params = new URLSearchParams({ locale })
   if (workoutKey) params.set('workout', workoutKey)
-  const res = await fetch(`/api/programs/access/${encodeURIComponent(token)}?${params}`)
+  const res = await fetch(
+    `/api/programs/access/${encodeURIComponent(token)}?${params}`,
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'access_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'access_failed'))
   return data as ProgramAccessContent & { ok: boolean }
 }
 
-export async function fetchAdminProgramPayments(accessToken: string): Promise<ProgramPurchasePayment[]> {
+export async function fetchAdminProgramPayments(
+  accessToken: string,
+): Promise<ProgramPurchasePayment[]> {
   const res = await fetch('/api/programs/admin/programs?view=payments', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'payments_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'payments_fetch_failed'))
   return (data.payments ?? []) as ProgramPurchasePayment[]
 }
 
-export async function fetchAdminProgramPurchases(accessToken: string): Promise<ProgramPaidPurchase[]> {
-  const res = await fetch('/api/programs/admin/programs?view=purchases', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
+export async function fetchAdminProgramPurchases(
+  accessToken: string,
+  page = 1,
+): Promise<{ purchases: ProgramPaidPurchase[]; total: number }> {
+  const res = await fetch(
+    `/api/programs/admin/programs?view=purchases&page=${page}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'purchases_fetch_failed'))
-  return (data.purchases ?? []) as ProgramPaidPurchase[]
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'purchases_fetch_failed'))
+  return {
+    purchases: (data.purchases ?? []) as ProgramPaidPurchase[],
+    total: Number(data.total ?? 0),
+  }
 }
 
-export async function adminConfirmProgramPayment(accessToken: string, purchaseId: string) {
+export async function adminConfirmProgramPayment(
+  accessToken: string,
+  purchaseId: string,
+) {
   const res = await fetch('/api/programs/admin/programs', {
     method: 'POST',
     headers: {
@@ -122,11 +155,15 @@ export async function adminConfirmProgramPayment(accessToken: string, purchaseId
     body: JSON.stringify({ action: 'confirm', purchase_id: purchaseId }),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'payment_confirm_failed'))
-  return data as { ok: boolean; already?: boolean }
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'payment_confirm_failed'))
+  return data as { ok: boolean; already?: boolean; delivery_failed?: boolean }
 }
 
-export async function adminResendProgramAccess(accessToken: string, purchaseId: string) {
+export async function adminResendProgramAccess(
+  accessToken: string,
+  purchaseId: string,
+) {
   const res = await fetch('/api/programs/admin/programs', {
     method: 'POST',
     headers: {
@@ -136,5 +173,6 @@ export async function adminResendProgramAccess(accessToken: string, purchaseId: 
     body: JSON.stringify({ action: 'resend-access', purchase_id: purchaseId }),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'resend_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'resend_failed'))
 }

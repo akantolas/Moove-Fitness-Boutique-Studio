@@ -11,13 +11,16 @@ import {
   isPastCell,
   POSE_WEEK_DAYS,
   slotDurationMinutes,
-  slotSpansRows,
+  timeToMinutes,
   startOfWeek,
   type CalendarSettings,
 } from '../lib/posingDates'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
-import type { AdminCellState, CalendarFeedback } from '../hooks/usePosingAdminPanel'
+import type {
+  AdminCellState,
+  CalendarFeedback,
+} from '../hooks/usePosingAdminPanel'
 import { AdminCalendarSettings } from './AdminCalendarSettings'
 
 export type AdminCalendarSlot = {
@@ -33,7 +36,13 @@ export type AdminCalendarSlot = {
   } | null
 }
 
-type CellState = 'empty' | 'open' | 'booked' | 'past' | 'continuation' | 'inactive'
+type CellState =
+  | 'empty'
+  | 'open'
+  | 'booked'
+  | 'past'
+  | 'continuation'
+  | 'inactive'
 
 type CellInfo = {
   state: CellState
@@ -62,11 +71,14 @@ type AdminWeekCalendarProps = {
   feedback?: CalendarFeedback
   onWeekStartChange: (date: Date) => void
   onDurationChange: (minutes: number) => void
+  onViewBooking?: (bookingId: string) => void
   onSetCellState: (dayKey: string, time: string, state: AdminCellState) => void
   onAddSlotTime: (dayKey: string, time: string) => void
   onOpenDayPreset: (dayKey: string) => void
   onClearDay: (dayKey: string) => void
-  onSaveCalendarSettings: (payload: Omit<CalendarSettings, 'updated_at'>) => Promise<CalendarSettings>
+  onSaveCalendarSettings: (
+    payload: Omit<CalendarSettings, 'updated_at'>,
+  ) => Promise<CalendarSettings>
 }
 
 function DayAddTime({
@@ -111,7 +123,9 @@ function DayAddTime({
   }
 
   return (
-    <div className={`flex flex-wrap items-center gap-1 ${inline ? '' : 'mt-1 justify-center'}`}>
+    <div
+      className={`flex flex-wrap items-center gap-1 ${inline ? '' : 'mt-1 justify-center'}`}
+    >
       <input
         type="time"
         value={time}
@@ -229,7 +243,10 @@ function resolveDisplayState(
   return 'empty'
 }
 
-function getCellClassName(state: CellState, size: 'desktop' | 'mobile'): string {
+function getCellClassName(
+  state: CellState,
+  size: 'desktop' | 'mobile',
+): string {
   const minH = size === 'mobile' ? 'min-h-11' : 'min-h-[2.25rem]'
   let cellClass = `border-b border-l border-white/5 p-1 transition ${minH} select-none `
   if (state === 'empty') {
@@ -253,14 +270,17 @@ function useCellMenu(busy: boolean) {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressTriggered = useRef(false)
 
-  const openMenu = useCallback((dayKey: string, time: string, x: number, y: number) => {
-    const padding = 8
-    const menuW = 152
-    const menuH = 120
-    const clampedX = Math.min(x, window.innerWidth - menuW - padding)
-    const clampedY = Math.min(y, window.innerHeight - menuH - padding)
-    setMenuTarget({ dayKey, time, x: clampedX, y: clampedY })
-  }, [])
+  const openMenu = useCallback(
+    (dayKey: string, time: string, x: number, y: number) => {
+      const padding = 8
+      const menuW = 152
+      const menuH = 120
+      const clampedX = Math.min(x, window.innerWidth - menuW - padding)
+      const clampedY = Math.min(y, window.innerHeight - menuH - padding)
+      setMenuTarget({ dayKey, time, x: clampedX, y: clampedY })
+    },
+    [],
+  )
 
   const clearLongPress = useCallback(() => {
     if (longPressTimer.current) {
@@ -313,6 +333,7 @@ function useCellMenu(busy: boolean) {
     menuTarget,
     setMenuTarget,
     canOpenMenu,
+    openMenu,
     handleContextMenu,
     handleTouchStart,
     handleTouchEnd,
@@ -328,6 +349,7 @@ function MobileDayGrid({
   busy,
   menuHint,
   onSetCellState,
+  onViewBooking,
   t,
 }: {
   day: Date
@@ -336,6 +358,7 @@ function MobileDayGrid({
   gridStepMinutes: number
   busy: boolean
   menuHint: string
+  onViewBooking?: (bookingId: string) => void
   onSetCellState: (dayKey: string, time: string, state: AdminCellState) => void
   t: (key: string) => string
 }) {
@@ -344,6 +367,7 @@ function MobileDayGrid({
     menuTarget,
     setMenuTarget,
     canOpenMenu,
+    openMenu,
     handleContextMenu,
     handleTouchStart,
     handleTouchEnd,
@@ -372,8 +396,11 @@ function MobileDayGrid({
             const rowSpan = info?.rowSpan ?? 1
             const slot = info?.slot
             const clientName =
-              slot?.booking?.profiles?.full_name ?? slot?.booking?.profiles?.email
-            const slotMinutes = slot ? slotDurationMinutes(slot.start_at, slot.end_at) : null
+              slot?.booking?.profiles?.full_name ??
+              slot?.booking?.profiles?.email
+            const slotMinutes = slot
+              ? slotDurationMinutes(slot.start_at, slot.end_at)
+              : null
             const cellClass = getCellClassName(state, 'mobile')
 
             return (
@@ -386,22 +413,54 @@ function MobileDayGrid({
                 </div>
                 <div
                   role="button"
-                  tabIndex={canOpenMenu(dayKey, gridTime, info) ? 0 : -1}
+                  tabIndex={
+                    !busy &&
+                    (canOpenMenu(dayKey, gridTime, info) ||
+                      Boolean(info?.slot?.booking && onViewBooking))
+                      ? 0
+                      : -1
+                  }
                   style={{
                     gridRow: `${gridRow} / span ${rowSpan}`,
                     gridColumn: 2,
                   }}
-                  onContextMenu={(e) => handleContextMenu(e, dayKey, gridTime, info)}
-                  onTouchStart={(e) => handleTouchStart(e, dayKey, gridTime, info)}
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, dayKey, gridTime, info)
+                  }
+                  onTouchStart={(e) =>
+                    handleTouchStart(e, dayKey, gridTime, info)
+                  }
                   onTouchEnd={handleTouchEnd}
                   onTouchMove={handleTouchEnd}
                   onTouchCancel={handleTouchEnd}
-                  onClick={() => {
+                  onClick={(event) => {
+                    if (busy) return
                     if (longPressTriggered.current) {
                       longPressTriggered.current = false
+                      return
+                    }
+                    if (slot?.booking) {
+                      onViewBooking?.(slot.booking.id)
+                      return
+                    }
+                    if (canOpenMenu(dayKey, gridTime, info)) {
+                      const rect = event.currentTarget.getBoundingClientRect()
+                      openMenu(
+                        dayKey,
+                        gridTime,
+                        rect.left + rect.width / 2,
+                        rect.top + rect.height / 2,
+                      )
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      event.currentTarget.click()
                     }
                   }}
                   className={`${cellClass} text-left`}
+                  aria-label={`${dayKey} ${gridTime} · ${state === 'booked' ? clientName ?? t('posing.admin.slotBooked') : t(`posing.admin.legend${state === 'open' ? 'Open' : state === 'inactive' ? 'Inactive' : 'Empty'}`)}`}
                   title={
                     state === 'booked' && clientName
                       ? `${t('posing.admin.slotBooked')}: ${clientName}`
@@ -411,7 +470,9 @@ function MobileDayGrid({
                   {state === 'open' ? (
                     <span className="block px-1 text-xs font-medium text-emerald-200/90">
                       {t('posing.admin.legendOpen')}
-                      {slotMinutes && slotMinutes > gridStepMinutes ? ` · ${slotMinutes}'` : ''}
+                      {slotMinutes && slotMinutes > gridStepMinutes
+                        ? ` · ${slotMinutes}'`
+                        : ''}
                     </span>
                   ) : null}
                   {state === 'booked' ? (
@@ -452,6 +513,7 @@ function TimeGrid({
   gridStepMinutes,
   busy,
   onSetCellState,
+  onViewBooking,
   onAddSlotTime,
   onOpenDayPreset,
   onClearDay,
@@ -463,6 +525,7 @@ function TimeGrid({
   cellMap: Map<string, CellInfo>
   gridStepMinutes: number
   busy: boolean
+  onViewBooking?: (bookingId: string) => void
   onSetCellState: (dayKey: string, time: string, state: AdminCellState) => void
   onAddSlotTime: (dayKey: string, time: string) => void
   onOpenDayPreset: (dayKey: string) => void
@@ -475,6 +538,7 @@ function TimeGrid({
     menuTarget,
     setMenuTarget,
     canOpenMenu,
+    openMenu,
     handleContextMenu,
     handleTouchStart,
     handleTouchEnd,
@@ -505,7 +569,9 @@ function TimeGrid({
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
                   {formatWeekdayShort(day, locale)}
                 </p>
-                <p className="mt-0.5 text-xs font-medium text-white">{formatDayLabel(day, locale)}</p>
+                <p className="mt-0.5 text-xs font-medium text-white">
+                  {formatDayLabel(day, locale)}
+                </p>
                 <div className="mt-2 flex flex-wrap justify-center gap-1">
                   <button
                     type="button"
@@ -526,7 +592,12 @@ function TimeGrid({
                     {t('posing.admin.clearDay')}
                   </button>
                 </div>
-                <DayAddTime dayKey={dayKey} busy={busy} onAddSlotTime={onAddSlotTime} t={t} />
+                <DayAddTime
+                  dayKey={dayKey}
+                  busy={busy}
+                  onAddSlotTime={onAddSlotTime}
+                  t={t}
+                />
               </div>
             )
           })}
@@ -554,7 +625,8 @@ function TimeGrid({
                   const rowSpan = info?.rowSpan ?? 1
                   const slot = info?.slot
                   const clientName =
-                    slot?.booking?.profiles?.full_name ?? slot?.booking?.profiles?.email
+                    slot?.booking?.profiles?.full_name ??
+                    slot?.booking?.profiles?.email
                   const slotMinutes = slot
                     ? slotDurationMinutes(slot.start_at, slot.end_at)
                     : null
@@ -565,22 +637,55 @@ function TimeGrid({
                     <div
                       key={key}
                       role="button"
-                      tabIndex={canOpenMenu(dayKey, gridTime, info) ? 0 : -1}
+                      tabIndex={
+                        !busy &&
+                        (canOpenMenu(dayKey, gridTime, info) ||
+                          Boolean(info?.slot?.booking && onViewBooking))
+                          ? 0
+                          : -1
+                      }
                       style={{
                         gridRow: `${gridRow} / span ${rowSpan}`,
                         gridColumn: dayIndex + 2,
                       }}
-                      onContextMenu={(e) => handleContextMenu(e, dayKey, gridTime, info)}
-                      onTouchStart={(e) => handleTouchStart(e, dayKey, gridTime, info)}
+                      onContextMenu={(e) =>
+                        handleContextMenu(e, dayKey, gridTime, info)
+                      }
+                      onTouchStart={(e) =>
+                        handleTouchStart(e, dayKey, gridTime, info)
+                      }
                       onTouchEnd={handleTouchEnd}
                       onTouchMove={handleTouchEnd}
                       onTouchCancel={handleTouchEnd}
-                      onClick={() => {
+                      onClick={(event) => {
+                        if (busy) return
                         if (longPressTriggered.current) {
                           longPressTriggered.current = false
+                          return
+                        }
+                        if (slot?.booking) {
+                          onViewBooking?.(slot.booking.id)
+                          return
+                        }
+                        if (canOpenMenu(dayKey, gridTime, info)) {
+                          const rect =
+                            event.currentTarget.getBoundingClientRect()
+                          openMenu(
+                            dayKey,
+                            gridTime,
+                            rect.left + rect.width / 2,
+                            rect.top + rect.height / 2,
+                          )
+                        }
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          event.currentTarget.click()
                         }
                       }}
                       className={`${cellClass} text-left`}
+                      aria-label={`${dayKey} ${gridTime} · ${state === 'booked' ? clientName ?? t('posing.admin.slotBooked') : t(`posing.admin.legend${state === 'open' ? 'Open' : state === 'inactive' ? 'Inactive' : 'Empty'}`)}`}
                       title={
                         state === 'booked' && clientName
                           ? `${t('posing.admin.slotBooked')}: ${clientName}`
@@ -590,7 +695,9 @@ function TimeGrid({
                       {state === 'open' ? (
                         <span className="block px-1 text-[10px] font-medium text-emerald-200/90">
                           {t('posing.admin.legendOpen')}
-                          {slotMinutes && slotMinutes > gridStepMinutes ? ` · ${slotMinutes}'` : ''}
+                          {slotMinutes && slotMinutes > gridStepMinutes
+                            ? ` · ${slotMinutes}'`
+                            : ''}
                         </span>
                       ) : null}
                       {state === 'booked' ? (
@@ -639,24 +746,33 @@ function LegendItem({
     <span
       className={`inline-flex shrink-0 items-center gap-1.5 text-white/55 ${compact ? 'text-[10px]' : 'text-xs'}`}
     >
-      <span className={`rounded-sm ${color} ${compact ? 'h-2 w-2' : 'h-2.5 w-2.5'}`} aria-hidden />
+      <span
+        className={`rounded-sm ${color} ${compact ? 'h-2 w-2' : 'h-2.5 w-2.5'}`}
+        aria-hidden
+      />
       {label}
     </span>
   )
 }
 
-function buildCellMap(
-  slots: AdminCalendarSlot[],
-  gridTimes: string[],
-  gridStepMinutes: number,
-) {
+function buildCellMap(slots: AdminCalendarSlot[], gridTimes: string[]) {
   const map = new Map<string, CellInfo>()
 
-  for (const slot of slots) {
+  for (const slot of [...slots].sort(
+    (a, b) => Number(Boolean(a.booking)) - Number(Boolean(b.booking)),
+  )) {
     const dayKey = athensDateKey(new Date(slot.start_at))
     const startTime = athensTimeKey(slot.start_at)
     const duration = slotDurationMinutes(slot.start_at, slot.end_at)
-    const rows = slotSpansRows(duration, gridStepMinutes)
+    const endMinutes = timeToMinutes(startTime) + duration
+    const rows = Math.max(
+      1,
+      gridTimes.filter(
+        (time) =>
+          timeToMinutes(time) >= timeToMinutes(startTime) &&
+          timeToMinutes(time) < endMinutes,
+      ).length,
+    )
     const startIdx = gridTimes.indexOf(startTime)
     if (startIdx === -1) continue
 
@@ -700,6 +816,7 @@ export function AdminWeekCalendar({
   onWeekStartChange,
   onDurationChange,
   onSetCellState,
+  onViewBooking,
   onAddSlotTime,
   onOpenDayPreset,
   onClearDay,
@@ -722,13 +839,14 @@ export function AdminWeekCalendar({
   )
 
   const days = useMemo(
-    () => Array.from({ length: POSE_WEEK_DAYS }, (_, i) => addDays(weekStart, i)),
+    () =>
+      Array.from({ length: POSE_WEEK_DAYS }, (_, i) => addDays(weekStart, i)),
     [weekStart],
   )
 
   const cellMap = useMemo(
-    () => buildCellMap(slots, gridTimes, calendarSettings.grid_step_minutes),
-    [slots, gridTimes, calendarSettings.grid_step_minutes],
+    () => buildCellMap(slots, gridTimes),
+    [slots, gridTimes],
   )
 
   const mobileDay = days[mobileDayIndex] ?? days[0]
@@ -738,8 +856,12 @@ export function AdminWeekCalendar({
     <section className="relative mt-10 pb-8 lg:pb-0">
       <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">{t('posing.admin.weekTitle')}</h2>
-          <p className="mt-1 text-sm text-white/55">{formatWeekRange(weekStart, locale)}</p>
+          <h2 className="text-lg font-semibold text-white">
+            {t('posing.admin.weekTitle')}
+          </h2>
+          <p className="mt-1 text-sm text-white/55">
+            {formatWeekRange(weekStart, locale)}
+          </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="flex flex-wrap items-center gap-2">
@@ -791,7 +913,9 @@ export function AdminWeekCalendar({
       <p className="mt-2 text-xs text-white/45">
         {t('posing.admin.durationHint', { minutes: duration })}
       </p>
-      <p className="mt-1 hidden text-xs text-white/40 lg:block">{t('posing.admin.cellMenuHint')}</p>
+      <p className="mt-1 hidden text-xs text-white/40 lg:block">
+        {t('posing.admin.cellMenuHint')}
+      </p>
       <p className="mt-1 text-xs text-white/40 lg:hidden">
         {t('posing.admin.cellMenuHintMobile')}
       </p>
@@ -807,17 +931,35 @@ export function AdminWeekCalendar({
       ) : null}
 
       <div className="mt-3 flex gap-3 overflow-x-auto pb-1 lg:mt-4 lg:flex-wrap lg:gap-4">
-        <LegendItem color="bg-white/10" label={t('posing.admin.legendEmpty')} compact />
-        <LegendItem color="bg-emerald-400/40" label={t('posing.admin.legendOpen')} compact />
-        <LegendItem color="bg-fuchsia-400/50" label={t('posing.admin.legendBooked')} compact />
-        <LegendItem color="bg-white/[0.04]" label={t('posing.admin.legendInactive')} compact />
+        <LegendItem
+          color="bg-white/10"
+          label={t('posing.admin.legendEmpty')}
+          compact
+        />
+        <LegendItem
+          color="bg-emerald-400/40"
+          label={t('posing.admin.legendOpen')}
+          compact
+        />
+        <LegendItem
+          color="bg-fuchsia-400/50"
+          label={t('posing.admin.legendBooked')}
+          compact
+        />
+        <LegendItem
+          color="bg-white/[0.04]"
+          label={t('posing.admin.legendInactive')}
+          compact
+        />
       </div>
 
       <div className="relative mt-6 overflow-hidden rounded-2xl border border-white/10 bg-black/25">
         {busy ? (
           <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
             <p className="rounded-full border border-white/10 bg-black/60 px-4 py-2 text-xs text-white/70">
-              {loading ? t('posing.account.loading') : t('posing.admin.opening')}
+              {loading
+                ? t('posing.account.loading')
+                : t('posing.admin.opening')}
             </p>
           </div>
         ) : null}
@@ -829,6 +971,7 @@ export function AdminWeekCalendar({
             cellMap={cellMap}
             gridStepMinutes={calendarSettings.grid_step_minutes}
             busy={busy}
+            onViewBooking={onViewBooking}
             onSetCellState={onSetCellState}
             onAddSlotTime={onAddSlotTime}
             onOpenDayPreset={onOpenDayPreset}
@@ -864,7 +1007,9 @@ export function AdminWeekCalendar({
           </div>
 
           <div className="border-b border-white/10 px-3 py-2">
-            <p className="text-xs font-medium text-white">{formatDayLabel(mobileDay, locale)}</p>
+            <p className="text-xs font-medium text-white">
+              {formatDayLabel(mobileDay, locale)}
+            </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -899,19 +1044,22 @@ export function AdminWeekCalendar({
             gridStepMinutes={calendarSettings.grid_step_minutes}
             busy={busy}
             menuHint={t('posing.admin.cellMenuHintMobile')}
+            onViewBooking={onViewBooking}
             onSetCellState={onSetCellState}
             t={t}
           />
         </div>
       </div>
 
-      <AdminCalendarSettings
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        settings={calendarSettings}
-        busy={busy}
-        onSave={onSaveCalendarSettings}
-      />
+      {settingsOpen ? (
+        <AdminCalendarSettings
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          settings={calendarSettings}
+          busy={busy}
+          onSave={onSaveCalendarSettings}
+        />
+      ) : null}
     </section>
   )
 }

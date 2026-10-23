@@ -3,9 +3,7 @@ import {
   buildConfirmationEmail,
   buildPaymentEmail,
 } from '../../../lib/email/templates.js'
-import {
-  buildCalendarForBooking,
-} from '../../../lib/email/sendSessionCalendar.js'
+import { buildCalendarForBooking } from '../../../lib/email/sendSessionCalendar.js'
 import {
   fetchBookingCancellationSnapshot,
   packageNameForLocale,
@@ -16,7 +14,6 @@ import {
   cancelPosingBooking,
   cors,
   createStripeCheckoutUrl,
-  findBookablePackage,
   formatSessionTimeWithZone,
   getSupabaseAdmin,
   getUserFromRequest,
@@ -26,7 +23,7 @@ import {
   readJsonBody,
   sendPosingEmailReliable,
 } from '../_lib.js'
-import { resolvePosingBonusSessions } from '../_offers.js'
+import { runPosingTransaction } from '../_transactions.js'
 import {
   formatPriceEUR,
   getPayPalUrl,
@@ -82,7 +79,9 @@ async function sendBookingNotify({
     html,
     text,
     idempotencyKey: `posing-notify-${bookingId}`,
-    ...(status === 'confirmed' && calendarAttachment ? { attachments: [calendarAttachment] } : {}),
+    ...(status === 'confirmed' && calendarAttachment
+      ? { attachments: [calendarAttachment] }
+      : {}),
   })
 }
 
@@ -122,7 +121,11 @@ export async function handleBookings(req, res) {
       }
 
       const locale = normalizeBookingLocale(req.query?.locale)
-      const calendarBundle = await buildCalendarForBooking(supabase, bookingId, locale)
+      const calendarBundle = await buildCalendarForBooking(
+        supabase,
+        bookingId,
+        locale,
+      )
       if (!calendarBundle) {
         return json(res, 404, { ok: false, error: 'calendar_unavailable' })
       }
@@ -152,7 +155,10 @@ export async function handleBookings(req, res) {
 
     try {
       const supabase = getSupabaseAdmin()
-      const snapshot = await fetchBookingCancellationSnapshot(supabase, bookingId)
+      const snapshot = await fetchBookingCancellationSnapshot(
+        supabase,
+        bookingId,
+      )
 
       const result = await cancelPosingBooking(supabase, {
         bookingId,
@@ -201,7 +207,8 @@ export async function handleBookings(req, res) {
     }
   }
 
-  if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' })
+  if (req.method !== 'POST')
+    return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
   const user = await getUserFromRequest(req)
   if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
@@ -245,7 +252,9 @@ export async function handleBookings(req, res) {
 
   const { data: plan } = await supabase
     .from('package_plans')
-    .select('key, name_en, name_el, sessions_total, period_days, duration_minutes')
+    .select(
+      'key, name_en, name_el, sessions_total, period_days, duration_minutes',
+    )
     .eq('key', planKey)
     .single()
 
@@ -269,48 +278,42 @@ export async function handleBookings(req, res) {
   const packageName = bookingLocale === 'el' ? plan.name_el : plan.name_en
   const sessionTime = formatSessionTimeWithZone(slot.start_at, bookingLocale)
   const durationMinutes = plan.duration_minutes
-  const from = process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
+  const from =
+    process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>'
 
-  const bookable = await findBookablePackage(supabase, user.id, planKey)
-
-  if (bookable.mode === 'blocked_pending') {
-    return json(res, 409, { ok: false, error: 'payment_required_first' })
+  let priceInfo
+  try {
+    priceInfo = await resolvePlanPrice(supabase, planKey, user.id)
+  } catch {
+    return json(res, 503, { ok: false, error: 'price_check_failed' })
   }
+  const amountEur = priceInfo.amountEur
+  const reserved = await runPosingTransaction(
+    supabase,
+    'posing_reserve_booking',
+    {
+      p_user_id: user.id,
+      p_slot_id: slotId,
+      p_plan_key: planKey,
+      p_locale: bookingLocale,
+      p_amount_eur: amountEur,
+    },
+  )
+  if (!reserved?.ok) {
+    return json(res, reserved?.error === 'migration_required' ? 503 : 409, {
+      ok: false,
+      error: reserved?.error ?? 'booking_create_failed',
+    })
+  }
+  const { booking, userPackage } = reserved
 
-  if (bookable.mode === 'use_existing') {
-    const userPackage = bookable.userPackage
-    if (userPackage.sessions_used >= userPackage.sessions_total) {
-      return json(res, 409, { ok: false, error: 'package_sessions_exhausted' })
-    }
-
-    const { data: booking, error: bookError } = await supabase
-      .from('posing_bookings')
-      .insert({
-        user_id: user.id,
-        slot_id: slotId,
-        plan_key: planKey,
-        user_package_id: userPackage.id,
-        status: 'confirmed',
-        locale: bookingLocale,
-      })
-      .select('id')
-      .single()
-
-    if (bookError || !booking) {
-      return json(res, 500, { ok: false, error: bookError?.message ?? 'booking_create_failed' })
-    }
-
-    const now = new Date().toISOString()
-    await supabase
-      .from('user_packages')
-      .update({
-        sessions_used: userPackage.sessions_used + 1,
-        updated_at: now,
-      })
-      .eq('id', userPackage.id)
-
+  if (reserved.booking_type === 'included_session') {
     try {
-      const calendarBundle = await buildCalendarForBooking(supabase, booking.id, bookingLocale)
+      const calendarBundle = await buildCalendarForBooking(
+        supabase,
+        booking.id,
+        bookingLocale,
+      )
       const calendar = calendarBundle?.calendar ?? null
 
       const confirmation = buildConfirmationEmail({
@@ -347,7 +350,10 @@ export async function handleBookings(req, res) {
         calendarAttachment: calendar?.attachment ?? null,
       })
     } catch (error) {
-      console.error('posing included session email error:', { bookingId: booking.id, error })
+      console.error('posing included session email error:', {
+        bookingId: booking.id,
+        error,
+      })
     }
 
     return json(res, 201, {
@@ -355,74 +361,12 @@ export async function handleBookings(req, res) {
       booking_id: booking.id,
       booking_type: 'included_session',
       status: 'confirmed',
-      sessions_remaining: userPackage.sessions_total - userPackage.sessions_used - 1,
+      sessions_remaining: reserved.sessions_remaining,
       message:
         bookingLocale === 'el'
           ? 'Η συνεδρία επιβεβαιώθηκε.'
           : 'Your session is confirmed.',
     })
-  }
-
-  const now = new Date()
-  const periodEnd = new Date(now)
-  periodEnd.setDate(periodEnd.getDate() + plan.period_days)
-
-  const { data: userPackage, error: pkgError } = await supabase
-    .from('user_packages')
-    .insert({
-      user_id: user.id,
-      plan_key: planKey,
-      sessions_total:
-        plan.sessions_total + (await resolvePosingBonusSessions(supabase, user.id, planKey, now)),
-      sessions_used: 0,
-      status: 'pending_payment',
-      period_start: now.toISOString(),
-      period_end: periodEnd.toISOString(),
-    })
-    .select('id')
-    .single()
-
-  if (pkgError || !userPackage) {
-    return json(res, 500, { ok: false, error: pkgError?.message ?? 'package_create_failed' })
-  }
-
-  const { data: booking, error: bookError } = await supabase
-    .from('posing_bookings')
-    .insert({
-      user_id: user.id,
-      slot_id: slotId,
-      plan_key: planKey,
-      user_package_id: userPackage.id,
-      status: 'pending_payment',
-      locale: bookingLocale,
-    })
-    .select('id')
-    .single()
-
-  if (bookError || !booking) {
-    await supabase.from('user_packages').delete().eq('id', userPackage.id)
-    return json(res, 500, { ok: false, error: bookError?.message ?? 'booking_create_failed' })
-  }
-
-  const priceInfo = await resolvePlanPrice(supabase, planKey, user.id)
-  const amountEur = priceInfo.amountEur
-
-  if (amountEur) {
-    const amountPatch = { amount_eur: amountEur, updated_at: new Date().toISOString() }
-    const { error: pkgAmountErr } = await supabase
-      .from('user_packages')
-      .update(amountPatch)
-      .eq('id', userPackage.id)
-    if (pkgAmountErr) {
-      console.error('user_packages amount_eur update skipped:', pkgAmountErr.message)
-    }
-    const { error: bookAmountErr } = await supabase
-      .from('posing_bookings')
-      .update(amountPatch)
-      .eq('id', booking.id)
-    if (bookAmountErr) {
-      console.error('posing_bookings amount_eur update skipped:', bookAmountErr.message)
-    }
   }
 
   const paypalLink = amountEur ? getPayPalUrl(amountEur) : ''
@@ -440,6 +384,7 @@ export async function handleBookings(req, res) {
       amountEur,
       packageName,
       useDynamicPrice: useDynamicStripe,
+      expiresAt: booking.payment_expires_at,
     })
     stripeLink = checkout.url
     if (checkout.sessionId) {
@@ -464,6 +409,9 @@ export async function handleBookings(req, res) {
       amountLabel: amountEur ? formatPriceEUR(amountEur, bookingLocale) : null,
       bookingId: booking.id,
       durationMinutes,
+      paymentDeadline: booking.payment_expires_at
+        ? formatSessionTimeWithZone(booking.payment_expires_at, bookingLocale)
+        : null,
       locale: bookingLocale,
     })
 
@@ -499,7 +447,10 @@ export async function handleBookings(req, res) {
       .update({ payment_email_sent_at: new Date().toISOString() })
       .eq('id', booking.id)
   } catch (error) {
-    console.error('posing booking email error:', { bookingId: booking.id, error })
+    console.error('posing booking email error:', {
+      bookingId: booking.id,
+      error,
+    })
   }
 
   return json(res, 201, {
@@ -507,9 +458,10 @@ export async function handleBookings(req, res) {
     booking_id: booking.id,
     booking_type: 'new_package',
     status: 'pending_payment',
+    payment_expires_at: booking.payment_expires_at ?? null,
     message:
       bookingLocale === 'el'
-        ? 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου για πληρωμή.'
-        : 'Booking reserved. Check your email to complete payment.',
+        ? 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου — έχεις 3 ώρες για να ολοκληρώσεις την πληρωμή, αλλιώς η ώρα αποδεσμεύεται.'
+        : 'Booking reserved. Check your email — you have 3 hours to complete payment, otherwise the slot is released.',
   })
 }

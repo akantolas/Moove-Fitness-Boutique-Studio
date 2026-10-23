@@ -10,7 +10,11 @@ export type PackagePlan = {
   duration_minutes: number
 }
 
-export type PackageQuotaStatus = 'none' | 'pending_payment' | 'active' | 'exhausted'
+export type PackageQuotaStatus =
+  | 'none'
+  | 'pending_payment'
+  | 'active'
+  | 'exhausted'
 
 export type PackageQuota = {
   planKey: string
@@ -21,11 +25,15 @@ export type PackageQuota = {
   userPackageId: string | null
 }
 
-export async function fetchPackagePlan(planKey: PosingPlanKey): Promise<PackagePlan | null> {
+export async function fetchPackagePlan(
+  planKey: PosingPlanKey,
+): Promise<PackagePlan | null> {
   const supabase = createSupabaseClient()
   const { data, error } = await supabase
     .from('package_plans')
-    .select('key, name_en, name_el, sessions_total, period_days, duration_minutes')
+    .select(
+      'key, name_en, name_el, sessions_total, period_days, duration_minutes',
+    )
     .eq('key', planKey)
     .maybeSingle()
 
@@ -42,6 +50,8 @@ export async function fetchUserPackageQuota(
 
   const supabase = createSupabaseClient()
   const now = new Date().toISOString()
+  // Mirrors posing_payment_lapsed: unpaid packages lapse 15 minutes after their deadline.
+  const lapsedBefore = new Date(Date.now() - 15 * 60 * 1000).toISOString()
 
   const { data: pending } = await supabase
     .from('user_packages')
@@ -49,6 +59,8 @@ export async function fetchUserPackageQuota(
     .eq('user_id', userId)
     .eq('plan_key', planKey)
     .eq('status', 'pending_payment')
+    .gt('period_end', now)
+    .or(`payment_expires_at.is.null,payment_expires_at.gt.${lapsedBefore}`)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -66,7 +78,7 @@ export async function fetchUserPackageQuota(
     }
   }
 
-  const { data: active } = await supabase
+  const { data: activeRows } = await supabase
     .from('user_packages')
     .select('id, sessions_total, sessions_used')
     .eq('user_id', userId)
@@ -74,8 +86,11 @@ export async function fetchUserPackageQuota(
     .eq('status', 'active')
     .gt('period_end', now)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+
+  // Same choice as posing_reserve_booking: the newest package that still has sessions.
+  const active =
+    activeRows?.find((p) => p.sessions_used < p.sessions_total) ??
+    activeRows?.[0]
 
   if (active) {
     const remaining = Math.max(0, active.sessions_total - active.sessions_used)
@@ -100,9 +115,22 @@ export async function fetchUserPackageQuota(
 }
 
 export function sumActiveSessionsRemaining(
-  packages: Array<{ status: string; sessions_total: number; sessions_used: number }>,
+  packages: Array<{
+    status: string
+    sessions_total: number
+    sessions_used: number
+    period_end: string | null
+  }>,
 ) {
   return packages
-    .filter((p) => p.status === 'active')
-    .reduce((sum, p) => sum + Math.max(0, p.sessions_total - p.sessions_used), 0)
+    .filter(
+      (p) =>
+        p.status === 'active' &&
+        p.period_end &&
+        Date.parse(p.period_end) > Date.now(),
+    )
+    .reduce(
+      (sum, p) => sum + Math.max(0, p.sessions_total - p.sessions_used),
+      0,
+    )
 }

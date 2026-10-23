@@ -6,6 +6,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import { PLAN_KEYS } from './_pricing.js'
+import { runPosingTransaction } from './_transactions.js'
 
 let localEnvLoaded = false
 
@@ -55,12 +56,13 @@ const STRIPE_LINK_ENV = {
 export function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
   const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.SUPABASE_SECRET_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY
   if (!url || !key) {
     throw new Error('missing_supabase_admin_config')
   }
-  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
 }
 
 export function getAdminEmails() {
@@ -124,11 +126,13 @@ export async function createStripeCheckoutUrl({
   amountEur = null,
   packageName = 'Move & Pose',
   useDynamicPrice = false,
+  expiresAt = null,
 }) {
   const secret = process.env.STRIPE_SECRET_KEY
   const priceEnv = STRIPE_PRICE_ENV[planKey] ?? STRIPE_PRICE_ENV.single
   const priceId = process.env[priceEnv]
-  const resolvedAmount = amountEur != null ? Math.round(Number(amountEur)) : null
+  const resolvedAmount =
+    amountEur != null ? Math.round(Number(amountEur)) : null
   const needsDynamic = useDynamicPrice || !priceId
 
   if (!secret || (needsDynamic && (!resolvedAmount || resolvedAmount <= 0))) {
@@ -136,14 +140,19 @@ export async function createStripeCheckoutUrl({
   }
 
   const successUrl =
-    process.env.POSE_SUCCESS_URL ?? 'https://moovefitness.gr/posing?payment=success'
-  const cancelUrl = process.env.POSE_CANCEL_URL ?? 'https://moovefitness.gr/posing#booking'
+    process.env.POSE_SUCCESS_URL ??
+    'https://moovefitness.gr/posing?payment=success'
+  const cancelUrl =
+    process.env.POSE_CANCEL_URL ?? 'https://moovefitness.gr/posing#booking'
 
   const params = new URLSearchParams()
   params.set('mode', 'payment')
   if (needsDynamic && resolvedAmount) {
     params.set('line_items[0][price_data][currency]', 'eur')
-    params.set('line_items[0][price_data][unit_amount]', String(resolvedAmount * 100))
+    params.set(
+      'line_items[0][price_data][unit_amount]',
+      String(resolvedAmount * 100),
+    )
     params.set('line_items[0][price_data][product_data][name]', packageName)
   } else if (priceId) {
     params.set('line_items[0][price]', priceId)
@@ -158,6 +167,11 @@ export async function createStripeCheckoutUrl({
   params.set('metadata[user_package_id]', userPackageId)
   params.set('metadata[plan_key]', planKey)
   params.set('metadata[locale]', locale === 'en' ? 'en' : 'el')
+  const expiresAtSeconds = Math.floor(Date.parse(expiresAt ?? '') / 1000)
+  // Stripe only accepts an expiry between 30 minutes and 24 hours ahead.
+  if (expiresAtSeconds > Date.now() / 1000 + 31 * 60) {
+    params.set('expires_at', String(expiresAtSeconds))
+  }
 
   const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
@@ -188,7 +202,10 @@ export function json(res, status, body) {
 
 export function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  )
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 }
 
@@ -197,13 +214,18 @@ export function resolveApiPath(req, basePrefix) {
   const fromQuery = req.query?.path
   if (fromQuery !== undefined && fromQuery !== null && fromQuery !== '') {
     const segments = Array.isArray(fromQuery) ? fromQuery : [fromQuery]
-    const joined = segments.map((s) => String(s).trim()).filter(Boolean).join('/')
+    const joined = segments
+      .map((s) => String(s).trim())
+      .filter(Boolean)
+      .join('/')
     if (joined) return joined
   }
 
   const rawUrl = String(req.url ?? '')
   const pathname = rawUrl.split('?')[0]
-  const normalizedPrefix = basePrefix.endsWith('/') ? basePrefix : `${basePrefix}/`
+  const normalizedPrefix = basePrefix.endsWith('/')
+    ? basePrefix
+    : `${basePrefix}/`
   if (pathname === normalizedPrefix.slice(0, -1)) return ''
   if (pathname.startsWith(normalizedPrefix)) {
     return pathname.slice(normalizedPrefix.length).replace(/^\/+|\/+$/g, '')
@@ -261,20 +283,34 @@ export function formatSessionTimeWithZone(startTime, locale = 'el') {
   return `${time}${suffix}`
 }
 
-export async function sendResendEmail({ from, to, subject, html, text, idempotencyKey, replyTo, attachments }) {
+export async function sendResendEmail({
+  from,
+  to,
+  subject,
+  html,
+  text,
+  idempotencyKey,
+  replyTo,
+  attachments,
+}) {
   const apiKey = process.env.RESEND_API_KEY?.trim()
   if (!apiKey) throw new Error('missing_resend_api_key')
 
-  const recipients = (Array.isArray(to) ? to : [to]).map((entry) => String(entry).trim()).filter(Boolean)
+  const recipients = (Array.isArray(to) ? to : [to])
+    .map((entry) => String(entry).trim())
+    .filter(Boolean)
   if (!recipients.length) throw new Error('missing_resend_recipients')
 
   const resendAttachments = (attachments ?? []).map((file) => ({
     filename: file.filename,
     content:
-      typeof file.content === 'string' && /^[A-Za-z0-9+/=\r\n]+$/.test(file.content.trim())
+      typeof file.content === 'string' &&
+      /^[A-Za-z0-9+/=\r\n]+$/.test(file.content.trim())
         ? file.content.trim()
         : Buffer.from(file.content, 'utf8').toString('base64'),
-    ...(file.contentType ? { content_type: file.contentType.split(';')[0].trim() } : {}),
+    ...(file.contentType
+      ? { content_type: file.contentType.split(';')[0].trim() }
+      : {}),
   }))
 
   const response = await fetch('https://api.resend.com/emails', {
@@ -311,7 +347,9 @@ function getSmtpConfig() {
   return {
     host: process.env.SMTP_HOST ?? 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === 'true' || Number(process.env.SMTP_PORT ?? 587) === 465,
+    secure:
+      process.env.SMTP_SECURE === 'true' ||
+      Number(process.env.SMTP_PORT ?? 587) === 465,
     auth: { user, pass },
   }
 }
@@ -320,14 +358,26 @@ export function hasEmailTransportConfig() {
   return Boolean(getSmtpConfig() || process.env.RESEND_API_KEY?.trim())
 }
 
-export async function sendPosingEmail({ from, to, subject, html, text, idempotencyKey, replyTo, attachments }) {
+export async function sendPosingEmail({
+  from,
+  to,
+  subject,
+  html,
+  text,
+  idempotencyKey,
+  replyTo,
+  attachments,
+}) {
   const smtp = getSmtpConfig()
   if (smtp) {
     const nodemailer = await import('nodemailer')
     const transporter = nodemailer.createTransport(smtp)
     const recipients = Array.isArray(to) ? to : [to]
     await transporter.sendMail({
-      from: from ?? process.env.POSE_FROM_EMAIL ?? 'Move & Pose <info@moovefitness.gr>',
+      from:
+        from ??
+        process.env.POSE_FROM_EMAIL ??
+        'Move & Pose <info@moovefitness.gr>',
       to: recipients.join(', '),
       subject,
       html,
@@ -383,7 +433,10 @@ export async function sendPosingEmailReliable(payload) {
   }
 }
 
-export { buildConfirmationEmail, buildPaymentEmail } from '../../lib/email/templates.js'
+export {
+  buildConfirmationEmail,
+  buildPaymentEmail,
+} from '../../lib/email/templates.js'
 
 export async function findBookablePackage(supabase, userId, planKey) {
   const now = new Date().toISOString()
@@ -394,6 +447,7 @@ export async function findBookablePackage(supabase, userId, planKey) {
     .eq('user_id', userId)
     .eq('plan_key', planKey)
     .eq('status', 'pending_payment')
+    .gt('period_end', now)
     .limit(1)
     .maybeSingle()
 
@@ -410,7 +464,9 @@ export async function findBookablePackage(supabase, userId, planKey) {
     .gt('period_end', now)
     .order('created_at', { ascending: false })
 
-  const activeWithRoom = (activePackages ?? []).find((p) => p.sessions_used < p.sessions_total)
+  const activeWithRoom = (activePackages ?? []).find(
+    (p) => p.sessions_used < p.sessions_total,
+  )
 
   if (activeWithRoom) {
     return {
@@ -425,141 +481,55 @@ export async function findBookablePackage(supabase, userId, planKey) {
 
 export async function activatePackagePayment(
   supabase,
-  { bookingId, userPackageId, paymentRef, paymentMethod = 'stripe', confirmedBy = null },
+  {
+    bookingId,
+    userPackageId,
+    paymentRef,
+    paymentMethod = 'stripe',
+    confirmedBy = null,
+    paidAt = null,
+  },
 ) {
-  const now = new Date().toISOString()
-
-  const { data: booking } = await supabase
-    .from('posing_bookings')
-    .select('id, status, user_package_id')
-    .eq('id', bookingId)
-    .maybeSingle()
-
-  if (!booking) return { ok: false, error: 'booking_not_found' }
-  if (booking.status === 'confirmed') return { ok: true, already: true }
-  if (booking.status !== 'pending_payment') {
-    return { ok: false, error: 'invalid_booking_status' }
-  }
-
-  const packageId = userPackageId ?? booking.user_package_id
-  if (!packageId) return { ok: false, error: 'missing_package' }
-
-  const { data: userPackage } = await supabase
-    .from('user_packages')
-    .select('id, status')
-    .eq('id', packageId)
-    .maybeSingle()
-
-  if (!userPackage) return { ok: false, error: 'package_not_found' }
-  if (userPackage.status !== 'pending_payment' && userPackage.status !== 'active') {
-    return { ok: false, error: 'invalid_package_status' }
-  }
-
-  const pkgUpdate = {
-    status: 'active',
-    stripe_payment_id: paymentRef,
-    sessions_used: 1,
-    updated_at: now,
-  }
-  if (paymentMethod) pkgUpdate.payment_method = paymentMethod
-  if (confirmedBy) pkgUpdate.confirmed_by = confirmedBy
-
-  let { error: pkgError } = await supabase
-    .from('user_packages')
-    .update(pkgUpdate)
-    .eq('id', packageId)
-
-  if (pkgError && /payment_method|confirmed_by/.test(pkgError.message)) {
-    const fallbackUpdate = {
-      status: 'active',
-      stripe_payment_id: paymentRef,
-      sessions_used: 1,
-      updated_at: now,
-    }
-    ;({ error: pkgError } = await supabase
-      .from('user_packages')
-      .update(fallbackUpdate)
-      .eq('id', packageId))
-  }
-
-  if (pkgError) return { ok: false, error: pkgError.message }
-
-  const { error: bookError } = await supabase
-    .from('posing_bookings')
-    .update({
-      status: 'confirmed',
-      stripe_session_id: paymentRef,
-      updated_at: now,
-    })
-    .eq('id', bookingId)
-
-  if (bookError) return { ok: false, error: bookError.message }
-
-  return { ok: true }
+  return runPosingTransaction(supabase, 'posing_activate_payment', {
+    p_booking_id: bookingId,
+    p_package_id: userPackageId ?? null,
+    p_payment_ref: paymentRef,
+    p_method: paymentMethod,
+    p_actor_id: confirmedBy,
+    p_paid_at: paidAt ?? undefined,
+  })
 }
 
-export async function cancelPosingBooking(supabase, { bookingId, userId, allowAdmin = false }) {
-  const { data: booking, error } = await supabase
-    .from('posing_bookings')
-    .select('id, user_id, status, user_package_id, slot:availability_slots(start_at)')
-    .eq('id', bookingId)
-    .maybeSingle()
-
-  if (error || !booking) return { ok: false, error: 'booking_not_found' }
-  if (!allowAdmin && booking.user_id !== userId) return { ok: false, error: 'forbidden' }
-  if (booking.status === 'cancelled') return { ok: true, already: true }
-  if (booking.status === 'completed' || booking.status === 'cancelled') {
-    return { ok: false, error: 'cannot_cancel' }
-  }
-
-  const now = new Date()
-  const nowIso = now.toISOString()
-  const slot = Array.isArray(booking.slot) ? booking.slot[0] : booking.slot
-  const slotStart = slot?.start_at ? new Date(slot.start_at) : null
-
-  if (booking.status === 'confirmed') {
-    if (!slotStart || slotStart <= now) {
-      return { ok: false, error: 'cannot_cancel' }
+/** Releases slots whose payment window lapsed; best-effort so reads never fail on it. */
+export async function expirePendingPayments(supabase) {
+  try {
+    const result = await runPosingTransaction(
+      supabase ?? getSupabaseAdmin(),
+      'posing_expire_pending_payments',
+    )
+    if (result?.ok === false) {
+      console.error('posing pending expiry failed:', result.error)
     }
-
-    if (booking.user_package_id) {
-      const { data: userPackage } = await supabase
-        .from('user_packages')
-        .select('sessions_used')
-        .eq('id', booking.user_package_id)
-        .maybeSingle()
-
-      if (userPackage) {
-        await supabase
-          .from('user_packages')
-          .update({
-            sessions_used: Math.max(0, userPackage.sessions_used - 1),
-            updated_at: nowIso,
-          })
-          .eq('id', booking.user_package_id)
-      }
-    }
+  } catch (error) {
+    console.error('posing pending expiry failed:', error)
   }
-
-  if (booking.status === 'pending_payment' && booking.user_package_id) {
-    await supabase
-      .from('user_packages')
-      .update({ status: 'cancelled', updated_at: nowIso })
-      .eq('id', booking.user_package_id)
-      .eq('status', 'pending_payment')
-  }
-
-  const { error: cancelError } = await supabase
-    .from('posing_bookings')
-    .update({ status: 'cancelled', updated_at: nowIso })
-    .eq('id', bookingId)
-
-  if (cancelError) return { ok: false, error: cancelError.message }
-
-  return { ok: true }
 }
 
-export function isBookingCancellable({ status, slotStartAt }, now = new Date()) {
+export async function cancelPosingBooking(
+  supabase,
+  { bookingId, userId, allowAdmin = false },
+) {
+  return runPosingTransaction(supabase, 'posing_cancel_booking', {
+    p_booking_id: bookingId,
+    p_user_id: userId,
+    p_allow_admin: allowAdmin,
+  })
+}
+
+export function isBookingCancellable(
+  { status, slotStartAt },
+  now = new Date(),
+) {
   if (status === 'cancelled' || status === 'completed') return false
   if (status === 'pending_payment') return true
   if (status === 'confirmed') {
@@ -573,7 +543,11 @@ export function isPackageCancellable(status) {
   return status === 'pending_payment' || status === 'active'
 }
 
-export async function getCancellableBookingsForPackage(supabase, packageId, now = new Date()) {
+export async function getCancellableBookingsForPackage(
+  supabase,
+  packageId,
+  now = new Date(),
+) {
   const { data: bookings, error } = await supabase
     .from('posing_bookings')
     .select('id, status, slot:availability_slots(start_at)')
@@ -591,39 +565,9 @@ export async function getCancellableBookingsForPackage(supabase, packageId, now 
   })
 }
 
-export async function cancelUserPackage(supabase, { packageId }) {
-  const { data: pkg, error } = await supabase
-    .from('user_packages')
-    .select('id, status')
-    .eq('id', packageId)
-    .maybeSingle()
-
-  if (error || !pkg) return { ok: false, error: 'package_not_found' }
-  if (pkg.status === 'cancelled') return { ok: true, already: true, cancelledBookingIds: [] }
-  if (!isPackageCancellable(pkg.status)) {
-    return { ok: false, error: 'package_not_cancellable' }
-  }
-
-  const now = new Date()
-  const nowIso = now.toISOString()
-  const toCancel = await getCancellableBookingsForPackage(supabase, packageId, now)
-  const cancelledBookingIds = toCancel.map((booking) => booking.id)
-
-  if (cancelledBookingIds.length > 0) {
-    const { error: cancelError } = await supabase
-      .from('posing_bookings')
-      .update({ status: 'cancelled', updated_at: nowIso })
-      .in('id', cancelledBookingIds)
-
-    if (cancelError) return { ok: false, error: cancelError.message }
-  }
-
-  const { error: pkgError } = await supabase
-    .from('user_packages')
-    .update({ status: 'cancelled', updated_at: nowIso })
-    .eq('id', packageId)
-
-  if (pkgError) return { ok: false, error: pkgError.message }
-
-  return { ok: true, cancelledBookingIds }
+export async function cancelUserPackage(supabase, { packageId, actorId }) {
+  return runPosingTransaction(supabase, 'posing_cancel_package', {
+    p_package_id: packageId,
+    p_actor_id: actorId,
+  })
 }

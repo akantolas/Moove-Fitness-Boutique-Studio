@@ -1,15 +1,18 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { sendLatePaymentEmails } from '../../lib/email/sendLatePaymentEmails.js'
 import { sendPaidConfirmationEmail } from '../../lib/email/sendPaidConfirmation.js'
-import {
-  activateNutritionOrder,
-  generateAndSendNutritionPlan,
-} from '../nutrition/_lib.js'
+import { generateAndSendNutritionPlan } from '../nutrition/_lib.js'
 import {
   activateProgramPurchase,
   normalizeBookingLocale,
   sendProgramAccessFlowEmail,
 } from '../programs/_lib.js'
-import { activatePackagePayment, getSupabaseAdmin, json, readRawBody } from './_lib.js'
+import {
+  activatePackagePayment,
+  getSupabaseAdmin,
+  json,
+  readRawBody,
+} from './_lib.js'
 
 export const config = {
   api: {
@@ -17,26 +20,44 @@ export const config = {
   },
 }
 
-function verifyStripeSignature(payload, signatureHeader, secret) {
-  if (!secret || !signatureHeader) return false
-  const parts = signatureHeader.split(',').reduce((acc, part) => {
-    const [key, value] = part.split('=')
-    if (key && value) acc[key] = value
-    return acc
-  }, {})
-  const timestamp = parts.t
-  const signature = parts.v1
-  if (!timestamp || !signature) return false
+/** Stripe's own libraries reject events signed more than 5 minutes ago. */
+export const STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300
 
-  const signed = `${timestamp}.${payload}`
-  const expected = createHmac('sha256', secret).update(signed).digest('hex')
-  try {
-    const a = Buffer.from(expected, 'utf8')
-    const b = Buffer.from(signature, 'utf8')
-    return a.length === b.length && timingSafeEqual(a, b)
-  } catch {
+export function verifyStripeSignature(
+  payload,
+  signatureHeader,
+  secret,
+  nowSeconds = Date.now() / 1000,
+) {
+  if (!secret || !signatureHeader) return false
+  let timestamp = null
+  const signatures = []
+  for (const part of signatureHeader.split(',')) {
+    const [key, value] = part.split('=')
+    if (key === 't') timestamp = value
+    // Stripe sends one v1 per active secret while a secret is being rolled.
+    if (key === 'v1' && value) signatures.push(value)
+  }
+  if (!timestamp || signatures.length === 0) return false
+  if (
+    !Number.isFinite(Number(timestamp)) ||
+    Math.abs(nowSeconds - Number(timestamp)) > STRIPE_SIGNATURE_TOLERANCE_SECONDS
+  ) {
     return false
   }
+
+  const signed = `${timestamp}.${payload}`
+  const expected = Buffer.from(
+    createHmac('sha256', secret).update(signed).digest('hex'),
+    'utf8',
+  )
+  return signatures.some((signature) => {
+    const candidate = Buffer.from(signature, 'utf8')
+    return (
+      candidate.length === expected.length &&
+      timingSafeEqual(candidate, expected)
+    )
+  })
 }
 
 async function handleProgramWithNutritionCheckout(supabase, session) {
@@ -52,25 +73,27 @@ async function handleProgramWithNutritionCheckout(supabase, session) {
     purchaseId,
     paymentRef: session.id,
     paymentMethod: 'stripe',
+    includeNutrition: true,
+    nutritionOrderId,
   })
 
   if (!programResult.ok) {
     return { handled: true, ok: false, error: programResult.error }
   }
 
-  const nutritionResult = await activateNutritionOrder(supabase, {
-    nutritionOrderId,
-    paymentRef: session.id,
-    paymentMethod: 'stripe',
-  })
+  const nutritionOrder = programResult.nutritionOrders.find(
+    (order) => order.id === nutritionOrderId,
+  )
 
-  if (!nutritionResult.ok) {
-    return { handled: true, ok: false, error: nutritionResult.error }
-  }
-
-  if (!programResult.already && programResult.purchase) {
+  if (
+    programResult.purchase &&
+    (!programResult.purchase.access_email_sent_at ||
+      programResult.purchase.delivery_status === 'failed')
+  ) {
     try {
-      await sendProgramAccessFlowEmail(programResult.purchase, locale)
+      await sendProgramAccessFlowEmail(programResult.purchase, locale, {
+        supabase,
+      })
       await supabase
         .from('moove_program_purchases')
         .update({
@@ -79,15 +102,25 @@ async function handleProgramWithNutritionCheckout(supabase, session) {
         })
         .eq('id', purchaseId)
     } catch (error) {
-      console.error('stripe webhook bundled program email failed:', { purchaseId, error })
+      console.error('stripe webhook bundled program email failed:', {
+        purchaseId,
+        error,
+      })
     }
   }
 
-  if (!nutritionResult.already && nutritionResult.order) {
+  if (
+    nutritionOrder &&
+    (!nutritionOrder.plan_email_sent_at ||
+      nutritionOrder.delivery_status === 'failed')
+  ) {
     try {
-      await generateAndSendNutritionPlan(supabase, nutritionResult.order, locale)
+      await generateAndSendNutritionPlan(supabase, nutritionOrder, locale)
     } catch (error) {
-      console.error('stripe webhook bundled nutrition plan failed:', { nutritionOrderId, error })
+      console.error('stripe webhook bundled nutrition plan failed:', {
+        nutritionOrderId,
+        error,
+      })
     }
   }
 
@@ -111,9 +144,13 @@ async function handleMooveProgramCheckout(supabase, session) {
     return { handled: true, ok: false, error: result.error }
   }
 
-  if (!result.already && result.purchase) {
+  if (
+    result.purchase &&
+    (!result.purchase.access_email_sent_at ||
+      result.purchase.delivery_status === 'failed')
+  ) {
     try {
-      await sendProgramAccessFlowEmail(result.purchase, locale)
+      await sendProgramAccessFlowEmail(result.purchase, locale, { supabase })
       await supabase
         .from('moove_program_purchases')
         .update({
@@ -133,13 +170,16 @@ async function handleMooveProgramCheckout(supabase, session) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'method_not_allowed' })
+  if (req.method !== 'POST')
+    return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
   const secret = process.env.STRIPE_WEBHOOK_SECRET
   const rawBody = await readRawBody(req)
   const signature = req.headers['stripe-signature']
 
-  if (secret && !verifyStripeSignature(rawBody, signature, secret)) {
+  if (!secret)
+    return json(res, 503, { ok: false, error: 'stripe_not_configured' })
+  if (!verifyStripeSignature(rawBody, signature, secret)) {
     return json(res, 400, { ok: false, error: 'invalid_signature' })
   }
 
@@ -160,7 +200,10 @@ export default async function handler(req, res) {
   const productType = session?.metadata?.product_type
 
   if (productType === 'program_with_nutrition') {
-    const bundledResult = await handleProgramWithNutritionCheckout(supabase, session)
+    const bundledResult = await handleProgramWithNutritionCheckout(
+      supabase,
+      session,
+    )
     if (bundledResult.handled) {
       if (!bundledResult.ok) {
         return json(res, 500, { ok: false, error: bundledResult.error })
@@ -187,7 +230,11 @@ export default async function handler(req, res) {
   const userPackageId = session?.metadata?.user_package_id
 
   if (!bookingId || !userPackageId) {
-    return json(res, 200, { ok: true, skipped: true, reason: 'missing_metadata' })
+    return json(res, 200, {
+      ok: true,
+      skipped: true,
+      reason: 'missing_metadata',
+    })
   }
 
   const result = await activatePackagePayment(supabase, {
@@ -195,6 +242,9 @@ export default async function handler(req, res) {
     userPackageId,
     paymentRef: session.id,
     paymentMethod: 'stripe',
+    paidAt: Number.isFinite(event.created)
+      ? new Date(event.created * 1000).toISOString()
+      : null,
   })
 
   if (!result.ok) {
@@ -202,7 +252,10 @@ export default async function handler(req, res) {
   }
 
   if (!result.already) {
-    const emailResult = await sendPaidConfirmationEmail(bookingId, {
+    const sendEmail = result.credit_only
+      ? sendLatePaymentEmails
+      : sendPaidConfirmationEmail
+    const emailResult = await sendEmail(bookingId, {
       locale: session?.metadata?.locale,
     })
     if (!emailResult.ok) {

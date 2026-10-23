@@ -59,6 +59,22 @@ export type AdminMemberPackage = {
   sessions_total: number
   sessions_used: number
   created_at: string
+  period_end: string | null
+  base_sessions: number
+  bonus_sessions: number
+  session_adjustment: number
+  payment_method: string | null
+  paid_at: string | null
+  adjustments?: Array<{
+    id: string
+    actor_id: string | null
+    actor_name: string | null
+    delta: number
+    reason: string
+    total_before: number
+    total_after: number
+    created_at: string
+  }>
 }
 
 export type AdminMemberBooking = {
@@ -76,9 +92,19 @@ export type AdminPayment = {
   created_at: string
   user_id: string
   user_package_id: string | null
-  profiles: { full_name: string | null; email: string; phone: string | null } | null
+  amount_eur: number | null
+  profiles: {
+    full_name: string | null
+    email: string
+    phone: string | null
+  } | null
   slot: { start_at: string; end_at: string } | null
-  user_package: { id: string; status: string; sessions_total: number } | null
+  user_package: {
+    id: string
+    status: string
+    sessions_total: number
+    period_end: string | null
+  } | null
 }
 
 export type AdminOverviewStats = {
@@ -86,6 +112,25 @@ export type AdminOverviewStats = {
   pendingPayments: number
   activePackages: number
   weekBookings: number
+  programPending: number
+  nutritionPending: number
+}
+
+export type AdminBookingFilters = {
+  status?: string
+  member?: string
+  booking?: string
+  from?: string
+  to?: string
+  search?: string
+  page?: number
+  pageSize?: number
+}
+export type AdminBookingPage = {
+  bookings: AdminBookingRow[]
+  total: number
+  page: number
+  pageSize: number
 }
 
 export type AdminBookingRow = {
@@ -94,6 +139,7 @@ export type AdminBookingRow = {
   status: string
   created_at: string
   user_id: string
+  cancelled_reason?: 'payment_expired' | 'payment_credited' | null
   profiles?: { full_name: string | null; email: string } | null
   slot?: { start_at: string; end_at: string } | null
 }
@@ -116,14 +162,25 @@ async function parseApiJson(res: Response) {
   try {
     return JSON.parse(text) as Record<string, unknown>
   } catch {
-    throw new Error(text.startsWith('A server error') ? 'server_config_error' : 'invalid_api_response')
+    throw new Error(
+      text.startsWith('A server error')
+        ? 'server_config_error'
+        : 'invalid_api_response',
+    )
   }
 }
 
-export async function fetchPosingSlots(from: string, to: string): Promise<PosingSlot[]> {
-  const res = await fetch(`/api/posing/slots?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)
+export async function fetchPosingSlots(
+  from: string,
+  to: string,
+  plan = 'single',
+): Promise<PosingSlot[]> {
+  const res = await fetch(
+    `/api/posing/slots?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&plan=${encodeURIComponent(plan)}`,
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'slots_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'slots_fetch_failed'))
   return data.slots as PosingSlot[]
 }
 
@@ -140,7 +197,8 @@ export async function createPosingBooking(
     body: JSON.stringify(payload),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'booking_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'booking_failed'))
   return data as {
     ok: boolean
     booking_id?: string
@@ -156,7 +214,8 @@ export async function fetchPosingMe(accessToken: string) {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'me_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'me_fetch_failed'))
   return data as {
     profile: { full_name: string | null; email: string; role: string }
     isAdmin: boolean
@@ -164,6 +223,7 @@ export async function fetchPosingMe(accessToken: string) {
     bookings: PosingBooking[]
     september_loyalty_eligible?: boolean
     october_new_member_eligible?: boolean
+    bonus_by_plan: Record<string, number>
   }
 }
 
@@ -196,7 +256,8 @@ export async function adminCreateSlot(
     body: JSON.stringify({ start_at, end_at, is_blocked }),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_create_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'admin_slot_create_failed'))
   return data.slot
 }
 
@@ -214,25 +275,94 @@ export async function adminUpdateSlot(
     body: JSON.stringify({ id, ...patch }),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_update_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'admin_slot_update_failed'))
   return data.slot
 }
 
 export async function adminDeleteSlot(accessToken: string, id: string) {
-  const res = await fetch(`/api/posing/admin/slots?id=${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
+  const res = await fetch(
+    `/api/posing/admin/slots?id=${encodeURIComponent(id)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'admin_slot_delete_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'admin_slot_delete_failed'))
 }
 
-export async function fetchAdminCalendarSettings(accessToken: string): Promise<CalendarSettings> {
+export async function adminBatchSlots(
+  accessToken: string,
+  action: 'create' | 'archive',
+  slots: Array<{ id?: string; start_at?: string; end_at?: string }>,
+) {
+  const res = await fetch('/api/posing/admin/slots', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ action, slots }),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'operation_failed'))
+  return data
+}
+
+export async function adminAdjustSessions(
+  accessToken: string,
+  packageId: string,
+  delta: number,
+  reason: string,
+  requestId: string,
+) {
+  const res = await fetch('/api/posing/admin/packages', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      package_id: packageId,
+      delta,
+      reason,
+      request_id: requestId,
+    }),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'operation_failed'))
+}
+
+export async function adminCompleteBooking(
+  accessToken: string,
+  bookingId: string,
+) {
+  const res = await fetch('/api/posing/admin/bookings', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ booking_id: bookingId }),
+  })
+  const data = await parseApiJson(res)
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'operation_failed'))
+}
+
+export async function fetchAdminCalendarSettings(
+  accessToken: string,
+): Promise<CalendarSettings> {
   const res = await fetch('/api/posing/admin/calendar-settings', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'settings_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'settings_fetch_failed'))
   return normalizeCalendarSettings(data.settings)
 }
 
@@ -249,26 +379,34 @@ export async function saveAdminCalendarSettings(
     body: JSON.stringify(payload),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'settings_save_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'settings_save_failed'))
   return normalizeCalendarSettings(data.settings)
 }
 
-export async function fetchAdminMembers(accessToken: string): Promise<AdminMember[]> {
+export async function fetchAdminMembers(
+  accessToken: string,
+): Promise<AdminMember[]> {
   const res = await fetch('/api/posing/admin/members', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'members_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'members_fetch_failed'))
   return data.members as AdminMember[]
 }
 
 export async function adminDeleteMember(accessToken: string, memberId: string) {
-  const res = await fetch(`/api/posing/admin/members?id=${encodeURIComponent(memberId)}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
+  const res = await fetch(
+    `/api/posing/admin/members?id=${encodeURIComponent(memberId)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'delete_member_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'delete_member_failed'))
 }
 
 export async function adminUpsertMemberPrice(
@@ -284,10 +422,16 @@ export async function adminUpsertMemberPrice(
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ user_id: userId, plan_key: planKey, price_eur: priceEur, note }),
+    body: JSON.stringify({
+      user_id: userId,
+      plan_key: planKey,
+      price_eur: priceEur,
+      note,
+    }),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'price_save_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'price_save_failed'))
   return data.plan_price as AdminMemberPlanPrice
 }
 
@@ -304,18 +448,25 @@ export async function adminDeleteMemberPrice(
     },
   )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'price_delete_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'price_delete_failed'))
 }
 
-export async function cancelPosingBooking(accessToken: string, bookingId: string, locale: string) {
+export async function cancelPosingBooking(
+  accessToken: string,
+  bookingId: string,
+  locale: string,
+) {
   const res = await fetch(
     `/api/posing/bookings?id=${encodeURIComponent(bookingId)}&locale=${encodeURIComponent(locale)}`,
     {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  )
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'cancel_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'cancel_failed'))
   return data as { ok: boolean; already?: boolean }
 }
 
@@ -331,7 +482,9 @@ export async function downloadBookingCalendar(
     },
   )
   if (!res.ok) {
-    const data = await parseApiJson(res).catch(() => ({ error: 'calendar_download_failed' }))
+    const data = await parseApiJson(res).catch(() => ({
+      error: 'calendar_download_failed',
+    }))
     throw new Error(String(data.error ?? 'calendar_download_failed'))
   }
   const blob = await res.blob()
@@ -343,25 +496,34 @@ export async function downloadBookingCalendar(
   URL.revokeObjectURL(url)
 }
 
-export async function fetchAdminOverview(accessToken: string): Promise<AdminOverviewStats> {
+export async function fetchAdminOverview(
+  accessToken: string,
+): Promise<AdminOverviewStats> {
   const res = await fetch('/api/posing/admin/bookings?view=stats', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'overview_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'overview_fetch_failed'))
   return data.stats as AdminOverviewStats
 }
 
-export async function fetchAdminPayments(accessToken: string): Promise<AdminPayment[]> {
+export async function fetchAdminPayments(
+  accessToken: string,
+): Promise<AdminPayment[]> {
   const res = await fetch('/api/posing/admin/bookings?view=payments', {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'payments_fetch_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'payments_fetch_failed'))
   return data.payments as AdminPayment[]
 }
 
-export async function adminConfirmPayment(accessToken: string, bookingId: string) {
+export async function adminConfirmPayment(
+  accessToken: string,
+  bookingId: string,
+) {
   const res = await fetch('/api/posing/admin/bookings', {
     method: 'POST',
     headers: {
@@ -371,8 +533,9 @@ export async function adminConfirmPayment(accessToken: string, bookingId: string
     body: JSON.stringify({ booking_id: bookingId }),
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'payment_confirm_failed'))
-  return data as { ok: boolean; already?: boolean }
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'payment_confirm_failed'))
+  return data as { ok: boolean; already?: boolean; delivery_failed?: boolean }
 }
 
 export async function adminCancelBooking(
@@ -386,34 +549,41 @@ export async function adminCancelBooking(
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'booking_cancel_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'booking_cancel_failed'))
   return data as { ok: boolean; already?: boolean }
 }
 
-export async function adminCancelPackage(accessToken: string, packageId: string, locale: string) {
+export async function adminCancelPackage(
+  accessToken: string,
+  packageId: string,
+  locale: string,
+) {
   const params = new URLSearchParams({ id: packageId, locale })
   const res = await fetch(`/api/posing/admin/packages?${params.toString()}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'package_cancel_failed'))
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'package_cancel_failed'))
   return data as { ok: boolean; already?: boolean; cancelledBookings?: number }
 }
 
 export async function fetchAdminBookings(
   accessToken: string,
-  status?: string,
-): Promise<AdminBookingRow[]> {
-  const url = status
-    ? `/api/posing/admin/bookings?status=${encodeURIComponent(status)}`
-    : '/api/posing/admin/bookings'
-  const res = await fetch(url, {
+  filters: AdminBookingFilters = {},
+): Promise<AdminBookingPage> {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(filters))
+    if (value != null && value !== '') params.set(key, String(value))
+  const res = await fetch(`/api/posing/admin/bookings?${params}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   const data = await parseApiJson(res)
-  if (!res.ok || !data.ok) throw new Error(String(data.error ?? 'bookings_fetch_failed'))
-  return data.bookings as AdminBookingRow[]
+  if (!res.ok || !data.ok)
+    throw new Error(String(data.error ?? 'bookings_fetch_failed'))
+  return data as AdminBookingPage
 }
 
 export const posingPackageKeys = site.posing.packageKeys

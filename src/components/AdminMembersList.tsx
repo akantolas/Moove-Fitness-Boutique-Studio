@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { ProfileAvatar } from './ProfileAvatar'
 import { MemberCustomPrices } from './MemberCustomPrices'
-import type { AdminMember, AdminMemberBooking } from '../lib/posingApi'
+import type {
+  AdminMember,
+  AdminMemberBooking,
+  AdminMemberPackage,
+} from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { bookingStatusLabel, planKeyLabel } from '../lib/posingLabels'
 import { translateAdminError } from '../hooks/usePosingAdminPanel'
 import { ConfirmDialog } from './ConfirmDialog'
 import type { PosingPlanKey } from '../site'
+import { AdminSessionAdjustment } from './AdminSessionAdjustment'
+import { useCurrentTime } from '../hooks/useCurrentTime'
 
 type AdminMembersListProps = {
   members: AdminMember[]
@@ -15,10 +21,24 @@ type AdminMembersListProps = {
   currentUserId: string
   busy: boolean
   onDeleteMember: (memberId: string) => Promise<void>
-  onSaveMemberPrice: (userId: string, planKey: PosingPlanKey, priceEur: number) => Promise<void>
+  onSaveMemberPrice: (
+    userId: string,
+    planKey: PosingPlanKey,
+    priceEur: number,
+  ) => Promise<void>
   onRemoveMemberPrice: (userId: string, planKey: PosingPlanKey) => Promise<void>
   onCancelPackage?: (packageId: string) => Promise<void>
   onCancelBooking?: (bookingId: string) => Promise<void>
+  onAdjustSessions: (
+    packageId: string,
+    delta: number,
+    reason: string,
+    requestId: string,
+  ) => Promise<void>
+  onViewBookings: (memberId: string) => void
+  onlyActivePackages?: boolean
+  clientsOnly?: boolean
+  onClearFilter: () => void
 }
 
 function formatMemberDate(iso: string, locale: Locale) {
@@ -50,6 +70,56 @@ function canCancelPackage(status: string) {
   return status === 'pending_payment' || status === 'active'
 }
 
+type Translate = (key: string, vars?: Record<string, string | number>) => string
+
+/** Picks the `…One` variant for a count of 1, so labels never read "1 sessions". */
+function countLabel(t: Translate, key: string, count: number) {
+  return count === 1 ? t(`${key}One`) : t(key, { count })
+}
+
+const PACKAGE_STATUS_ORDER: Record<string, number> = {
+  active: 0,
+  pending_payment: 1,
+  expired: 2,
+  cancelled: 3,
+}
+
+/** Usable packages first, then history, newest first within each group. */
+function sortMemberPackages(packages: AdminMemberPackage[]) {
+  return [...packages].sort(
+    (a, b) =>
+      (PACKAGE_STATUS_ORDER[a.status] ?? 9) -
+        (PACKAGE_STATUS_ORDER[b.status] ?? 9) ||
+      Date.parse(b.created_at) - Date.parse(a.created_at),
+  )
+}
+
+/** What a package means for the member now: credit left, awaiting payment, or history. */
+function packageBalanceLine(pkg: AdminMemberPackage, t: Translate) {
+  const unused = Math.max(0, pkg.sessions_total - pkg.sessions_used)
+  if (pkg.status === 'active') {
+    return t('posing.admin.packageLineActive', {
+      remaining: unused,
+      total: pkg.sessions_total,
+    })
+  }
+  if (pkg.status === 'pending_payment') return t('posing.admin.packageLinePending')
+  if (!pkg.paid_at) return t('posing.admin.packageLineUnpaid')
+  const used = t('posing.admin.packageLineUsed', {
+    used: pkg.sessions_used,
+    total: pkg.sessions_total,
+  })
+  return unused > 0
+    ? `${used} · ${countLabel(t, 'posing.admin.packageLineUnused', unused)}`
+    : used
+}
+
+function paymentMethodLabel(method: string | null, t: Translate) {
+  if (method === 'stripe') return t('posing.admin.paymentMethodStripe')
+  if (method === 'manual') return t('posing.admin.paymentMethodManual')
+  return '—'
+}
+
 function canCancelMemberBooking(booking: AdminMemberBooking) {
   if (booking.status === 'pending_payment') return true
   if (booking.status !== 'confirmed') return false
@@ -67,8 +137,14 @@ export function AdminMembersList({
   onRemoveMemberPrice,
   onCancelPackage,
   onCancelBooking,
+  onAdjustSessions,
+  onViewBookings,
+  onlyActivePackages = false,
+  clientsOnly = false,
+  onClearFilter,
 }: AdminMembersListProps) {
   const { t, dictionary } = useTranslation()
+  const now = useCurrentTime()
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [cancelPackageId, setCancelPackageId] = useState<string | null>(null)
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null)
@@ -76,8 +152,36 @@ export function AdminMembersList({
   const [deleteError, setDeleteError] = useState('')
   const [actionError, setActionError] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [cancellingPackageId, setCancellingPackageId] = useState<string | null>(null)
-  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(null)
+  const [cancellingPackageId, setCancellingPackageId] = useState<string | null>(
+    null,
+  )
+  const [cancellingBookingId, setCancellingBookingId] = useState<string | null>(
+    null,
+  )
+  const [search, setSearch] = useState('')
+  const packageToCancel = cancelPackageId
+    ? members
+        .flatMap((member) => member.user_packages ?? [])
+        .find((pkg) => pkg.id === cancelPackageId)
+    : undefined
+  const creditLostOnCancel =
+    packageToCancel?.status === 'active' && packageToCancel.paid_at
+      ? Math.max(0, packageToCancel.sessions_total - packageToCancel.sessions_used)
+      : 0
+  const visibleMembers = members.filter(
+    (member) =>
+      (!clientsOnly || member.role !== 'admin') &&
+      (!onlyActivePackages ||
+        member.user_packages?.some(
+          (p) =>
+            p.status === 'active' &&
+            p.period_end &&
+            Date.parse(p.period_end) > now,
+        )) &&
+      `${member.full_name ?? ''} ${member.email}`
+        .toLocaleLowerCase()
+        .includes(search.trim().toLocaleLowerCase()),
+  )
 
   async function handleDelete(memberId: string) {
     setDeleteError('')
@@ -127,12 +231,42 @@ export function AdminMembersList({
     <section>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-white">{t('posing.admin.membersTitle')}</h2>
-          <p className="mt-1 text-sm text-white/50">{t('posing.admin.membersBody')}</p>
+          <h2 className="text-lg font-semibold text-white">
+            {t('posing.admin.membersTitle')}
+          </h2>
+          <p className="mt-1 text-sm text-white/50">
+            {t('posing.admin.membersBody')}
+          </p>
         </div>
         <p className="text-xs text-white/40">
-          {t('posing.admin.membersCount', { count: members.length })}
+          {t('posing.admin.membersCount', { count: visibleMembers.length })}
         </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <label className="min-w-0 flex-1 text-xs text-white/60">
+          {t('posing.admin.searchMembers')}
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2.5 text-sm text-white"
+          />
+        </label>
+        {onlyActivePackages || clientsOnly ? (
+          <button
+            type="button"
+            onClick={onClearFilter}
+            className="rounded-full border border-fuchsia-200/25 px-4 py-2.5 text-xs text-fuchsia-100"
+          >
+            {t(
+              onlyActivePackages
+                ? 'posing.admin.activePackagesFilter'
+                : 'posing.admin.clientsFilter',
+            )}{' '}
+            · {t('posing.admin.clearFilter')}
+          </button>
+        ) : null}
       </div>
 
       {deleteError ? (
@@ -147,18 +281,21 @@ export function AdminMembersList({
         </p>
       ) : null}
 
-      {members.length === 0 ? (
+      {visibleMembers.length === 0 ? (
         <p className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/50">
           {t('posing.admin.noMembers')}
         </p>
       ) : (
         <div className="mt-4 space-y-3">
-          {members.map((member) => {
+          {visibleMembers.map((member) => {
             const isSelf = member.id === currentUserId
             const isAdmin = member.role === 'admin'
             const canDelete = !isSelf && !isAdmin
             const isExpanded = expandedId === member.id
-            const activePackages = (member.user_packages ?? []).filter((p) => p.status === 'active')
+            const packages = sortMemberPackages(member.user_packages ?? [])
+            const activePackages = packages.filter(
+              (p) => p.status === 'active',
+            )
             const pendingPackages = (member.user_packages ?? []).filter(
               (p) => p.status === 'pending_payment',
             )
@@ -194,13 +331,21 @@ export function AdminMembersList({
                           </span>
                         ) : null}
                       </p>
-                      <p className="truncate text-sm text-white/55">{member.email}</p>
+                      <p className="truncate text-sm text-white/55">
+                        {member.email}
+                      </p>
                       <p className="mt-1 text-xs text-white/40">
                         {activePackages.length > 0
-                          ? t('posing.admin.memberActivePackages', { count: activePackages.length })
+                          ? countLabel(
+                              t,
+                              'posing.admin.memberActivePackages',
+                              activePackages.length,
+                            )
                           : pendingPackages.length > 0
-                            ? t('posing.admin.memberPendingPackages', { count: pendingPackages.length })
-                            : t('posing.admin.memberNoPackages')}
+                            ? t('posing.admin.memberPendingPackages')
+                            : packages.length > 0
+                              ? t('posing.admin.memberNoActivePackage')
+                              : t('posing.admin.memberNoPackages')}
                       </p>
                     </div>
                   </button>
@@ -220,7 +365,9 @@ export function AdminMembersList({
                     ) : null}
                     <button
                       type="button"
-                      onClick={() => setExpandedId(isExpanded ? null : member.id)}
+                      onClick={() =>
+                        setExpandedId(isExpanded ? null : member.id)
+                      }
                       className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/60 hover:bg-white/5"
                     >
                       {isExpanded ? '−' : '+'}
@@ -235,11 +382,15 @@ export function AdminMembersList({
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
                           {t('posing.account.phone')}
                         </p>
-                        <p className="mt-1 text-sm text-white/70">{member.phone ?? '—'}</p>
+                        <p className="mt-1 text-sm text-white/70">
+                          {member.phone ?? '—'}
+                        </p>
                         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
                           {t('posing.account.division')}
                         </p>
-                        <p className="mt-1 text-sm text-white/70">{member.division ?? '—'}</p>
+                        <p className="mt-1 text-sm text-white/70">
+                          {member.division ?? '—'}
+                        </p>
                         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
                           {t('posing.admin.memberSince')}
                         </p>
@@ -249,13 +400,15 @@ export function AdminMembersList({
                       </div>
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
-                          {t('posing.account.activePackages')}
+                          {t('posing.admin.memberPackages')}
                         </p>
-                        {(member.user_packages ?? []).length === 0 ? (
-                          <p className="mt-2 text-sm text-white/50">{t('posing.admin.memberNoPackages')}</p>
+                        {packages.length === 0 ? (
+                          <p className="mt-2 text-sm text-white/50">
+                            {t('posing.admin.memberNoPackages')}
+                          </p>
                         ) : (
                           <ul className="mt-2 space-y-2">
-                            {(member.user_packages ?? []).map((pkg) => (
+                            {packages.map((pkg) => (
                               <li
                                 key={pkg.id}
                                 className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
@@ -265,22 +418,57 @@ export function AdminMembersList({
                                     <p className="text-white">
                                       {planKeyLabel(
                                         pkg.plan_key,
-                                        (i) => dictionary.posing.pricing.packages[i]?.name,
+                                        (i) =>
+                                          dictionary.posing.pricing.packages[i]
+                                            ?.name,
                                         t,
                                       )}
                                     </p>
-                                    <p className="mt-0.5 text-xs text-white/50">
-                                      {packageStatusLabel(pkg.status, t)} ·{' '}
-                                      {t('posing.account.remaining', {
-                                        remaining: Math.max(0, pkg.sessions_total - pkg.sessions_used),
-                                        total: pkg.sessions_total,
+                                    {pkg.period_end &&
+                                    (pkg.status !== 'cancelled' ||
+                                      pkg.paid_at) ? (
+                                      <p className="mt-1 text-xs text-white/45">
+                                        {t('posing.admin.packageExpiry', {
+                                          date: formatMemberDate(
+                                            pkg.period_end,
+                                            locale,
+                                          ),
+                                        })}
+                                      </p>
+                                    ) : null}
+                                    <p className="mt-1 text-xs text-fuchsia-100/65">
+                                      {t('posing.admin.packageBreakdown', {
+                                        base: pkg.base_sessions,
+                                        bonus: pkg.bonus_sessions,
+                                        adjustment: pkg.session_adjustment,
                                       })}
                                     </p>
+                                    {pkg.paid_at ? (
+                                      <p className="mt-0.5 text-xs text-white/45">
+                                        {t('posing.admin.packagePaid', {
+                                          date: formatMemberDate(
+                                            pkg.paid_at,
+                                            locale,
+                                          ),
+                                          method: paymentMethodLabel(
+                                            pkg.payment_method,
+                                            t,
+                                          ),
+                                        })}
+                                      </p>
+                                    ) : null}
+                                    <p className="mt-0.5 text-xs text-white/50">
+                                      {packageStatusLabel(pkg.status, t)} ·{' '}
+                                      {packageBalanceLine(pkg, t)}
+                                    </p>
                                   </div>
-                                  {canCancelPackage(pkg.status) && onCancelPackage ? (
+                                  {canCancelPackage(pkg.status) &&
+                                  onCancelPackage ? (
                                     <button
                                       type="button"
-                                      disabled={busy || cancellingPackageId === pkg.id}
+                                      disabled={
+                                        busy || cancellingPackageId === pkg.id
+                                      }
                                       onClick={() => setCancelPackageId(pkg.id)}
                                       className="shrink-0 rounded-full border border-rose-300/30 bg-rose-400/10 px-3 py-1 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/15 disabled:opacity-50"
                                     >
@@ -290,10 +478,22 @@ export function AdminMembersList({
                                     </button>
                                   ) : null}
                                 </div>
+                                <AdminSessionAdjustment
+                                  pkg={pkg}
+                                  busy={busy}
+                                  onAdjust={onAdjustSessions}
+                                />
                               </li>
                             ))}
                           </ul>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => onViewBookings(member.id)}
+                          className="mt-4 text-xs font-semibold text-fuchsia-200 hover:underline"
+                        >
+                          {t('posing.admin.memberAllBookings')}
+                        </button>
                         {(member.recent_bookings ?? []).length > 0 ? (
                           <>
                             <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
@@ -307,15 +507,24 @@ export function AdminMembersList({
                                 >
                                   <span>
                                     {booking.slot?.start_at
-                                      ? formatSlot(booking.slot.start_at, locale)
+                                      ? formatSlot(
+                                          booking.slot.start_at,
+                                          locale,
+                                        )
                                       : '—'}{' '}
                                     · {bookingStatusLabel(booking.status, t)}
                                   </span>
-                                  {canCancelMemberBooking(booking) && onCancelBooking ? (
+                                  {canCancelMemberBooking(booking) &&
+                                  onCancelBooking ? (
                                     <button
                                       type="button"
-                                      disabled={busy || cancellingBookingId === booking.id}
-                                      onClick={() => setCancelBookingId(booking.id)}
+                                      disabled={
+                                        busy ||
+                                        cancellingBookingId === booking.id
+                                      }
+                                      onClick={() =>
+                                        setCancelBookingId(booking.id)
+                                      }
                                       className="shrink-0 rounded-full border border-rose-300/30 bg-rose-400/10 px-2.5 py-0.5 text-[10px] font-semibold text-rose-100 transition hover:bg-rose-400/15 disabled:opacity-50"
                                     >
                                       {cancellingBookingId === booking.id
@@ -334,8 +543,12 @@ export function AdminMembersList({
                       memberId={member.id}
                       planPrices={member.plan_prices ?? []}
                       busy={busy}
-                      onSave={(planKey, priceEur) => onSaveMemberPrice(member.id, planKey, priceEur)}
-                      onRemove={(planKey) => onRemoveMemberPrice(member.id, planKey)}
+                      onSave={(planKey, priceEur) =>
+                        onSaveMemberPrice(member.id, planKey, priceEur)
+                      }
+                      onRemove={(planKey) =>
+                        onRemoveMemberPrice(member.id, planKey)
+                      }
                     />
                   </div>
                 ) : null}
@@ -350,7 +563,9 @@ export function AdminMembersList({
         title={t('posing.admin.confirmDeleteMemberTitle')}
         body={t('posing.admin.confirmDeleteMemberBody')}
         confirmLabel={
-          deletingId ? t('posing.admin.deletingMember') : t('posing.admin.confirmDeleteMember')
+          deletingId
+            ? t('posing.admin.deletingMember')
+            : t('posing.admin.confirmDeleteMember')
         }
         cancelLabel={t('posing.admin.cancelDeleteMember')}
         busy={deletingId !== null}
@@ -364,7 +579,15 @@ export function AdminMembersList({
       <ConfirmDialog
         open={cancelPackageId !== null}
         title={t('posing.admin.confirmCancelPackageTitle')}
-        body={t('posing.admin.confirmCancelPackageBody')}
+        body={
+          creditLostOnCancel > 0
+            ? `${t('posing.admin.confirmCancelPackageBody')} ${countLabel(
+                t,
+                'posing.admin.confirmCancelPaidPackageWarning',
+                creditLostOnCancel,
+              )}`
+            : t('posing.admin.confirmCancelPackageBody')
+        }
         confirmLabel={t('posing.admin.cancelPackage')}
         cancelLabel={t('posing.admin.cancelDeleteMember')}
         busy={cancellingPackageId !== null}

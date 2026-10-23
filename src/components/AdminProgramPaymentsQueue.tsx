@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import type { ProgramPaidPurchase, ProgramPurchasePayment } from '../lib/programsApi'
+import type {
+  ProgramPaidPurchase,
+  ProgramPurchasePayment,
+} from '../lib/programsApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { ConfirmDialog } from './ConfirmDialog'
+import { AdminPagination } from './AdminPagination'
+import { DeliveryStatus } from './DeliveryStatus'
 
 type AdminProgramPaymentsQueueProps = {
   payments: ProgramPurchasePayment[]
@@ -11,6 +16,9 @@ type AdminProgramPaymentsQueueProps = {
   busy: boolean
   onConfirm: (purchaseId: string) => Promise<void>
   onResendAccess: (purchaseId: string) => Promise<void>
+  page: number
+  total: number
+  onPageChange: (page: number) => void
 }
 
 function formatDateTime(iso: string, locale: Locale) {
@@ -39,6 +47,9 @@ export function AdminProgramPaymentsQueue({
   busy,
   onConfirm,
   onResendAccess,
+  page,
+  total,
+  onPageChange,
 }: AdminProgramPaymentsQueueProps) {
   const { t } = useTranslation()
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -80,10 +91,14 @@ export function AdminProgramPaymentsQueue({
       ) : null}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-white">{t('programs.admin.pendingTitle')}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-white">
+          {t('programs.admin.pendingTitle')}
+        </h2>
         {payments.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center">
-            <p className="text-sm text-white/50">{t('programs.admin.noPending')}</p>
+            <p className="text-sm text-white/50">
+              {t('programs.admin.noPending')}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -95,12 +110,26 @@ export function AdminProgramPaymentsQueue({
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-medium text-white">{payment.email}</p>
-                    <p className="mt-1 text-sm text-white/70">{payment.program_name}</p>
+                    <p className="mt-1 text-sm text-white/70">
+                      {payment.program_name}
+                    </p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/60">
-                      <span>{formatPrice(payment.amount_eur, locale)}</span>
-                      <span>· {formatDateTime(payment.created_at, locale)}</span>
+                      <span>
+                        {formatPrice(
+                          payment.total_amount_eur ?? payment.amount_eur,
+                          locale,
+                        )}
+                      </span>
+                      <span>
+                        · {formatDateTime(payment.created_at, locale)}
+                      </span>
                       <span>· Ref {payment.purchase_ref}</span>
                     </div>
+                    {payment.includes_nutrition ? (
+                      <p className="mt-2 text-xs text-fuchsia-200">
+                        {t('posing.admin.bundleIncludesNutrition')}
+                      </p>
+                    ) : null}
                   </div>
                   <button
                     type="button"
@@ -120,10 +149,14 @@ export function AdminProgramPaymentsQueue({
       </section>
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-white">{t('programs.admin.recentPaidTitle')}</h2>
+        <h2 className="mb-4 text-lg font-semibold text-white">
+          {t('programs.admin.recentPaidTitle')}
+        </h2>
         {paidPurchases.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center">
-            <p className="text-sm text-white/50">{t('programs.admin.noPaid')}</p>
+            <p className="text-sm text-white/50">
+              {t('programs.admin.noPaid')}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -135,13 +168,20 @@ export function AdminProgramPaymentsQueue({
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-medium text-white">{purchase.email}</p>
-                    <p className="mt-1 text-sm text-white/70">{purchase.program_name}</p>
+                    <p className="mt-1 text-sm text-white/70">
+                      {purchase.program_name}
+                    </p>
                     <div className="mt-2 flex flex-wrap gap-2 text-xs text-white/60">
                       <span>{formatPrice(purchase.amount_eur, locale)}</span>
-                      <span>· {formatDateTime(purchase.created_at, locale)}</span>
+                      <span>
+                        · {formatDateTime(purchase.created_at, locale)}
+                      </span>
                       <span>· Ref {purchase.purchase_ref}</span>
-                      {purchase.payment_method ? <span>· {purchase.payment_method}</span> : null}
+                      {purchase.payment_method ? (
+                        <span>· {purchase.payment_method}</span>
+                      ) : null}
                     </div>
+                    <DeliveryStatus status={purchase.delivery_status} />
                   </div>
                   <button
                     type="button"
@@ -160,10 +200,21 @@ export function AdminProgramPaymentsQueue({
         )}
       </section>
 
+      <AdminPagination
+        page={page}
+        total={total}
+        busy={busy}
+        onChange={onPageChange}
+      />
+
       <ConfirmDialog
         open={confirmId !== null}
         title={t('posing.admin.confirmPaymentTitle')}
-        body={t('programs.admin.confirmBody')}
+        body={t(
+          payments.find((p) => p.id === confirmId)?.includes_nutrition
+            ? 'posing.admin.paidBundleConfirmation'
+            : 'programs.admin.confirmBody',
+        )}
         confirmLabel={t('posing.admin.confirmPayment')}
         cancelLabel={t('posing.admin.cancelDeleteMember')}
         busy={confirmingId !== null}

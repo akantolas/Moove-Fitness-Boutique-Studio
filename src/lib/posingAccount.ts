@@ -23,7 +23,8 @@ const AVATAR_BUCKET = 'posing-avatars'
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
-const profileSelectBase = 'full_name, email, phone, division, notes, role, created_at'
+const profileSelectBase =
+  'full_name, email, phone, division, notes, role, created_at'
 const profileSelect = `${profileSelectBase}, avatar_url`
 
 function isMissingAvatarColumn(message: string) {
@@ -32,10 +33,17 @@ function isMissingAvatarColumn(message: string) {
 
 async function fetchProfileRow(userId: string) {
   const supabase = createSupabaseClient()
-  const full = await supabase.from('profiles').select(profileSelect).eq('id', userId).maybeSingle()
+  const full = await supabase
+    .from('profiles')
+    .select(profileSelect)
+    .eq('id', userId)
+    .maybeSingle()
 
   if (!full.error) {
-    return { profile: full.data as PosingProfile | null, profileError: null as string | null }
+    return {
+      profile: full.data as PosingProfile | null,
+      profileError: null as string | null,
+    }
   }
 
   if (isMissingAvatarColumn(full.error.message)) {
@@ -60,7 +68,11 @@ async function selectProfileAfterWrite(
   supabase: ReturnType<typeof createSupabaseClient>,
   userId: string,
 ) {
-  const full = await supabase.from('profiles').select(profileSelect).eq('id', userId).maybeSingle()
+  const full = await supabase
+    .from('profiles')
+    .select(profileSelect)
+    .eq('id', userId)
+    .maybeSingle()
   if (!full.error && full.data) return full.data as PosingProfile
 
   if (full.error && isMissingAvatarColumn(full.error.message)) {
@@ -125,7 +137,10 @@ function resizeImageToAvatar(file: File): Promise<Blob> {
   })
 }
 
-export async function uploadPosingAvatar(userId: string, file: File): Promise<string> {
+export async function uploadPosingAvatar(
+  userId: string,
+  file: File,
+): Promise<string> {
   if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
     throw new Error('avatar_invalid_type')
   }
@@ -187,12 +202,16 @@ export async function fetchPosingAccountData(userId: string) {
   const [packagesRes, bookingsRes, profileResult, isAdmin] = await Promise.all([
     supabase
       .from('user_packages')
-      .select('id, plan_key, sessions_total, sessions_used, status, period_start, period_end, created_at')
+      .select(
+        'id, plan_key, sessions_total, sessions_used, status, period_start, period_end, created_at',
+      )
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
     supabase
       .from('posing_bookings')
-      .select('id, plan_key, status, created_at, slot:availability_slots(start_at, end_at)')
+      .select(
+        'id, plan_key, status, created_at, slot:availability_slots(start_at, end_at)',
+      )
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
     fetchProfileRow(userId),
@@ -206,11 +225,17 @@ export async function fetchPosingAccountData(userId: string) {
 
   const packages: UserPackage[] = (packagesRes.data ?? []).map((p) => ({
     ...p,
+    status:
+      p.status === 'active' &&
+      p.period_end &&
+      Date.parse(p.period_end) <= Date.now()
+        ? 'expired'
+        : p.status,
     sessions_remaining: Math.max(0, p.sessions_total - p.sessions_used),
   }))
 
   const bookings: PosingBooking[] = (bookingsRes.data ?? []).map((row) => {
-    const slot = Array.isArray(row.slot) ? row.slot[0] ?? null : row.slot
+    const slot = Array.isArray(row.slot) ? (row.slot[0] ?? null) : row.slot
     return {
       id: row.id,
       plan_key: row.plan_key,
@@ -260,13 +285,18 @@ export async function updatePosingProfile(
   })
 
   if (insertError) {
-    throw new Error(insertError.message ?? updateError.message ?? 'profile_save_failed')
+    throw new Error(
+      insertError.message ?? updateError.message ?? 'profile_save_failed',
+    )
   }
 
   return selectProfileAfterWrite(supabase, userId)
 }
 
-export async function deletePosingAccount(accessToken: string, password: string) {
+export async function deletePosingAccount(
+  accessToken: string,
+  password: string,
+) {
   const res = await fetch('/api/posing/account/delete', {
     method: 'POST',
     headers: {
@@ -277,7 +307,7 @@ export async function deletePosingAccount(accessToken: string, password: string)
   })
 
   const text = await res.text()
-  let data: Record<string, unknown> = {}
+  let data: Record<string, unknown>
   try {
     data = JSON.parse(text) as Record<string, unknown>
   } catch {

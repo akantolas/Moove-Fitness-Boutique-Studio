@@ -1,16 +1,23 @@
 import {
   cors,
   ensureAdmin,
+  expirePendingPayments,
   getSupabaseAdmin,
   getUserFromRequest,
   json,
 } from '../_lib.js'
-import { isOctoberOfferActive, isSeptemberLoyaltyEligible, userIsNewPosingMember } from '../_offers.js'
+import {
+  computePosingBonusSessions,
+  isOctoberOfferActive,
+  isSeptemberLoyaltyEligible,
+  userIsNewPosingMember,
+} from '../_offers.js'
 
 export async function handleMe(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
-  if (req.method !== 'GET') return json(res, 405, { ok: false, error: 'method_not_allowed' })
+  if (req.method !== 'GET')
+    return json(res, 405, { ok: false, error: 'method_not_allowed' })
 
   try {
     const user = await getUserFromRequest(req)
@@ -18,11 +25,14 @@ export async function handleMe(req, res) {
 
     const supabase = getSupabaseAdmin()
     const isAdmin = await ensureAdmin(user)
+    await expirePendingPayments(supabase)
 
     const [packagesRes, bookingsRes, profileRes] = await Promise.all([
       supabase
         .from('user_packages')
-        .select('id, plan_key, sessions_total, sessions_used, status, period_start, period_end, created_at')
+        .select(
+          'id, plan_key, sessions_total, sessions_used, status, period_start, period_end, created_at',
+        )
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
       supabase
@@ -32,11 +42,21 @@ export async function handleMe(req, res) {
         )
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
-      supabase.from('profiles').select('full_name, email, role').eq('id', user.id).maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('full_name, email, role')
+        .eq('id', user.id)
+        .maybeSingle(),
     ])
 
     if (packagesRes.error || bookingsRes.error) {
-      return json(res, 500, { ok: false, error: packagesRes.error?.message ?? bookingsRes.error?.message ?? 'fetch_failed' })
+      return json(res, 500, {
+        ok: false,
+        error:
+          packagesRes.error?.message ??
+          bookingsRes.error?.message ??
+          'fetch_failed',
+      })
     }
 
     const packages = (packagesRes.data ?? []).map((p) => ({
@@ -57,6 +77,22 @@ export async function handleMe(req, res) {
       bookings: bookingsRes.data ?? [],
       september_loyalty_eligible: septemberLoyaltyEligible,
       october_new_member_eligible: isOctoberOfferActive() && isNewMember,
+      bonus_by_plan: Object.fromEntries(
+        [
+          'single',
+          'sapphire',
+          'ruby',
+          'diamond',
+          'ruby_july8',
+          'diamond_july8',
+        ].map((key) => [
+          key,
+          computePosingBonusSessions(key, {
+            enrolledInSeptemberOffer: septemberLoyaltyEligible,
+            isNewMember,
+          }),
+        ]),
+      ),
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'server_error'

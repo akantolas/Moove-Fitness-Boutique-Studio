@@ -45,8 +45,10 @@ export const el = {
     bookPosingShort: 'Κράτηση',
   },
   footer: {
-    studioBlurb: 'Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {{owner}}.',
-    posingBlurb: 'Online posing coaching για διαγωνισμούς bodybuilding — από την {{coach}}.',
+    studioBlurb:
+      'Pilates & Reformer studio στον Βόλο, υπό την καθοδήγηση της {{owner}}.',
+    posingBlurb:
+      'Online posing coaching για διαγωνισμούς bodybuilding — από την {{coach}}.',
     posingSubtitle: 'Η Ακαδημία Posing',
     backToStudio: '← Επιστροφή στο {{name}} studio',
     nav: 'Πλοήγηση',
@@ -108,7 +110,8 @@ export const el = {
   },
   about: {
     eyebrow: 'Σχετικά',
-    description: 'Ιδρύτρια του {{name}} · Γυμνάστρια · Δημιουργός της Move & Pose',
+    description:
+      'Ιδρύτρια του {{name}} · Γυμνάστρια · Δημιουργός της Move & Pose',
     experienceTitle: 'Βιογραφικό',
     paragraphs: [
       'Η Μάγδα Σαμαρά είναι απόφοιτος του Τμήματος Επιστήμης Φυσικής Αγωγής και Αθλητισμού (ΤΕΦΑΑ) του Πανεπιστημίου Θεσσαλίας και ιδρύτρια του Moove Fitness Boutique Studio στον Βόλο. Διαθέτει πολυετή εμπειρία στον χώρο της άσκησης και της ευεξίας, έχοντας εκπαιδεύσει εκατοντάδες ασκούμενους μέσα από εξατομικευμένες και ομαδικές προπονήσεις.',
@@ -133,7 +136,8 @@ export const el = {
   contact: {
     eyebrow: 'Επικοινωνία',
     title: 'Πού βρισκόμαστε',
-    description: 'Για κράτηση πήγαινε online. Για οτιδήποτε άλλο, γράψε ή πάρε τηλέφωνο.',
+    description:
+      'Για κράτηση πήγαινε online. Για οτιδήποτε άλλο, γράψε ή πάρε τηλέφωνο.',
     detailsTitle: 'Στοιχεία επικοινωνίας',
     address: 'Διεύθυνση',
     phone: 'Τηλέφωνο',
@@ -144,19 +148,22 @@ export const el = {
     sent: "Το πήραμε! Θα σ' απαντήσουμε το συντομότερο δυνατό.",
     sending: 'Αποστολή…',
     sendError: 'Δεν στάλθηκε το μήνυμα. Δοκίμασε ξανά ή πάρε τηλέφωνο.',
-    sendUnavailable: 'Η αποστολή δεν είναι διαθέσιμη αυτή τη στιγμή. Πάρε τηλέφωνο ή γράψε στο info@moovefitness.gr.',
+    sendUnavailable:
+      'Η αποστολή δεν είναι διαθέσιμη αυτή τη στιγμή. Πάρε τηλέφωνο ή γράψε στο info@moovefitness.gr.',
     name: 'Ονοματεπώνυμο',
     namePlaceholder: 'π.χ. Μαρία Παπαδοπούλου',
     emailPlaceholder: 'το email σου',
     message: 'Μήνυμα',
     messagePlaceholder: 'Γράψε εδώ ό,τι θες να ρωτήσεις...',
-    consentBefore: 'Συμφωνώ με την επεξεργασία των στοιχείων μου για απάντηση στο αίτημά μου, σύμφωνα με την',
+    consentBefore:
+      'Συμφωνώ με την επεξεργασία των στοιχείων μου για απάντηση στο αίτημά μου, σύμφωνα με την',
     consentAfter: '.',
   },
   classes: {
     eyebrow: 'Μαθήματα',
     title: 'Πρόγραμμα & τύποι',
-    description: 'Εβδομαδιαίο group πρόγραμμα. Για κράτηση, χρησιμοποιήστε το online σύστημα.',
+    description:
+      'Εβδομαδιαίο group πρόγραμμα. Για κράτηση, χρησιμοποιήστε το online σύστημα.',
     weekTitle: 'Καλοκαιρινό εβδομαδιαίο πρόγραμμα',
     weekRange: 'Δευτέρα – Σάββατο',
     detailsEyebrow: 'Λεπτομέρειες',
@@ -210,10 +217,8 @@ export const el = {
     processing: {
       eyebrow: 'Σύντομα διαθέσιμα',
       title: 'Τα προγράμματα είναι υπό επεξεργασία',
-      body:
-        'Ετοιμάζουμε νέα προγράμματα προπόνησης. Η σελίδα αγοράς είναι προσωρινά κλειστή — θα είναι διαθέσιμη σύντομα.',
-      note:
-        'Αν έχεις ήδη αγοράσει πρόγραμμα, το link πρόσβασης στο email σου συνεχίζει να λειτουργεί κανονικά.',
+      body: 'Ετοιμάζουμε νέα προγράμματα προπόνησης. Η σελίδα αγοράς είναι προσωρινά κλειστή — θα είναι διαθέσιμη σύντομα.',
+      note: 'Αν έχεις ήδη αγοράσει πρόγραμμα, το link πρόσβασης στο email σου συνεχίζει να λειτουργεί κανονικά.',
       cta: 'Επικοινωνία',
       backHome: 'Πίσω στην αρχική',
     },
@@ -241,7 +246,8 @@ export const el = {
       title: 'Τέσσερις επιλογές. Ένας ξεκάθαρος στόχος.',
       body: 'Κάθε αγορά περιλαμβάνει όλες τις προπονήσεις του προγράμματος και προσωπικό private link.',
       selectorLabel: 'Διάλεξε πακέτο',
-      selectorHint: 'Υπάρχουν 4 διαθέσιμα πακέτα — πάτησε για να δεις λεπτομέρειες.',
+      selectorHint:
+        'Υπάρχουν 4 διαθέσιμα πακέτα — πάτησε για να δεις λεπτομέρειες.',
     },
     nutritionUpsell: {
       eyebrow: 'Προαιρετική προσθήκη',
@@ -253,7 +259,8 @@ export const el = {
         'Διαθέσιμο μόνο με αγορά προγράμματος',
       ],
       priceLabel: '+{{price}}€',
-      checkoutHint: 'Ενεργοποιείται στο βήμα πληρωμής — τσέκαρε την επιλογή στο checkout.',
+      checkoutHint:
+        'Ενεργοποιείται στο βήμα πληρωμής — τσέκαρε την επιλογή στο checkout.',
     },
     collections: {
       collection: {
@@ -289,14 +296,17 @@ export const el = {
       foundation: 'Χτίσε σωστή τεχνική και δύναμη στα βασικά patterns.',
       shape: 'Δούλεψε έλεγχο, σταθερότητα και καθαρή εκτέλεση.',
       sculpt: 'Δώσε έμφαση σε activation και ολοκληρωμένο glute work.',
-      definition: 'Μέγιστος ορισμός γλουτών με supersets, unilateral work και pump sessions.',
+      definition:
+        'Μέγιστος ορισμός γλουτών με supersets, unilateral work και pump sessions.',
       symmetry: 'Αύξησε ενεργοποίηση και συμμετρία με unilateral pump work.',
       strength: 'Ανέβασε ένταση με structured heavy glute training.',
       unilateral: 'Χτίσε δύναμη και έλεγχο σε κάθε πλευρά ξεχωριστά.',
       posterior: 'Δούλεψε οπίσθια αλυσίδα με στόχο πραγματική πρόοδο.',
       volume: 'Πρόσθεσε όγκο και pump με πιο υψηλό training volume.',
-      conditioning: 'Αύξησε conditioning και θερμιδική κατανάλωση με μεταβολικούς κύκλους και high-rep glute work.',
-      complete: 'Από τη σωστή βάση μέχρι δύναμη, όγκο, ορισμό και conditioning — και οι 12 προπονήσεις σε μία συλλογή.',
+      conditioning:
+        'Αύξησε conditioning και θερμιδική κατανάλωση με μεταβολικούς κύκλους και high-rep glute work.',
+      complete:
+        'Από τη σωστή βάση μέχρι δύναμη, όγκο, ορισμό και conditioning — και οι 12 προπονήσεις σε μία συλλογή.',
     },
     featured: 'Δημοφιλής επιλογή',
     includes: {
@@ -313,9 +323,18 @@ export const el = {
       eyebrow: 'Πώς λειτουργεί',
       title: 'Από την επιλογή στην προπόνηση',
       steps: [
-        { title: 'Διάλεξε πρόγραμμα', body: 'Σύγκρινε στόχο, επίπεδο και διάρκεια.' },
-        { title: 'Ολοκλήρωσε πληρωμή', body: 'Θα λάβεις ασφαλείς επιλογές πληρωμής στο email σου.' },
-        { title: 'Προπονήσου', body: 'Μετά την επιβεβαίωση σού στέλνουμε το προσωπικό σου link.' },
+        {
+          title: 'Διάλεξε πρόγραμμα',
+          body: 'Σύγκρινε στόχο, επίπεδο και διάρκεια.',
+        },
+        {
+          title: 'Ολοκλήρωσε πληρωμή',
+          body: 'Θα λάβεις ασφαλείς επιλογές πληρωμής στο email σου.',
+        },
+        {
+          title: 'Προπονήσου',
+          body: 'Μετά την επιβεβαίωση σού στέλνουμε το προσωπικό σου link.',
+        },
       ],
     },
     sculptGuidelines: {
@@ -407,21 +426,25 @@ export const el = {
       cta: 'Συνέχισε σε ασφαλή πληρωμή',
       submitting: 'Μετάβαση στο Stripe…',
       successTitle: 'Έλεγξε το email',
-      successBody: 'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις link πρόσβασης.',
+      successBody:
+        'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις link πρόσβασης.',
       refLabel: 'Κωδικός παραγγελίας',
       invalidEmail: 'Βάλε έγκυρο email.',
       nutritionAddon: 'Προσθήκη προσωποποιημένης διατροφής (+{{price}}€)',
       nutritionAddonHint: 'Διαθέσιμη μόνο με αγορά προγράμματος.',
       nutritionQuestionnaireTitle: 'Ερωτηματολόγιο διατροφής',
-      nutritionQuestionnaireHint: 'Συμπλήρωσε τα στοιχεία για να δημιουργηθεί το προσωποποιημένο πλάνο σου.',
+      nutritionQuestionnaireHint:
+        'Συμπλήρωσε τα στοιχεία για να δημιουργηθεί το προσωποποιημένο πλάνο σου.',
       cancelNutrition: 'Ακύρωση προσθήκης διατροφής',
       errors: {
         order_failed: 'Η παραγγελία απέτυχε. Δοκίμασε ξανά.',
         rate_limit: 'Πολλές παραγγελίες — δοκίμασε αργότερα.',
         invalid_email: 'Μη έγκυρο email.',
         invalid_program: 'Μη έγκυρο πρόγραμμα.',
-        stripe_unavailable: 'Η ασφαλής πληρωμή δεν είναι διαθέσιμη αυτή τη στιγμή. Δοκίμασε ξανά αργότερα.',
-        stripe_not_configured: 'Το Stripe δεν είναι ρυθμισμένο τοπικά. Πρόσθεσε STRIPE_SECRET_KEY στο .env.local και κάνε restart το vercel dev.',
+        stripe_unavailable:
+          'Η ασφαλής πληρωμή δεν είναι διαθέσιμη αυτή τη στιγμή. Δοκίμασε ξανά αργότερα.',
+        stripe_not_configured:
+          'Το Stripe δεν είναι ρυθμισμένο τοπικά. Πρόσθεσε STRIPE_SECRET_KEY στο .env.local και κάνε restart το vercel dev.',
       },
     },
     paymentSuccess: {
@@ -479,7 +502,8 @@ export const el = {
       noPending: 'Δεν υπάρχουν εκκρεμείς πληρωμές προγραμμάτων.',
       recentPaidTitle: 'Πρόσφατες πληρωμένες παραγγελίες',
       noPaid: 'Δεν υπάρχουν πρόσφατες πληρωμένες παραγγελίες.',
-      confirmBody: 'Επιβεβαίωση πληρωμής (PayPal/Revolut) — θα σταλεί email με link πρόσβασης.',
+      confirmBody:
+        'Επιβεβαίωση πληρωμής (PayPal/Revolut) — θα σταλεί email με link πρόσβασης.',
       resendAccess: 'Επανάληψη email πρόσβασης',
       resending: 'Αποστολή…',
     },
@@ -541,7 +565,12 @@ export const el = {
       viewPackages: 'Δες τα πακέτα',
       openCal: 'Άνοιγμα Cal.com',
       byCoach: 'by {{coach}}',
-      chips: ['1:1 coaching', 'Stage presence', 'Greek & English', 'Email confirmation'],
+      chips: [
+        '1:1 coaching',
+        'Stage presence',
+        'Greek & English',
+        'Email confirmation',
+      ],
     },
     about: {
       eyebrow: 'Σχετικά με εμάς',
@@ -596,7 +625,10 @@ export const el = {
     how: {
       title: 'Πώς λειτουργεί',
       steps: [
-        { title: 'Κράτηση', body: 'Επιλέγετε πακέτο και κλείνετε διαθέσιμη ώρα στο ημερολόγιο.' },
+        {
+          title: 'Κράτηση',
+          body: 'Επιλέγετε πακέτο και κλείνετε διαθέσιμη ώρα στο ημερολόγιο.',
+        },
         {
           title: 'Email & πληρωμή',
           body: 'Λαμβάνεις email με την τιμή και συνδέσμους πληρωμής (Stripe, PayPal ή Revolut).',
@@ -618,7 +650,11 @@ export const el = {
       swipeHint: 'Σύρε για άλλο πακέτο · ',
       counter: '{{current}} από {{total}}',
       includedTitle: 'Όλα τα sessions περιλαμβάνουν',
-      included: ['Personalised walks', 'T-walks ανά federation', 'Comparison rounds'],
+      included: [
+        'Personalised walks',
+        'T-walks ανά federation',
+        'Comparison rounds',
+      ],
       packages: [
         {
           label: 'Μία συνεδρία',
@@ -664,17 +700,21 @@ export const el = {
       ],
     },
     booking: {
+      offerCheckFailed: 'Δεν ολοκληρώθηκε ο έλεγχος προσφοράς. Δοκίμασε ξανά.',
       eyebrow: 'Κράτηση & πληρωμή',
       title: 'Κλείσε τη συνεδρία σου',
       body: 'Συνδέσου στον λογαριασμό σου, επίλεξε διαθέσιμη ώρα — η τιμή και οι σύνδεσμοι πληρωμής θα σταλούν στο email σου.',
       selectedLabel: 'Επιλεγμένο πακέτο',
-      paymentSuccess: 'Η πληρωμή ολοκληρώθηκε. Σας ευχαριστούμε — θα λάβετε επιβεβαίωση από το Stripe.',
+      paymentSuccess:
+        'Η πληρωμή ολοκληρώθηκε. Σας ευχαριστούμε — θα λάβετε επιβεβαίωση από το Stripe.',
       sessionsIncluded: '{{count}} συνεδρίες',
+      sessionsIncludedOne: '1 συνεδρία',
       sessionsRemaining: 'Απομένουν {{remaining}} από {{total}}',
       sessionsRemainingShort: '{{remaining}} διαθέσιμες κρατήσεις',
       newPurchaseHint: 'Νέα αγορά — θα λάβεις email πληρωμής',
       paidPackageHint: 'Πληρωμένο πακέτο',
-      paymentRequiredFirst: 'Ολοκλήρωσε την πληρωμή πριν κλείσεις επόμενη συνεδρία',
+      paymentRequiredFirst:
+        'Ολοκλήρωσε την πληρωμή πριν κλείσεις επόμενη συνεδρία',
       sessionsExhausted: 'Έχεις κλείσει όλες τις συνεδρίες αυτού του πακέτου',
       confirmIncluded: 'Επιβεβαίωση κράτησης',
       stickyConfirm: 'Επιβεβαίωση κράτησης',
@@ -689,7 +729,8 @@ export const el = {
       title: 'NEW OCTOBER OFFER',
       subtitle: 'Όλα τα μηνιαία πακέτα — 4 συνεδρίες + 2 δωρεάν.',
       onlyOctober: 'Μόνο για νέα μέλη',
-      loyaltyHint: 'Οι αγορές Sapphire, Ruby ή Diamond τον Σεπτέμβριο κρατούν το +1 δωρεάν έως 31/3/2027.',
+      loyaltyHint:
+        'Οι αγορές Sapphire, Ruby ή Diamond τον Σεπτέμβριο κρατούν το +1 δωρεάν έως 31/3/2027.',
       loyaltyBadge: '+1 δωρεάν',
       bonusBadge: '+2 δωρεάν',
       flyerAlt: 'Move & Pose — προσφορά Οκτωβρίου: 4 συνεδρίες + 2 δωρεάν',
@@ -703,7 +744,8 @@ export const el = {
       logout: 'Αποσύνδεση',
       myAccount: 'Ο λογαριασμός μου',
       loginTitle: 'Σύνδεση',
-      loginBody: 'Συνδέσου για να κλείσεις συνεδρία και να δεις τις κρατήσεις σου.',
+      loginBody:
+        'Συνδέσου για να κλείσεις συνεδρία και να δεις τις κρατήσεις σου.',
       signupTitle: 'Δημιουργία λογαριασμού',
       signupBody: 'Φτιάξε λογαριασμό Move & Pose για κρατήσεις και πακέτα.',
       fullName: 'Ονοματεπώνυμο',
@@ -717,13 +759,17 @@ export const el = {
       signingIn: 'Σύνδεση…',
       signingUp: 'Εγγραφή…',
       signupSuccessTitle: 'Έλεγξε το email σου',
-      signupSuccessBody: 'Σου στείλαμε email επιβεβαίωσης. Μετά την ενεργοποίηση, συνδέσου για να κλείσεις συνεδρία.',
+      signupSuccessBody:
+        'Σου στείλαμε email επιβεβαίωσης. Μετά την ενεργοποίηση, συνδέσου για να κλείσεις συνεδρία.',
       errorGeneric: 'Κάτι πήγε στραβά. Δοκίμασε ξανά.',
       invalidCredentials:
         'Λάθος email ή κωδικός. Αν μόλις έκανες εγγραφή, πρώτα επιβεβαίωσε το email (έλεγξε και spam).',
-      emailNotConfirmed: 'Πρέπει να επιβεβαιώσεις το email πριν τη σύνδεση. Έλεγξε inbox και spam.',
-      rateLimit: 'Πολλά email από το Supabase. Δοκίμασε αργότερα ή δημιούργησε τον χρήστη χειροκίνητα στο dashboard.',
-      notConfigured: 'Το σύστημα κρατήσεων ρυθμίζεται. Επικοινώνησε μαζί μας για κράτηση.',
+      emailNotConfirmed:
+        'Πρέπει να επιβεβαιώσεις το email πριν τη σύνδεση. Έλεγξε inbox και spam.',
+      rateLimit:
+        'Πολλά email από το Supabase. Δοκίμασε αργότερα ή δημιούργησε τον χρήστη χειροκίνητα στο dashboard.',
+      notConfigured:
+        'Το σύστημα κρατήσεων ρυθμίζεται. Επικοινώνησε μαζί μας για κράτηση.',
       forgotPassword: 'Ξέχασες τον κωδικό;',
       forgotPasswordTitle: 'Επαναφορά κωδικού',
       forgotPasswordBody:
@@ -737,9 +783,12 @@ export const el = {
       resetPasswordBody: 'Διάλεξε νέο κωδικό (τουλάχιστον 8 χαρακτήρες).',
       setNewPassword: 'Αποθήκευση κωδικού',
       settingPassword: 'Αποθήκευση…',
-      resetPasswordSuccess: 'Ο κωδικός άλλαξε. Μπορείς να συνδεθείς με τον νέο κωδικό.',
-      resetLinkInvalid: 'Ο σύνδεσμος έληξε ή δεν είναι έγκυρος. Ζήτησε νέο από την επαναφορά κωδικού.',
-      samePassword: 'Ο νέος κωδικός πρέπει να είναι διαφορετικός από τον προηγούμενο.',
+      resetPasswordSuccess:
+        'Ο κωδικός άλλαξε. Μπορείς να συνδεθείς με τον νέο κωδικό.',
+      resetLinkInvalid:
+        'Ο σύνδεσμος έληξε ή δεν είναι έγκυρος. Ζήτησε νέο από την επαναφορά κωδικού.',
+      samePassword:
+        'Ο νέος κωδικός πρέπει να είναι διαφορετικός από τον προηγούμενο.',
       weakPassword: 'Ο κωδικός είναι πολύ ασθενής ή σύντομος.',
       backToLogin: 'Πίσω στη σύνδεση',
       continueWithGoogle: 'Συνέχεια με Google',
@@ -750,7 +799,8 @@ export const el = {
       title: 'Ο λογαριασμός μου',
       loading: 'Φόρτωση…',
       profileTitle: 'Το προφίλ μου',
-      profileBody: 'Συμπλήρωσε τα στοιχεία επικοινωνίας σου — χρησιμοποιούνται για κρατήσεις και επικοινωνία με τη coach.',
+      profileBody:
+        'Συμπλήρωσε τα στοιχεία επικοινωνίας σου — χρησιμοποιούνται για κρατήσεις και επικοινωνία με τη coach.',
       fullName: 'Ονοματεπώνυμο',
       phone: 'Τηλέφωνο',
       division: 'Division / κατηγορία',
@@ -775,7 +825,8 @@ export const el = {
       dangerZoneTitle: 'Προχωρημένα',
       dangerZoneExpand: 'Εμφάνιση',
       passwordTitle: 'Αλλαγή κωδικού',
-      passwordBody: 'Βάλε τον τρέχοντα κωδικό και τον νέο (τουλάχιστον 8 χαρακτήρες).',
+      passwordBody:
+        'Βάλε τον τρέχοντα κωδικό και τον νέο (τουλάχιστον 8 χαρακτήρες).',
       currentPassword: 'Τρέχων κωδικός',
       newPassword: 'Νέος κωδικός',
       confirmPassword: 'Επιβεβαίωση νέου κωδικού',
@@ -784,14 +835,15 @@ export const el = {
       passwordChanged: 'Ο κωδικός ενημερώθηκε.',
       passwordMismatch: 'Οι νέοι κωδικοί δεν ταιριάζουν.',
       deleteTitle: 'Διαγραφή λογαριασμού',
-      deleteBody: 'Η διαγραφή είναι μόνιμη. Χάνεις πρόσβαση σε κρατήσεις και πακέτα.',
+      deleteBody:
+        'Η διαγραφή είναι μόνιμη. Χάνεις πρόσβαση σε κρατήσεις και πακέτα.',
       deletePassword: 'Κωδικός για επιβεβαίωση',
       deleteConfirm: 'Διαγραφή λογαριασμού',
       deleting: 'Διαγραφή…',
       deleteSuccess: 'Ο λογαριασμός διαγράφηκε.',
       activePackages: 'Ενεργά πακέτα',
       noPackages: 'Δεν έχεις ενεργό πακέτο ακόμα.',
-      remaining: '{{remaining}} απομένουν από {{total}} sessions',
+      remaining: 'Απομένουν {{remaining}} από {{total}} συνεδρίες',
       upcoming: 'Επερχόμενες κρατήσεις',
       noBookings: 'Δεν έχεις κρατήσεις.',
       bookNew: 'Κλείσε νέα συνεδρία',
@@ -807,23 +859,30 @@ export const el = {
       addToCalendar: 'Πρόσθεσε στο ημερολόγιο',
       downloadingCalendar: 'Λήψη…',
       cancelOrderTitle: 'Ακύρωση παραγγελίας;',
-      cancelOrderBody: 'Η κράτηση και το πακέτο θα ακυρωθούν. Η ώρα θα ξαναγίνει διαθέσιμη.',
+      cancelOrderBody:
+        'Η κράτηση και το πακέτο θα ακυρωθούν. Η ώρα θα ξαναγίνει διαθέσιμη.',
       cancelBookingTitle: 'Ακύρωση κράτησης;',
-      cancelBookingBody: 'Η συνεδρία θα ακυρωθεί και θα επιστρέψει 1 session στο πακέτο σου.',
+      cancelBookingBody:
+        'Η συνεδρία θα ακυρωθεί και θα επιστρέψει 1 session στο πακέτο σου.',
       status: {
+        non_cancelled: 'Όλες εκτός ακυρωμένων',
         pending_payment: 'Αναμονή πληρωμής',
         confirmed: 'Επιβεβαιωμένη',
         cancelled: 'Ακυρωμένη',
         completed: 'Ολοκληρωμένη',
       },
       errors: {
-        server_config_error: 'Πρόβλημα ρύθμισης server (έλεγξε SUPABASE_SERVICE_ROLE_KEY στο Vercel).',
+        server_config_error:
+          'Πρόβλημα ρύθμισης server (έλεγξε SUPABASE_SERVICE_ROLE_KEY στο Vercel).',
         invalid_password: 'Λάθος κωδικός.',
         admin_cannot_delete: 'Οι admin λογαριασμοί δεν διαγράφονται από εδώ.',
-        active_bookings: 'Έχεις ενεργή κράτηση. Ακύρωσέ την πρώτα ή επικοινώνησε μαζί μας.',
+        active_bookings:
+          'Έχεις ενεργή κράτηση. Ακύρωσέ την πρώτα ή επικοινώνησε μαζί μας.',
         password_required: 'Συμπλήρωσε τον κωδικό σου.',
-        password_too_short: 'Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.',
-        password_same_as_current: 'Ο νέος κωδικός πρέπει να είναι διαφορετικός από τον τρέχοντα.',
+        password_too_short:
+          'Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.',
+        password_same_as_current:
+          'Ο νέος κωδικός πρέπει να είναι διαφορετικός από τον τρέχοντα.',
         password_change_failed: 'Η αλλαγή κωδικού απέτυχε. Δοκίμασε ξανά.',
         delete_failed: 'Η διαγραφή απέτυχε. Δοκίμασε ξανά.',
         avatar_invalid_type: 'Μόνο JPG, PNG ή WebP.',
@@ -836,35 +895,102 @@ export const el = {
         cancel_failed: 'Η ακύρωση απέτυχε. Δοκίμασε ξανά.',
         booking_not_found: 'Η κράτηση δεν βρέθηκε.',
         calendar_download_failed: 'Αποτυχία λήψης ημερολογίου. Δοκίμασε ξανά.',
-        not_confirmed: 'Το ημερολόγιο είναι διαθέσιμο μόνο για επιβεβαιωμένες συνεδρίες.',
-        calendar_unavailable: 'Δεν βρέθηκαν στοιχεία συνεδρίας για το ημερολόγιο.',
+        not_confirmed:
+          'Το ημερολόγιο είναι διαθέσιμο μόνο για επιβεβαιωμένες συνεδρίες.',
+        calendar_unavailable:
+          'Δεν βρέθηκαν στοιχεία συνεδρίας για το ημερολόγιο.',
         calendar_failed: 'Αποτυχία λήψης ημερολογίου. Δοκίμασε ξανά.',
         unauthorized: 'Συνδέσου για να κατεβάσεις το ημερολόγιο.',
-        method_not_allowed: 'Η λήψη ημερολογίου δεν είναι διαθέσιμη ακόμα. Δοκίμασε ξανά σε λίγο.',
+        method_not_allowed:
+          'Η λήψη ημερολογίου δεν είναι διαθέσιμη ακόμα. Δοκίμασε ξανά σε λίγο.',
       },
     },
     calendar: {
       title: 'Διαθέσιμες ώρες',
+      timezoneNote: 'Οι ώρες είναι σε ώρα Ελλάδας',
       loading: 'Φόρτωση διαθεσιμότητας…',
       noSlots: '—',
       loginPrompt: 'Για κράτηση χρειάζεται λογαριασμός.',
       confirm: 'Επιβεβαίωση κράτησης',
       booking: 'Κράτηση…',
-      success: 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου για πληρωμή.',
+      success:
+        'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου — έχεις 3 ώρες για να ολοκληρώσεις την πληρωμή, αλλιώς η ώρα αποδεσμεύεται.',
       error: 'Η κράτηση απέτυχε. Δοκίμασε ξανά.',
       slotTaken: 'Η ώρα μόλις κλείστηκε. Επίλεξε άλλη.',
       loginRequired: 'Συνδέσου για να κλείσεις ώρα.',
-      sessionExpired: 'Η σύνδεσή σου έληξε. Συνδέσου ξανά για να ολοκληρώσεις την κράτηση.',
+      sessionExpired:
+        'Η σύνδεσή σου έληξε. Συνδέσου ξανά για να ολοκληρώσεις την κράτηση.',
       errors: {
+        slot_in_past: 'Επίλεξε μελλοντική ώρα.',
+        outside_package_period:
+          'Η συνεδρία είναι μετά τη λήξη του πακέτου. Επίλεξε νωρίτερη ώρα.',
+        offer_check_failed:
+          'Δεν ολοκληρώθηκε ο έλεγχος προσφοράς. Δοκίμασε ξανά.',
+        price_check_failed: 'Δεν φορτώθηκε η τιμή του πακέτου. Δοκίμασε ξανά.',
+        slot_not_available:
+          'Η ώρα δεν είναι διαθέσιμη για ολόκληρη τη διάρκεια της συνεδρίας.',
+        operation_failed: 'Η αλλαγή απέτυχε. Δοκίμασε ξανά.',
         server_config_error:
           'Πρόβλημα ρύθμισης server. Έλεγξε SUPABASE_URL και SUPABASE_SERVICE_ROLE_KEY στο Vercel και κάνε redeploy.',
         missing_supabase_admin_config:
           'Λείπουν SUPABASE_URL ή SUPABASE_SERVICE_ROLE_KEY στο Vercel. Κάνε redeploy μετά την προσθήκη.',
-        invalid_api_response: 'Μη έγκυρη απάντηση από το server. Δοκίμασε ξανά σε λίγο.',
+        invalid_api_response:
+          'Μη έγκυρη απάντηση από το server. Δοκίμασε ξανά σε λίγο.',
         slots_fetch_failed: 'Αποτυχία φόρτωσης ωρών. Δοκίμασε ξανά.',
       },
     },
     admin: {
+      pageSummary: 'Σελίδα {{page}} από {{pages}} · {{total}} εγγραφές',
+      previousPage: 'Προηγούμενη',
+      nextPage: 'Επόμενη',
+      statusFilter: 'Κατάσταση κράτησης',
+      searchBookings: 'Αναζήτηση ονόματος ή email',
+      fromDate: 'Από ημερομηνία',
+      toDate: 'Έως ημερομηνία',
+      dateFilterHint: 'Συνεδρίες {{from}} – {{to}} · ώρα Ελλάδας',
+      memberFilterActive: 'Κρατήσεις επιλεγμένου μέλους',
+      searchMembers: 'Αναζήτηση μέλους',
+      activePackagesFilter: 'Με ενεργό πακέτο',
+      clientsFilter: 'Πελάτες',
+      clearFilter: 'Καθαρισμός φίλτρου',
+      memberAllBookings: 'Όλες οι κρατήσεις του μέλους',
+      packageExpiry: 'Λήξη: {{date}}',
+      packageBreakdown:
+        'Βασικές: {{base}} · Bonus: {{bonus}} · Προσαρμογή: {{adjustment}}',
+      addSession: '+1 συνεδρία',
+      removeSession: '−1 συνεδρία',
+      adjustmentHistory: 'Ιστορικό προσαρμογών',
+      adjustmentReason: 'Αιτιολογία (τουλάχιστον 3 χαρακτήρες)',
+      adjustmentExplanation:
+        'Σύνολο συνεδριών: {{before}} → {{after}}. Η προσαρμογή αφορά τις διαθέσιμες συνεδρίες.',
+      saveAdjustment: 'Αποθήκευση αλλαγής',
+      completeBooking: 'Ολοκλήρωση συνεδρίας',
+      completeBookingBody:
+        'Η συνεδρία θα σημειωθεί ως ολοκληρωμένη. Έχει ήδη χρεωθεί στο πακέτο.',
+      deliverySent: 'Το email στάλθηκε',
+      deliveryFailed: 'Η αποστολή απέτυχε',
+      deliveryPending: 'Εκκρεμεί αποστολή',
+      deliveryUnknown: 'Δεν υπάρχει καταγραφή αποστολής',
+      paymentRecordedDeliveryFailed:
+        'Η πληρωμή καταχωρίστηκε, αλλά η παράδοση απέτυχε. Χρησιμοποίησε την επαναποστολή.',
+      pastPayment:
+        'Η ημερομηνία της συνεδρίας έχει περάσει. Έλεγξε την πληρωμή πριν την επιβεβαίωση.',
+      cancelPending: 'Ακύρωση εκκρεμότητας',
+      weekdayTemplate: 'Πρότυπο ημέρας',
+      weekdays: [
+        'Δευτέρα',
+        'Τρίτη',
+        'Τετάρτη',
+        'Πέμπτη',
+        'Παρασκευή',
+        'Σάββατο',
+        'Κυριακή',
+      ],
+      sessionReservationsHint:
+        'Το υπόλοιπο περιλαμβάνει και τις μελλοντικές κρατήσεις που έχουν ήδη δεσμευτεί.',
+      bundleIncludesNutrition: 'Περιλαμβάνει συνδεδεμένο διατροφικό πρόγραμμα',
+      paidBundleConfirmation:
+        'Η επιβεβαίωση αφορά και τα συνδεδεμένα προϊόντα της κοινής παραγγελίας.',
       title: 'Διαχείριση',
       subtitle: 'Κρατήσεις, μέλη και πληρωμές Move & Pose',
       eyebrow: 'Πάνελ διαχείρισης',
@@ -875,7 +1001,8 @@ export const el = {
       reviewPayments: 'Έλεγχος εκκρεμών πληρωμών',
       actions: 'Ενέργειες',
       confirmDeleteMemberTitle: 'Διαγραφή μέλους;',
-      confirmDeleteMemberBody: 'Ο λογαριασμός και τα σχετικά δεδομένα διαγράφονται οριστικά. Η ενέργεια δεν αναιρείται.',
+      confirmDeleteMemberBody:
+        'Ο λογαριασμός και τα σχετικά δεδομένα διαγράφονται οριστικά. Η ενέργεια δεν αναιρείται.',
       tabOverview: 'Επισκόπηση',
       tabCalendar: 'Ημερολόγιο',
       tabMembers: 'Μέλη',
@@ -894,7 +1021,13 @@ export const el = {
       confirmPayment: 'Επιβεβαίωση πληρωμής',
       confirmingPayment: 'Επιβεβαίωση…',
       confirmPaymentTitle: 'Επιβεβαίωση πληρωμής;',
-      confirmPaymentBody: 'Η κράτηση θα επιβεβαιωθεί χειροκίνητα (π.χ. μετρητά ή τραπεζική κατάθεση).',
+      confirmPaymentBody:
+        'Η κράτηση θα επιβεβαιωθεί χειροκίνητα (π.χ. μετρητά ή τραπεζική κατάθεση).',
+      confirmLatePayment: 'Καταχώρηση πληρωμής',
+      confirmLatePaymentBody:
+        'Η κράτηση έχει λήξει. Η πληρωμή θα καταχωρηθεί και το πακέτο θα ενεργοποιηθεί με όλες τις συνεδρίες διαθέσιμες — ο πελάτης θα λάβει email να κλείσει νέα ώρα.',
+      paymentExpiredNote: 'Έληξε απλήρωτη',
+      paymentCreditedNote: 'Πληρώθηκε μετά την ακύρωση',
       cancelBooking: 'Ακύρωση κράτησης',
       cancelPackage: 'Ακύρωση πακέτου',
       cancellingBooking: 'Ακύρωση…',
@@ -910,8 +1043,24 @@ export const el = {
       filterAll: 'Όλες',
       noBookings: 'Δεν υπάρχουν κρατήσεις.',
       memberActivePackages: '{{count}} ενεργά πακέτα',
-      memberPendingPackages: '{{count}} εκκρεμεί πληρωμή',
+      memberActivePackagesOne: '1 ενεργό πακέτο',
+      memberPendingPackages: 'Εκκρεμεί πληρωμή',
       memberNoPackages: 'Χωρίς πακέτα',
+      memberNoActivePackage: 'Χωρίς ενεργό πακέτο',
+      memberPackages: 'Πακέτα',
+      packageLineActive: 'Απομένουν {{remaining}} από {{total}}',
+      packageLinePending: 'Περιμένει πληρωμή για να ενεργοποιηθεί',
+      packageLineUsed: 'Έγιναν {{used}} από {{total}}',
+      packageLineUnused: '{{count}} δεν χρησιμοποιήθηκαν',
+      packageLineUnusedOne: '1 δεν χρησιμοποιήθηκε',
+      packageLineUnpaid: 'Δεν πληρώθηκε',
+      packagePaid: 'Πληρωμή: {{date}} · {{method}}',
+      paymentMethodManual: 'χειροκίνητα',
+      paymentMethodStripe: 'Stripe',
+      confirmCancelPaidPackageWarning:
+        'Προσοχή: το πακέτο είναι πληρωμένο και έχει ακόμα {{count}} αχρησιμοποίητες συνεδρίες. Μετά την ακύρωση δεν θα μπορούν να κλειστούν.',
+      confirmCancelPaidPackageWarningOne:
+        'Προσοχή: το πακέτο είναι πληρωμένο και έχει ακόμα 1 αχρησιμοποίητη συνεδρία. Μετά την ακύρωση δεν θα μπορεί να κλειστεί.',
       recentBookings: 'Πρόσφατες κρατήσεις',
       packageStatus: {
         pending_payment: 'Αναμονή πληρωμής',
@@ -941,13 +1090,15 @@ export const el = {
       openDay: 'Άνοιγμα',
       clearDay: 'Καθάρισμα',
       opening: 'Ενημέρωση…',
-      durationHint: 'Οι νέες ώρες δημιουργούνται με διάρκεια {{minutes}} λεπτά.',
+      durationHint:
+        'Οι νέες ώρες δημιουργούνται με διάρκεια {{minutes}} λεπτά.',
       slotsCreated: 'Προστέθηκαν {{count}} ώρες.',
       slotsDeleted: 'Διαγράφηκαν {{count}} ώρες.',
       slotBooked: 'Κράτηση',
       calendarSettings: 'Ρυθμίσεις ημερολογίου',
       dayTemplate: 'Πρότυπο «Άνοιγμα ημέρας»',
-      dayTemplateHint: 'Ώρες που δημιουργούνται με το κουμπί «Άνοιγμα» στη στήλη της ημέρας.',
+      dayTemplateHint:
+        'Ώρες που δημιουργούνται με το κουμπί «Άνοιγμα» στη στήλη της ημέρας.',
       addTime: 'Προσθήκη ώρας',
       addTimeShort: '+ Ώρα',
       removeTime: 'Αφαίρεση',
@@ -961,8 +1112,9 @@ export const el = {
       openSettings: 'Ρυθμίσεις',
       closeSettings: 'Κλείσιμο',
       cancelSettings: 'Ακύρωση',
-      cellMenuHint: 'Δεξί κλικ ή παρατεταμένο πάτημα σε ώρα για αλλαγή κατάστασης.',
-      cellMenuHintMobile: 'Παρατεταμένο πάτημα σε ώρα για αλλαγή κατάστασης.',
+      cellMenuHint:
+        'Πάτησε μια ώρα για αλλαγή κατάστασης ή μια κράτηση για τα στοιχεία της.',
+      cellMenuHintMobile: 'Πάτησε μια ώρα για αλλαγή κατάστασης ή μια κράτηση για τα στοιχεία της.',
       weekdayActiveFrom: 'Ενεργές από',
       weekdayActiveUntil: 'Ενεργές έως',
       activeHoursSummary: '{{weekday}}: ενεργές {{from}}–{{until}}',
@@ -988,7 +1140,8 @@ export const el = {
       you: 'εσύ',
       deleteMember: 'Διαγραφή',
       customPricesTitle: 'Ειδικές τιμές',
-      customPricesBody: 'Οι τιμές ισχύουν μόνο για αυτόν τον πελάτη και εμφανίζονται στο email κράτησης.',
+      customPricesBody:
+        'Οι τιμές ισχύουν μόνο για αυτόν τον πελάτη και εμφανίζονται στο email κράτησης.',
       catalogPrice: 'Κανονική: {{price}}',
       customPriceActive: 'Ειδική: {{price}}',
       savePrice: 'Αποθήκευση',
@@ -999,7 +1152,8 @@ export const el = {
       cancelDeleteMember: 'Άκυρο',
       deletingMember: 'Διαγραφή…',
       memberErrors: {
-        cannot_delete_self: 'Δεν μπορείς να διαγράψεις τον δικό σου λογαριασμό από εδώ.',
+        cannot_delete_self:
+          'Δεν μπορείς να διαγράψεις τον δικό σου λογαριασμό από εδώ.',
         cannot_delete_admin: 'Δεν διαγράφονται admin λογαριασμοί.',
         member_not_found: 'Ο χρήστης δεν βρέθηκε.',
         delete_member_failed: 'Η διαγραφή απέτυχε.',
@@ -1008,6 +1162,36 @@ export const el = {
         invalid_price: 'Μη έγκυρη τιμή.',
       },
       adminErrors: {
+        member_has_active_items:
+          'Το μέλος έχει ενεργό πακέτο με διαθέσιμες συνεδρίες, εκκρεμή πληρωμή ή μελλοντική κράτηση. Ακύρωσέ τα πρώτα και μετά διάγραψε το μέλος.',
+        slot_not_available:
+          'Η ώρα δεν είναι διαθέσιμη για ολόκληρη τη διάρκεια της συνεδρίας.',
+        delivery_failed: 'Η παράδοση απέτυχε. Δοκίμασε επαναποστολή.',
+        preview_blocked:
+          'Ο browser μπλόκαρε το νέο παράθυρο. Επίτρεψε τα αναδυόμενα παράθυρα για την προεπισκόπηση.',
+        operation_failed: 'Η αλλαγή απέτυχε. Δοκίμασε ξανά.',
+        invalid_adjustment:
+          'Συμπλήρωσε έγκυρη αιτιολογία για την αλλαγή συνεδρίας.',
+        no_available_sessions: 'Δεν υπάρχει διαθέσιμη συνεδρία για αφαίρεση.',
+        package_not_active:
+          'Η αλλαγή συνεδριών είναι διαθέσιμη σε ενεργά πακέτα που δεν έχουν λήξει.',
+        adjustment_conflict:
+          'Η ίδια ενέργεια έχει ήδη καταχωριστεί με διαφορετικά στοιχεία.',
+        session_not_finished:
+          'Η ώρα λήξης της συνεδρίας δεν έχει περάσει ακόμη.',
+        slot_overlap:
+          'Η ώρα επικαλύπτεται με υπάρχουσα διαθεσιμότητα ή κράτηση.',
+        slot_in_past: 'Επίλεξε μελλοντική ώρα.',
+        outside_package_period:
+          'Η συνεδρία είναι μετά τη λήξη του πακέτου. Επίλεξε νωρίτερη ώρα.',
+        invalid_times: 'Επίλεξε έγκυρες μελλοντικές ώρες.',
+        invalid_date_range: 'Έλεγξε το εύρος ημερομηνιών.',
+        invalid_pagination: 'Μη έγκυρη σελίδα αποτελεσμάτων.',
+        invalid_filter: 'Μη έγκυρο φίλτρο.',
+        member_details_failed:
+          'Δεν φορτώθηκαν τα στοιχεία μελών. Δοκίμασε ξανά.',
+        offer_check_failed:
+          'Δεν ολοκληρώθηκε ο έλεγχος προσφοράς. Δοκίμασε ξανά.',
         load_failed: 'Αποτυχία φόρτωσης δεδομένων.',
         slots_failed: 'Αποτυχία φόρτωσης ημερολογίου.',
         toggle_failed: 'Αποτυχία ενημέρωσης ώρας.',
@@ -1031,10 +1215,12 @@ export const el = {
         settings_save_failed: 'Αποτυχία αποθήκευσης ρυθμίσεων ημερολογίου.',
         invalid_time: 'Μη έγκυρη μορφή ώρας.',
         time_exists: 'Υπάρχει ήδη ώρα σε αυτή την ώρα.',
-        invalid_weekday_templates: 'Μη έγκυρες ρυθμίσεις προγράμματος ανά ημέρα.',
-        outside_active_hours: 'Η ώρα είναι εκτός των ενεργών ωρών αυτής της ημέρας.',
+        invalid_weekday_templates:
+          'Μη έγκυρες ρυθμίσεις προγράμματος ανά ημέρα.',
+        outside_active_hours:
+          'Η ώρα είναι εκτός των ενεργών ωρών αυτής της ημέρας.',
         migration_required:
-          'Απαιτείται migration βάσης. Τρέξε το supabase/scripts/apply_posing_calendar_settings.sql στο Supabase SQL Editor.',
+          'Η βάση χρειάζεται ενημέρωση πριν χρησιμοποιηθεί αυτή η λειτουργία.',
       },
     },
     faq: {
@@ -1076,7 +1262,8 @@ export const el = {
       preferredDate: 'Προτιμώμενη ημέρα / ώρα',
       sessionType: 'Τύπος συνεδρίας',
       message: 'Σημειώσεις',
-      messagePlaceholder: 'Division, επίπεδο, ημερομηνία αγώνα ή ό,τι χρειάζεται να ξέρουμε.',
+      messagePlaceholder:
+        'Division, επίπεδο, ημερομηνία αγώνα ή ό,τι χρειάζεται να ξέρουμε.',
       submit: 'Αίτημα ραντεβού',
       options: {
         online: 'Online posing session',
@@ -1336,7 +1523,8 @@ export const el = {
       cta: 'Αγορά διατροφής',
       submitting: 'Αποστολή…',
       successTitle: 'Έλεγξε το email',
-      successBody: 'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις το PDF.',
+      successBody:
+        'Στείλαμε email με συνδέσμους πληρωμής. Μετά την πληρωμή θα λάβεις το PDF.',
       refLabel: 'Κωδικός παραγγελίας',
       errors: {
         order_failed: 'Η παραγγελία απέτυχε. Δοκίμασε ξανά.',
@@ -1356,7 +1544,8 @@ export const el = {
       noPending: 'Δεν υπάρχουν εκκρεμείς πληρωμές διατροφής.',
       recentPaidTitle: 'Πρόσφατες παραγγελίες διατροφής',
       noPaid: 'Δεν υπάρχουν πρόσφατες παραγγελίες.',
-      confirmBody: 'Επιβεβαίωση πληρωμής (PayPal/Revolut) — θα δημιουργηθεί και σταλεί PDF.',
+      confirmBody:
+        'Επιβεβαίωση πληρωμής (PayPal/Revolut) — θα δημιουργηθεί και σταλεί PDF.',
       resendPlan: 'Επανάληψη PDF',
       resending: 'Αποστολή…',
       previewPdf: 'Προβολή PDF',

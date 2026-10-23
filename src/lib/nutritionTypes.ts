@@ -1,5 +1,10 @@
 export type NutritionGender = 'female' | 'male'
-export type NutritionActivity = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
+export type NutritionActivity =
+  | 'sedentary'
+  | 'light'
+  | 'moderate'
+  | 'active'
+  | 'very_active'
 export type NutritionGoal = 'cut' | 'maintain' | 'bulk'
 export type NutritionDietType = 'omnivore' | 'vegetarian' | 'vegan'
 export type NutritionCookingLevel = 'minimal' | 'moderate' | 'advanced'
@@ -53,10 +58,14 @@ export type NutritionOrderPayment = {
   program_key: string | null
   created_at: string
   order_ref: string
+  confirms_bundle?: boolean
+  total_amount_eur?: number
 }
 
 export type NutritionPaidOrder = NutritionOrderPayment & {
   payment_method: string | null
   plan_email_sent_at: string | null
+  delivery_status: 'unknown' | 'pending' | 'sent' | 'failed'
+  has_pdf: boolean
   responses: NutritionResponses
 }

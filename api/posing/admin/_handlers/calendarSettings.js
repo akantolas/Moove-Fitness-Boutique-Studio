@@ -34,11 +34,17 @@ const DEFAULTS = {
 
 function buildDefaultWeekdayTemplates(gridStart, gridEnd) {
   const entry = {
-    times: [...DEFAULT_TEMPLATE_TIMES],
+    times: DEFAULT_TEMPLATE_TIMES.filter(
+      (time) =>
+        Number(time.split(':')[0]) >= gridStart &&
+        Number(time.split(':')[0]) < gridEnd,
+    ),
     start_hour: gridStart,
     end_hour: gridEnd,
   }
-  return Object.fromEntries(WEEKDAY_KEYS.map((key) => [key, { ...entry, times: [...entry.times] }]))
+  return Object.fromEntries(
+    WEEKDAY_KEYS.map((key) => [key, { ...entry, times: [...entry.times] }]),
+  )
 }
 
 const DEFAULT_WEEKDAY_TEMPLATES = buildDefaultWeekdayTemplates(
@@ -117,6 +123,15 @@ function validateWeekdayTemplates(raw, gridStart, gridEnd) {
     if (startHour < gridStart || endHour > gridEnd) {
       return { ok: false, error: 'invalid_weekday_templates' }
     }
+    if (
+      normalized.some(
+        (time) =>
+          Number(time.split(':')[0]) < startHour ||
+          Number(time.split(':')[0]) >= endHour,
+      )
+    ) {
+      return { ok: false, error: 'outside_active_hours' }
+    }
 
     templates[key] = {
       times: sortTimes(normalized),
@@ -135,7 +150,11 @@ function mergeWeekdayTemplates(raw, gridStart, gridEnd) {
 
   for (const key of WEEKDAY_KEYS) {
     const entry = coerced[key] ?? defaults[key]
-    const single = validateWeekdayTemplates({ ...defaults, [key]: entry }, gridStart, gridEnd)
+    const single = validateWeekdayTemplates(
+      { ...defaults, [key]: entry },
+      gridStart,
+      gridEnd,
+    )
     templates[key] = single.ok ? single.templates[key] : defaults[key]
   }
 
@@ -148,7 +167,11 @@ function validateSettings(body) {
   }
 
   const defaultDuration = Number(body.default_duration_minutes)
-  if (!Number.isInteger(defaultDuration) || defaultDuration < 15 || defaultDuration > 120) {
+  if (
+    !Number.isInteger(defaultDuration) ||
+    defaultDuration < 15 ||
+    defaultDuration > 120
+  ) {
     return { ok: false, error: 'invalid_duration' }
   }
 
@@ -171,7 +194,11 @@ function validateSettings(body) {
     return { ok: false, error: 'invalid_grid_step' }
   }
 
-  const weekdayResult = validateWeekdayTemplates(body.weekday_templates, gridStart, gridEnd)
+  const weekdayResult = validateWeekdayTemplates(
+    body.weekday_templates,
+    gridStart,
+    gridEnd,
+  )
   if (!weekdayResult.ok) return weekdayResult
 
   return {
@@ -194,8 +221,13 @@ function toResponse(row) {
   const gridStart = row.grid_start_hour ?? DEFAULTS.grid_start_hour
   const gridEnd = row.grid_end_hour ?? DEFAULTS.grid_end_hour
   return {
-    weekday_templates: normalizeWeekdayTemplates(row.weekday_templates, gridStart, gridEnd),
-    default_duration_minutes: row.default_duration_minutes ?? DEFAULTS.default_duration_minutes,
+    weekday_templates: normalizeWeekdayTemplates(
+      row.weekday_templates,
+      gridStart,
+      gridEnd,
+    ),
+    default_duration_minutes:
+      row.default_duration_minutes ?? DEFAULTS.default_duration_minutes,
     grid_start_hour: gridStart,
     grid_end_hour: gridEnd,
     grid_step_minutes: row.grid_step_minutes ?? DEFAULTS.grid_step_minutes,
@@ -209,7 +241,8 @@ export async function handleAdminCalendarSettings(req, res) {
 
   const user = await getUserFromRequest(req)
   if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
-  if (!(await ensureAdmin(user))) return json(res, 403, { ok: false, error: 'forbidden' })
+  if (!(await ensureAdmin(user)))
+    return json(res, 403, { ok: false, error: 'forbidden' })
 
   const supabase = getSupabaseAdmin()
 
@@ -246,7 +279,11 @@ export async function handleAdminCalendarSettings(req, res) {
 
       const { data, error } = await supabase
         .from('posing_calendar_settings')
-        .upsert({ id: 1, ...validated.settings, updated_at: new Date().toISOString() })
+        .upsert({
+          id: 1,
+          ...validated.settings,
+          updated_at: new Date().toISOString(),
+        })
         .select(
           'weekday_templates, default_duration_minutes, grid_start_hour, grid_end_hour, grid_step_minutes, updated_at',
         )
