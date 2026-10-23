@@ -1043,6 +1043,7 @@ export const en = {
       packageLineActive: '{{remaining}} of {{total}} remaining',
       packageLinePending: 'Activates once paid',
       packageLineUnpaid: 'Never paid',
+      packagePurchased: 'Purchased: {{date}}',
       packagePaid: 'Paid: {{date}} · {{method}}',
       paymentMethodManual: 'manual',
       paymentMethodStripe: 'Stripe',
