@@ -8,7 +8,7 @@ const MEMBER = '10000000-0000-4000-8000-000000000002'
 const OTHER = '10000000-0000-4000-8000-000000000003'
 const MIGRATION = '20261013132600_admin_panel_reliability.sql'
 const EXPIRY_MIGRATION = '20261023112336_posing_booking_rules.sql'
-const REMINDER_MIGRATION = '20261023140000_package_expiry_reminders.sql'
+const REMINDER_MIGRATION = '20261023121122_package_expiry_reminders.sql'
 let db
 
 async function createDatabase() {
