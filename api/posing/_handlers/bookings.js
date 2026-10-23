@@ -2,6 +2,7 @@ import {
   buildAdminBookingNotifyEmail,
   buildConfirmationEmail,
   buildPaymentEmail,
+  formatPackageDate,
 } from '../../../lib/email/templates.js'
 import { buildCalendarForBooking } from '../../../lib/email/sendSessionCalendar.js'
 import {
@@ -30,6 +31,14 @@ import {
   getRevolutUrl,
   resolvePlanPrice,
 } from '../_pricing.js'
+
+/** Validity the reservation gave the package; payment restarts it for the same length. */
+function packageValidityDays(userPackage) {
+  const days =
+    (Date.parse(userPackage?.period_end) - Date.parse(userPackage?.period_start)) /
+    86400000
+  return Number.isFinite(days) && days > 0 ? Math.round(days) : null
+}
 
 async function sendBookingNotify({
   from,
@@ -323,6 +332,9 @@ export async function handleBookings(req, res) {
         bookingId: booking.id,
         durationMinutes,
         googleCalendarUrl: calendar?.googleCalendarUrl ?? null,
+        packageValidUntil: userPackage?.period_end
+          ? formatPackageDate(userPackage.period_end, bookingLocale)
+          : null,
         locale: bookingLocale,
       })
 
@@ -412,6 +424,7 @@ export async function handleBookings(req, res) {
       paymentDeadline: booking.payment_expires_at
         ? formatSessionTimeWithZone(booking.payment_expires_at, bookingLocale)
         : null,
+      packageValidityDays: packageValidityDays(userPackage),
       locale: bookingLocale,
     })
 
