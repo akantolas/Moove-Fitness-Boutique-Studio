@@ -209,7 +209,7 @@ Endpoint: `POST /api/posing/signup-notify` (μέσα στο υπάρχον posin
 | `POST /api/posing/bookings` | Κράτηση + email |
 | `GET /api/posing/bookings?id=&format=ics` | Λήψη `.ics` (auth, confirmed only) |
 | `GET /api/posing/health` | Έλεγχος Vercel env (hasUrl, hasServiceKey) |
-| `POST /api/posing/account/delete` | Διαγραφή λογαριασμού (password + Bearer JWT) |
+| `POST /api/posing/account-delete` | Διαγραφή λογαριασμού (password + Bearer JWT) |
 | `POST /api/posing/signup-notify` | Admin email σε νέο account (Supabase webhook) |
 | `GET /api/posing/me` | Πακέτα & κρατήσεις χρήστη (legacy API) |
 | `POST /api/posing/admin/slots` | Προσθήκη slot |

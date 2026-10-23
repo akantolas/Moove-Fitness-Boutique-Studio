@@ -9,14 +9,15 @@ import { handleSlots } from './_handlers/slots.js'
 
 const BASE_PREFIX = '/api/posing/'
 
+// Vercel matches this catch-all for a single path segment only, so route names have no "/".
 const routes = {
   health: handleHealth,
   me: handleMe,
   slots: handleSlots,
   bookings: handleBookings,
-  'account/delete': handleAccountDelete,
+  'account-delete': handleAccountDelete,
   'signup-notify': handleSignupNotify,
-  'cron/expiry-reminders': handleExpiryReminders,
+  'cron-expiry-reminders': handleExpiryReminders,
 }
 
 export default async function handler(req, res) {
