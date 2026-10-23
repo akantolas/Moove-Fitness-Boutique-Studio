@@ -297,7 +297,7 @@ export async function deletePosingAccount(
   accessToken: string,
   password: string,
 ) {
-  const res = await fetch('/api/posing/account/delete', {
+  const res = await fetch('/api/posing/account-delete', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
