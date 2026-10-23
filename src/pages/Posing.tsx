@@ -12,6 +12,7 @@ import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { useBookingSectionVisible } from '../hooks/useBookingSectionVisible'
 import { fetchPosingMe, type UserPackage } from '../lib/posingApi'
 import { fetchPackagePlan } from '../lib/posingPackages'
+import { packageValidityDays } from '../lib/posingValidity'
 import {
   getOctoberBonusSessions,
   getSeptemberBonusSessions,
@@ -78,8 +79,9 @@ export function PosingPage() {
         )
   const now = useCurrentTime()
   const [sessionsTotal, setSessionsTotal] = useState<number | null>(null)
-  const [offersModalOpen, setOffersModalOpen] = useState(() =>
-    shouldShowOffersPopup({ seenInSession: hasSeenOffersPopup() }),
+  const [planPeriodDays, setPlanPeriodDays] = useState<number | null>(null)
+  const [offersDismissed, setOffersDismissed] = useState(
+    () => !shouldShowOffersPopup({ seenInSession: hasSeenOffersPopup() }),
   )
   const [septemberLoyaltyEligible, setSeptemberLoyaltyEligible] =
     useState(false)
@@ -90,7 +92,7 @@ export function PosingPage() {
   const [memberPackages, setMemberPackages] = useState<UserPackage[]>([])
   const [memberDataToken, setMemberDataToken] = useState<string | null>(null)
   const [offerError, setOfferError] = useState(false)
-  const { accessToken, sessionReady } = usePosingAuth()
+  const { accessToken, sessionReady, loading: authLoading } = usePosingAuth()
   const bookingSectionRef = useRef<HTMLElement | null>(null)
   const bookingSectionVisible = useBookingSectionVisible(bookingSectionRef)
   const posingBookingSticky = usePosingBookingSticky()
@@ -159,7 +161,9 @@ export function PosingPage() {
   useEffect(() => {
     let cancelled = false
     fetchPackagePlan(selectedPlanKey).then((plan) => {
-      if (!cancelled) setSessionsTotal(plan?.sessions_total ?? null)
+      if (cancelled) return
+      setSessionsTotal(plan?.sessions_total ?? null)
+      setPlanPeriodDays(plan?.period_days ?? null)
     })
     return () => {
       cancelled = true
@@ -194,12 +198,33 @@ export function PosingPage() {
   const offeredSessionsTotal =
     existingPackage?.sessions_total ??
     (sessionsTotal != null && bonus != null ? sessionsTotal + bonus : null)
+  // A paid package has a fixed end; a new one is valid for a span counted from payment.
+  const validityLabel =
+    existingPackage?.status === 'active' && existingPackage.period_end
+      ? t('posing.booking.validUntil', {
+          date: new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'Europe/Athens',
+          }).format(new Date(existingPackage.period_end)),
+        })
+      : offeredSessionsTotal != null && planPeriodDays != null
+        ? t('posing.booking.validityDays', {
+            days: packageValidityDays(offeredSessionsTotal, planPeriodDays),
+          })
+        : null
+  // The popup is for new members, so signed-in members see it only once /me confirms they qualify.
+  const offersEligibilityKnown =
+    !authLoading && (!accessToken || memberDataToken === accessToken)
+  const offersModalOpen =
+    !offersDismissed && offersEligibilityKnown && octoberNewMemberEligible
 
   return (
     <div className="bg-[#08080c] text-white">
       <PosingOffersModal
         open={offersModalOpen}
-        onClose={() => setOffersModalOpen(false)}
+        onClose={() => setOffersDismissed(true)}
       />
       {accountDeleted ? (
         <div className="border-b border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-center text-sm text-emerald-100">
@@ -446,6 +471,7 @@ export function PosingPage() {
                     : t('posing.booking.sessionsIncluded', {
                         count: offeredSessionsTotal,
                       })}
+                  {validityLabel ? ` · ${validityLabel}` : null}
                 </p>
               ) : null}
               {offerError ? (

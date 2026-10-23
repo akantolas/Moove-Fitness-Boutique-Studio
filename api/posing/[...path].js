@@ -1,6 +1,7 @@
 import { json, resolveApiPath } from './_lib.js'
 import { handleAccountDelete } from './_handlers/accountDelete.js'
 import { handleBookings } from './_handlers/bookings.js'
+import { handleExpiryReminders } from './_handlers/expiryReminders.js'
 import { handleHealth } from './_handlers/health.js'
 import { handleMe } from './_handlers/me.js'
 import { handleSignupNotify } from './_handlers/signupNotify.js'
@@ -15,6 +16,7 @@ const routes = {
   bookings: handleBookings,
   'account/delete': handleAccountDelete,
   'signup-notify': handleSignupNotify,
+  'cron/expiry-reminders': handleExpiryReminders,
 }
 
 export default async function handler(req, res) {

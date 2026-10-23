@@ -49,6 +49,15 @@ function formatSlotTime(startAt: string, locale: Locale) {
   }).format(new Date(startAt))
 }
 
+function formatPackageDate(iso: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Athens',
+  }).format(new Date(iso))
+}
+
 function profileToForm(profile: PosingProfile | null) {
   return {
     fullName: profile?.full_name ?? '',
@@ -178,6 +187,14 @@ export function PosingAccountPage() {
 
   const activePackages = useMemo(
     () => packages.filter((p) => p.status === 'active'),
+    [packages],
+  )
+
+  const lastExpiredPackage = useMemo(
+    () =>
+      packages
+        .filter((p) => p.status === 'expired' && p.period_end)
+        .sort((a, b) => Date.parse(b.period_end!) - Date.parse(a.period_end!))[0],
     [packages],
   )
 
@@ -472,7 +489,17 @@ export function PosingAccountPage() {
             <h2 className="text-lg font-semibold text-white">{t('posing.account.activePackages')}</h2>
             {activePackages.length === 0 ? (
               <div className="mt-6 text-center">
-                <p className="text-sm text-white/50">{t('posing.account.noPackages')}</p>
+                <p className="text-sm text-white/50">
+                  {lastExpiredPackage?.period_end
+                    ? t('posing.account.packageExpiredOn', {
+                        name: planKeyLabel(
+                          lastExpiredPackage.plan_key,
+                          (i) => dictionary.posing.pricing.packages[i]?.name,
+                        ),
+                        date: formatPackageDate(lastExpiredPackage.period_end, locale),
+                      })
+                    : t('posing.account.noPackages')}
+                </p>
                 <a
                   href="/posing#booking"
                   className="mt-4 inline-block text-xs font-semibold uppercase tracking-[0.18em] text-fuchsia-200 hover:underline"
@@ -496,6 +523,13 @@ export function PosingAccountPage() {
                         total: pkg.sessions_total,
                       })}
                     </p>
+                    {pkg.period_end ? (
+                      <p className="mt-0.5 text-xs text-white/50">
+                        {t('posing.account.packageValidUntil', {
+                          date: formatPackageDate(pkg.period_end, locale),
+                        })}
+                      </p>
+                    ) : null}
                     {pkg.sessions_remaining > 0 ? (
                       <Link
                         to={`/posing?package=${encodeURIComponent(pkg.plan_key)}#booking`}
