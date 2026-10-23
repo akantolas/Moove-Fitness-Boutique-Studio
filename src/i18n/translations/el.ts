@@ -1051,6 +1051,7 @@ export const el = {
       packageLineActive: 'Απομένουν {{remaining}} από {{total}}',
       packageLinePending: 'Περιμένει πληρωμή για να ενεργοποιηθεί',
       packageLineUnpaid: 'Δεν πληρώθηκε',
+      packagePurchased: 'Αγορά: {{date}}',
       packagePaid: 'Πληρωμή: {{date}} · {{method}}',
       paymentMethodManual: 'χειροκίνητα',
       paymentMethodStripe: 'Stripe',

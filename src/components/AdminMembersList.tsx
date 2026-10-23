@@ -437,20 +437,26 @@ export function AdminMembersList({
                                         adjustment: pkg.session_adjustment,
                                       })}
                                     </p>
-                                    {pkg.paid_at ? (
-                                      <p className="mt-0.5 text-xs text-white/45">
-                                        {t('posing.admin.packagePaid', {
-                                          date: formatMemberDate(
-                                            pkg.paid_at,
-                                            locale,
-                                          ),
-                                          method: paymentMethodLabel(
-                                            pkg.payment_method,
-                                            t,
-                                          ),
-                                        })}
-                                      </p>
-                                    ) : null}
+                                    <p className="mt-0.5 text-xs text-white/45">
+                                      {t('posing.admin.packagePurchased', {
+                                        date: formatMemberDate(
+                                          pkg.created_at,
+                                          locale,
+                                        ),
+                                      })}
+                                      {pkg.paid_at
+                                        ? ` · ${t('posing.admin.packagePaid', {
+                                            date: formatMemberDate(
+                                              pkg.paid_at,
+                                              locale,
+                                            ),
+                                            method: paymentMethodLabel(
+                                              pkg.payment_method,
+                                              t,
+                                            ),
+                                          })}`
+                                        : null}
+                                    </p>
                                     <p className="mt-0.5 text-xs text-white/50">
                                       {[
                                         packageStatusLabel(pkg.status, t),
