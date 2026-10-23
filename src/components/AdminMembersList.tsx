@@ -94,24 +94,18 @@ function sortMemberPackages(packages: AdminMemberPackage[]) {
   )
 }
 
-/** What a package means for the member now: credit left, awaiting payment, or history. */
+/** What a package means for the member now; closed packages show their status alone. */
 function packageBalanceLine(pkg: AdminMemberPackage, t: Translate) {
-  const unused = Math.max(0, pkg.sessions_total - pkg.sessions_used)
   if (pkg.status === 'active') {
     return t('posing.admin.packageLineActive', {
-      remaining: unused,
+      remaining: Math.max(0, pkg.sessions_total - pkg.sessions_used),
       total: pkg.sessions_total,
     })
   }
   if (pkg.status === 'pending_payment') return t('posing.admin.packageLinePending')
-  if (!pkg.paid_at) return t('posing.admin.packageLineUnpaid')
-  const used = t('posing.admin.packageLineUsed', {
-    used: pkg.sessions_used,
-    total: pkg.sessions_total,
-  })
-  return unused > 0
-    ? `${used} · ${countLabel(t, 'posing.admin.packageLineUnused', unused)}`
-    : used
+  if (pkg.status === 'cancelled' && !pkg.paid_at)
+    return t('posing.admin.packageLineUnpaid')
+  return null
 }
 
 function paymentMethodLabel(method: string | null, t: Translate) {
@@ -458,8 +452,12 @@ export function AdminMembersList({
                                       </p>
                                     ) : null}
                                     <p className="mt-0.5 text-xs text-white/50">
-                                      {packageStatusLabel(pkg.status, t)} ·{' '}
-                                      {packageBalanceLine(pkg, t)}
+                                      {[
+                                        packageStatusLabel(pkg.status, t),
+                                        packageBalanceLine(pkg, t),
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' · ')}
                                     </p>
                                   </div>
                                   {canCancelPackage(pkg.status) &&
