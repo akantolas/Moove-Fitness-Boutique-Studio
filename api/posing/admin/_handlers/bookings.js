@@ -1,3 +1,4 @@
+import { sendLatePaymentEmails } from '../../../../lib/email/sendLatePaymentEmails.js'
 import { sendPaidConfirmationEmail } from '../../../../lib/email/sendPaidConfirmation.js'
 import {
   fetchBookingCancellationSnapshot,
@@ -126,14 +127,23 @@ export async function handleAdminBookings(req, res) {
       let deliveryFailed = false
       if (!result.already) {
         try {
-          const emailResult = await sendPaidConfirmationEmail(bookingId, { locale: booking.locale })
+          const sendEmail = result.credit_only
+            ? sendLatePaymentEmails
+            : sendPaidConfirmationEmail
+          const emailResult = await sendEmail(bookingId, { locale: booking.locale })
           deliveryFailed = !emailResult.ok
         } catch {
           deliveryFailed = true
         }
       }
 
-      return json(res, 200, { ok: true, already: result.already ?? false, payment_confirmed: true, delivery_failed: deliveryFailed })
+      return json(res, 200, {
+        ok: true,
+        already: result.already ?? false,
+        payment_confirmed: true,
+        credit_only: result.credit_only ?? false,
+        delivery_failed: deliveryFailed,
+      })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'server_error'
       return json(res, 500, { ok: false, error: message })

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  buildLatePaymentCreditEmail,
   buildMooveProgramPaymentEmail,
   buildPaymentEmail,
 } from '../lib/email/templates.js'
@@ -67,5 +68,43 @@ describe('Revolut payment email instructions', () => {
     assert.match(email.text, /34,90\s*€/)
     assert.match(email.text, /κωδικό παραγγελίας ABCD1234/)
     assert.ok(email.html.includes(REVOLUT_URL))
+  })
+})
+
+describe('payment deadline', () => {
+  for (const [locale, window, label] of [
+    ['el', 'έχεις 3 ώρες|κρατημένη για 3 ώρες', 'Πληρωμή έως'],
+    ['en', 'held for 3 hours', 'Pay by'],
+  ]) {
+    it(`tells ${locale} customers they have 3 hours and until when`, () => {
+      const email = buildPaymentEmail({
+        attendeeName: 'Test Customer',
+        packageName: 'Single',
+        sessionTime: '1 August 2026, 12:00',
+        revolutLink: REVOLUT_URL,
+        amountEur: 70,
+        bookingId: 'abcd1234-5678-90ab-cdef',
+        paymentDeadline: '1 August 2026, 09:00 (Greece time)',
+        locale,
+      })
+      assert.match(email.text, new RegExp(window))
+      assert.match(email.text, new RegExp(`${label}.*09:00`))
+      assert.ok(email.html.includes('09:00 (Greece time)'))
+    })
+  }
+})
+
+describe('late payment credit email', () => {
+  it('asks the member to book a new time for their plan', () => {
+    const email = buildLatePaymentCreditEmail({
+      attendeeName: 'Test Customer',
+      packageName: 'Ruby',
+      planKey: 'ruby',
+      sessionsTotal: 6,
+      validUntil: '22 November 2026',
+      locale: 'en',
+    })
+    assert.match(email.text, /every session available/)
+    assert.ok(email.html.includes('/posing?plan=ruby#booking'))
   })
 })

@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { ProfileAvatar } from './ProfileAvatar'
 import { MemberCustomPrices } from './MemberCustomPrices'
-import type { AdminMember, AdminMemberBooking } from '../lib/posingApi'
+import type {
+  AdminMember,
+  AdminMemberBooking,
+  AdminMemberPackage,
+} from '../lib/posingApi'
 import { useTranslation } from '../i18n/useTranslation'
 import type { Locale } from '../i18n/types'
 import { bookingStatusLabel, planKeyLabel } from '../lib/posingLabels'
@@ -66,6 +70,56 @@ function canCancelPackage(status: string) {
   return status === 'pending_payment' || status === 'active'
 }
 
+type Translate = (key: string, vars?: Record<string, string | number>) => string
+
+/** Picks the `…One` variant for a count of 1, so labels never read "1 sessions". */
+function countLabel(t: Translate, key: string, count: number) {
+  return count === 1 ? t(`${key}One`) : t(key, { count })
+}
+
+const PACKAGE_STATUS_ORDER: Record<string, number> = {
+  active: 0,
+  pending_payment: 1,
+  expired: 2,
+  cancelled: 3,
+}
+
+/** Usable packages first, then history, newest first within each group. */
+function sortMemberPackages(packages: AdminMemberPackage[]) {
+  return [...packages].sort(
+    (a, b) =>
+      (PACKAGE_STATUS_ORDER[a.status] ?? 9) -
+        (PACKAGE_STATUS_ORDER[b.status] ?? 9) ||
+      Date.parse(b.created_at) - Date.parse(a.created_at),
+  )
+}
+
+/** What a package means for the member now: credit left, awaiting payment, or history. */
+function packageBalanceLine(pkg: AdminMemberPackage, t: Translate) {
+  const unused = Math.max(0, pkg.sessions_total - pkg.sessions_used)
+  if (pkg.status === 'active') {
+    return t('posing.admin.packageLineActive', {
+      remaining: unused,
+      total: pkg.sessions_total,
+    })
+  }
+  if (pkg.status === 'pending_payment') return t('posing.admin.packageLinePending')
+  if (!pkg.paid_at) return t('posing.admin.packageLineUnpaid')
+  const used = t('posing.admin.packageLineUsed', {
+    used: pkg.sessions_used,
+    total: pkg.sessions_total,
+  })
+  return unused > 0
+    ? `${used} · ${countLabel(t, 'posing.admin.packageLineUnused', unused)}`
+    : used
+}
+
+function paymentMethodLabel(method: string | null, t: Translate) {
+  if (method === 'stripe') return t('posing.admin.paymentMethodStripe')
+  if (method === 'manual') return t('posing.admin.paymentMethodManual')
+  return '—'
+}
+
 function canCancelMemberBooking(booking: AdminMemberBooking) {
   if (booking.status === 'pending_payment') return true
   if (booking.status !== 'confirmed') return false
@@ -105,6 +159,15 @@ export function AdminMembersList({
     null,
   )
   const [search, setSearch] = useState('')
+  const packageToCancel = cancelPackageId
+    ? members
+        .flatMap((member) => member.user_packages ?? [])
+        .find((pkg) => pkg.id === cancelPackageId)
+    : undefined
+  const creditLostOnCancel =
+    packageToCancel?.status === 'active' && packageToCancel.paid_at
+      ? Math.max(0, packageToCancel.sessions_total - packageToCancel.sessions_used)
+      : 0
   const visibleMembers = members.filter(
     (member) =>
       (!clientsOnly || member.role !== 'admin') &&
@@ -229,7 +292,8 @@ export function AdminMembersList({
             const isAdmin = member.role === 'admin'
             const canDelete = !isSelf && !isAdmin
             const isExpanded = expandedId === member.id
-            const activePackages = (member.user_packages ?? []).filter(
+            const packages = sortMemberPackages(member.user_packages ?? [])
+            const activePackages = packages.filter(
               (p) => p.status === 'active',
             )
             const pendingPackages = (member.user_packages ?? []).filter(
@@ -272,14 +336,16 @@ export function AdminMembersList({
                       </p>
                       <p className="mt-1 text-xs text-white/40">
                         {activePackages.length > 0
-                          ? t('posing.admin.memberActivePackages', {
-                              count: activePackages.length,
-                            })
+                          ? countLabel(
+                              t,
+                              'posing.admin.memberActivePackages',
+                              activePackages.length,
+                            )
                           : pendingPackages.length > 0
-                            ? t('posing.admin.memberPendingPackages', {
-                                count: pendingPackages.length,
-                              })
-                            : t('posing.admin.memberNoPackages')}
+                            ? t('posing.admin.memberPendingPackages')
+                            : packages.length > 0
+                              ? t('posing.admin.memberNoActivePackage')
+                              : t('posing.admin.memberNoPackages')}
                       </p>
                     </div>
                   </button>
@@ -334,15 +400,15 @@ export function AdminMembersList({
                       </div>
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
-                          {t('posing.account.activePackages')}
+                          {t('posing.admin.memberPackages')}
                         </p>
-                        {(member.user_packages ?? []).length === 0 ? (
+                        {packages.length === 0 ? (
                           <p className="mt-2 text-sm text-white/50">
                             {t('posing.admin.memberNoPackages')}
                           </p>
                         ) : (
                           <ul className="mt-2 space-y-2">
-                            {(member.user_packages ?? []).map((pkg) => (
+                            {packages.map((pkg) => (
                               <li
                                 key={pkg.id}
                                 className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
@@ -358,7 +424,9 @@ export function AdminMembersList({
                                         t,
                                       )}
                                     </p>
-                                    {pkg.period_end ? (
+                                    {pkg.period_end &&
+                                    (pkg.status !== 'cancelled' ||
+                                      pkg.paid_at) ? (
                                       <p className="mt-1 text-xs text-white/45">
                                         {t('posing.admin.packageExpiry', {
                                           date: formatMemberDate(
@@ -375,16 +443,23 @@ export function AdminMembersList({
                                         adjustment: pkg.session_adjustment,
                                       })}
                                     </p>
+                                    {pkg.paid_at ? (
+                                      <p className="mt-0.5 text-xs text-white/45">
+                                        {t('posing.admin.packagePaid', {
+                                          date: formatMemberDate(
+                                            pkg.paid_at,
+                                            locale,
+                                          ),
+                                          method: paymentMethodLabel(
+                                            pkg.payment_method,
+                                            t,
+                                          ),
+                                        })}
+                                      </p>
+                                    ) : null}
                                     <p className="mt-0.5 text-xs text-white/50">
                                       {packageStatusLabel(pkg.status, t)} ·{' '}
-                                      {t('posing.account.remaining', {
-                                        remaining: Math.max(
-                                          0,
-                                          pkg.sessions_total -
-                                            pkg.sessions_used,
-                                        ),
-                                        total: pkg.sessions_total,
-                                      })}
+                                      {packageBalanceLine(pkg, t)}
                                     </p>
                                   </div>
                                   {canCancelPackage(pkg.status) &&
@@ -504,7 +579,15 @@ export function AdminMembersList({
       <ConfirmDialog
         open={cancelPackageId !== null}
         title={t('posing.admin.confirmCancelPackageTitle')}
-        body={t('posing.admin.confirmCancelPackageBody')}
+        body={
+          creditLostOnCancel > 0
+            ? `${t('posing.admin.confirmCancelPackageBody')} ${countLabel(
+                t,
+                'posing.admin.confirmCancelPaidPackageWarning',
+                creditLostOnCancel,
+              )}`
+            : t('posing.admin.confirmCancelPackageBody')
+        }
         confirmLabel={t('posing.admin.cancelPackage')}
         cancelLabel={t('posing.admin.cancelDeleteMember')}
         busy={cancellingPackageId !== null}

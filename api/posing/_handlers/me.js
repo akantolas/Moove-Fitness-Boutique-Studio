@@ -1,6 +1,7 @@
 import {
   cors,
   ensureAdmin,
+  expirePendingPayments,
   getSupabaseAdmin,
   getUserFromRequest,
   json,
@@ -24,6 +25,7 @@ export async function handleMe(req, res) {
 
     const supabase = getSupabaseAdmin()
     const isAdmin = await ensureAdmin(user)
+    await expirePendingPayments(supabase)
 
     const [packagesRes, bookingsRes, profileRes] = await Promise.all([
       supabase

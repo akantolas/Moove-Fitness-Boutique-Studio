@@ -126,6 +126,7 @@ export async function createStripeCheckoutUrl({
   amountEur = null,
   packageName = 'Move & Pose',
   useDynamicPrice = false,
+  expiresAt = null,
 }) {
   const secret = process.env.STRIPE_SECRET_KEY
   const priceEnv = STRIPE_PRICE_ENV[planKey] ?? STRIPE_PRICE_ENV.single
@@ -166,6 +167,11 @@ export async function createStripeCheckoutUrl({
   params.set('metadata[user_package_id]', userPackageId)
   params.set('metadata[plan_key]', planKey)
   params.set('metadata[locale]', locale === 'en' ? 'en' : 'el')
+  const expiresAtSeconds = Math.floor(Date.parse(expiresAt ?? '') / 1000)
+  // Stripe only accepts an expiry between 30 minutes and 24 hours ahead.
+  if (expiresAtSeconds > Date.now() / 1000 + 31 * 60) {
+    params.set('expires_at', String(expiresAtSeconds))
+  }
 
   const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
     method: 'POST',
@@ -492,6 +498,21 @@ export async function activatePackagePayment(
     p_actor_id: confirmedBy,
     p_paid_at: paidAt ?? undefined,
   })
+}
+
+/** Releases slots whose payment window lapsed; best-effort so reads never fail on it. */
+export async function expirePendingPayments(supabase) {
+  try {
+    const result = await runPosingTransaction(
+      supabase ?? getSupabaseAdmin(),
+      'posing_expire_pending_payments',
+    )
+    if (result?.ok === false) {
+      console.error('posing pending expiry failed:', result.error)
+    }
+  } catch (error) {
+    console.error('posing pending expiry failed:', error)
+  }
 }
 
 export async function cancelPosingBooking(

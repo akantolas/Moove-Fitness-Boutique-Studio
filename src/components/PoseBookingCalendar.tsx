@@ -3,6 +3,14 @@ import { Link } from 'react-router-dom'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
 import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
 import { createPosingBooking, fetchPosingSlots } from '../lib/posingApi'
+import {
+  addDays,
+  athensDateKey,
+  formatDayLabel,
+  formatTime,
+  groupSlotsByAthensDay,
+  startOfWeek,
+} from '../lib/posingDates'
 import { fetchUserPackageQuota, type PackageQuota } from '../lib/posingPackages'
 import { translateSlotsError } from '../lib/posingSlotsErrors'
 import { isSupabaseConfigured, createSupabaseClient } from '../lib/supabase'
@@ -15,38 +23,6 @@ type PoseBookingCalendarProps = {
   selectedPlanKey: PosingPlanKey
   selectedPackageName: string
   locale: Locale
-}
-
-function startOfWeek(date: Date) {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function addDays(date: Date, days: number) {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
-
-function formatDayLabel(date: Date, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'Europe/Athens',
-  }).format(date)
-}
-
-function formatTime(startAt: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === 'el' ? 'el-GR' : 'en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Athens',
-  }).format(new Date(startAt))
 }
 
 function translateBookingError(code: string, t: (key: string) => string) {
@@ -165,24 +141,10 @@ export function PoseBookingCalendar({
     return Array.from({ length: 14 }, (_, i) => addDays(weekStart, i))
   }, [weekStart])
 
-  const slotsByDay = useMemo(() => {
-    const map = new Map<string, typeof slots>()
-    for (const day of days) {
-      const key = day.toISOString().slice(0, 10)
-      map.set(key, [])
-    }
-    for (const slot of slots) {
-      const athensDate = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Athens',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(new Date(slot.start_at))
-      const list = map.get(athensDate)
-      if (list) list.push(slot)
-    }
-    return map
-  }, [days, slots])
+  const slotsByDay = useMemo(
+    () => groupSlotsByAthensDay(days, slots),
+    [days, slots],
+  )
 
   const willUseIncludedSession = Boolean(
     quota?.status === 'active' && quota.sessionsRemaining > 0,
@@ -248,13 +210,9 @@ export function PoseBookingCalendar({
         setError(t('posing.calendar.slotTaken'))
       } else if (code === 'unauthorized') {
         setError(t('posing.calendar.loginRequired'))
-      } else if (
-        code === 'payment_required_first' ||
-        code === 'package_sessions_exhausted'
-      ) {
-        setError(translateBookingError(code, t))
       } else {
-        setError(t('posing.calendar.error'))
+        const translated = translateBookingError(code, t)
+        setError(translated === code ? t('posing.calendar.error') : translated)
       }
     } finally {
       setBooking(false)
@@ -329,7 +287,10 @@ export function PoseBookingCalendar({
           {sessionsTotal != null ? (
             <span className="text-white/55">
               {' '}
-              · {t('posing.booking.sessionsIncluded', { count: sessionsTotal })}
+              ·{' '}
+              {sessionsTotal === 1
+                ? t('posing.booking.sessionsIncludedOne')
+                : t('posing.booking.sessionsIncluded', { count: sessionsTotal })}
             </span>
           ) : null}
         </p>
@@ -347,9 +308,14 @@ export function PoseBookingCalendar({
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
-          {t('posing.calendar.title')}
-        </p>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-fuchsia-200/80">
+            {t('posing.calendar.title')}
+          </p>
+          <p className="mt-1 text-xs text-white/50">
+            {t('posing.calendar.timezoneNote')}
+          </p>
+        </div>
         <div className="flex gap-2">
           <button
             type="button"
@@ -394,12 +360,7 @@ export function PoseBookingCalendar({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {days.map((day) => {
-            const key = new Intl.DateTimeFormat('en-CA', {
-              timeZone: 'Europe/Athens',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            }).format(day)
+            const key = athensDateKey(day)
             const daySlots = slotsByDay.get(key) ?? []
             return (
               <div

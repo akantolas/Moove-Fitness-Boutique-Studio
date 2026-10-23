@@ -50,6 +50,8 @@ export async function fetchUserPackageQuota(
 
   const supabase = createSupabaseClient()
   const now = new Date().toISOString()
+  // Mirrors posing_payment_lapsed: unpaid packages lapse 15 minutes after their deadline.
+  const lapsedBefore = new Date(Date.now() - 15 * 60 * 1000).toISOString()
 
   const { data: pending } = await supabase
     .from('user_packages')
@@ -58,6 +60,7 @@ export async function fetchUserPackageQuota(
     .eq('plan_key', planKey)
     .eq('status', 'pending_payment')
     .gt('period_end', now)
+    .or(`payment_expires_at.is.null,payment_expires_at.gt.${lapsedBefore}`)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -75,7 +78,7 @@ export async function fetchUserPackageQuota(
     }
   }
 
-  const { data: active } = await supabase
+  const { data: activeRows } = await supabase
     .from('user_packages')
     .select('id, sessions_total, sessions_used')
     .eq('user_id', userId)
@@ -83,8 +86,11 @@ export async function fetchUserPackageQuota(
     .eq('status', 'active')
     .gt('period_end', now)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+
+  // Same choice as posing_reserve_booking: the newest package that still has sessions.
+  const active =
+    activeRows?.find((p) => p.sessions_used < p.sessions_total) ??
+    activeRows?.[0]
 
   if (active) {
     const remaining = Math.max(0, active.sessions_total - active.sessions_used)

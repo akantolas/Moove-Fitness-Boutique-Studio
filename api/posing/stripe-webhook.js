@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { sendLatePaymentEmails } from '../../lib/email/sendLatePaymentEmails.js'
 import { sendPaidConfirmationEmail } from '../../lib/email/sendPaidConfirmation.js'
 import { generateAndSendNutritionPlan } from '../nutrition/_lib.js'
 import {
@@ -19,26 +20,44 @@ export const config = {
   },
 }
 
-function verifyStripeSignature(payload, signatureHeader, secret) {
-  if (!secret || !signatureHeader) return false
-  const parts = signatureHeader.split(',').reduce((acc, part) => {
-    const [key, value] = part.split('=')
-    if (key && value) acc[key] = value
-    return acc
-  }, {})
-  const timestamp = parts.t
-  const signature = parts.v1
-  if (!timestamp || !signature) return false
+/** Stripe's own libraries reject events signed more than 5 minutes ago. */
+export const STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300
 
-  const signed = `${timestamp}.${payload}`
-  const expected = createHmac('sha256', secret).update(signed).digest('hex')
-  try {
-    const a = Buffer.from(expected, 'utf8')
-    const b = Buffer.from(signature, 'utf8')
-    return a.length === b.length && timingSafeEqual(a, b)
-  } catch {
+export function verifyStripeSignature(
+  payload,
+  signatureHeader,
+  secret,
+  nowSeconds = Date.now() / 1000,
+) {
+  if (!secret || !signatureHeader) return false
+  let timestamp = null
+  const signatures = []
+  for (const part of signatureHeader.split(',')) {
+    const [key, value] = part.split('=')
+    if (key === 't') timestamp = value
+    // Stripe sends one v1 per active secret while a secret is being rolled.
+    if (key === 'v1' && value) signatures.push(value)
+  }
+  if (!timestamp || signatures.length === 0) return false
+  if (
+    !Number.isFinite(Number(timestamp)) ||
+    Math.abs(nowSeconds - Number(timestamp)) > STRIPE_SIGNATURE_TOLERANCE_SECONDS
+  ) {
     return false
   }
+
+  const signed = `${timestamp}.${payload}`
+  const expected = Buffer.from(
+    createHmac('sha256', secret).update(signed).digest('hex'),
+    'utf8',
+  )
+  return signatures.some((signature) => {
+    const candidate = Buffer.from(signature, 'utf8')
+    return (
+      candidate.length === expected.length &&
+      timingSafeEqual(candidate, expected)
+    )
+  })
 }
 
 async function handleProgramWithNutritionCheckout(supabase, session) {
@@ -233,7 +252,10 @@ export default async function handler(req, res) {
   }
 
   if (!result.already) {
-    const emailResult = await sendPaidConfirmationEmail(bookingId, {
+    const sendEmail = result.credit_only
+      ? sendLatePaymentEmails
+      : sendPaidConfirmationEmail
+    const emailResult = await sendEmail(bookingId, {
       locale: session?.metadata?.locale,
     })
     if (!emailResult.ok) {

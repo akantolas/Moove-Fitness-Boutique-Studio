@@ -11,6 +11,31 @@ import { CATALOG_PRICES_EUR, PLAN_KEYS } from '../../_pricing.js'
 const PROFILE_SELECT =
   'id, full_name, email, phone, division, role, avatar_url, created_at, updated_at'
 
+/** Most recent sessions first, by session time rather than booking time. */
+export function latestBySessionTime(bookings, limit) {
+  const time = (booking) => {
+    const slot = Array.isArray(booking.slot) ? booking.slot[0] : booking.slot
+    return Date.parse(slot?.start_at ?? booking.created_at) || 0
+  }
+  return [...bookings].sort((a, b) => time(b) - time(a)).slice(0, limit)
+}
+
+/** True while a member still has a payment, a session or paid credit outstanding. */
+export function hasLiveMembership(openBookings, activePackages, now = Date.now()) {
+  const hasOpenBooking = openBookings.some((booking) => {
+    if (booking.status === 'pending_payment') return true
+    const slot = Array.isArray(booking.slot) ? booking.slot[0] : booking.slot
+    return Date.parse(slot?.start_at ?? '') > now
+  })
+  const hasCredit = activePackages.some(
+    (pkg) =>
+      pkg.status === 'active' &&
+      Date.parse(pkg.period_end ?? '') > now &&
+      pkg.sessions_total > pkg.sessions_used,
+  )
+  return hasOpenBooking || hasCredit
+}
+
 export async function handleAdminMembers(req, res) {
   cors(res)
   if (req.method === 'OPTIONS') return res.status(204).end()
@@ -52,9 +77,7 @@ export async function handleAdminMembers(req, res) {
             .select(
               'id, user_id, status, plan_key, created_at, slot:availability_slots(start_at)',
             )
-            .in('user_id', memberIds)
-            .order('created_at', { ascending: false })
-            .limit(200),
+            .in('user_id', memberIds),
           supabase
             .from('profile_plan_prices')
             .select('user_id, plan_key, price_eur, note, updated_at')
@@ -106,15 +129,16 @@ export async function handleAdminMembers(req, res) {
 
       for (const booking of bookings ?? []) {
         const list = bookingsByUser.get(booking.user_id) ?? []
-        if (list.length < 3) {
-          list.push({
-            ...booking,
-            slot: Array.isArray(booking.slot)
-              ? (booking.slot[0] ?? null)
-              : booking.slot,
-          })
-          bookingsByUser.set(booking.user_id, list)
-        }
+        list.push({
+          ...booking,
+          slot: Array.isArray(booking.slot)
+            ? (booking.slot[0] ?? null)
+            : booking.slot,
+        })
+        bookingsByUser.set(booking.user_id, list)
+      }
+      for (const [userId, list] of bookingsByUser) {
+        bookingsByUser.set(userId, latestBySessionTime(list, 3))
       }
 
       for (const row of planPrices ?? []) {
@@ -233,6 +257,28 @@ export async function handleAdminMembers(req, res) {
     if (!target) return json(res, 404, { ok: false, error: 'member_not_found' })
     if (target.role === 'admin') {
       return json(res, 403, { ok: false, error: 'cannot_delete_admin' })
+    }
+
+    // Deleting cascades to packages and bookings, so live ones must be cancelled first.
+    const [openBookingsRes, packagesRes] = await Promise.all([
+      supabase
+        .from('posing_bookings')
+        .select('id, status, slot:availability_slots(start_at)')
+        .eq('user_id', memberId)
+        .in('status', ['pending_payment', 'confirmed']),
+      supabase
+        .from('user_packages')
+        .select('status, period_end, sessions_total, sessions_used')
+        .eq('user_id', memberId)
+        .eq('status', 'active'),
+    ])
+    if (openBookingsRes.error || packagesRes.error) {
+      return json(res, 503, { ok: false, error: 'member_details_failed' })
+    }
+    if (
+      hasLiveMembership(openBookingsRes.data ?? [], packagesRes.data ?? [])
+    ) {
+      return json(res, 409, { ok: false, error: 'member_has_active_items' })
     }
 
     const { error: deleteError } =

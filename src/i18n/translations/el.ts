@@ -708,6 +708,7 @@ export const el = {
       paymentSuccess:
         'Η πληρωμή ολοκληρώθηκε. Σας ευχαριστούμε — θα λάβετε επιβεβαίωση από το Stripe.',
       sessionsIncluded: '{{count}} συνεδρίες',
+      sessionsIncludedOne: '1 συνεδρία',
       sessionsRemaining: 'Απομένουν {{remaining}} από {{total}}',
       sessionsRemainingShort: '{{remaining}} διαθέσιμες κρατήσεις',
       newPurchaseHint: 'Νέα αγορά — θα λάβεις email πληρωμής',
@@ -842,7 +843,7 @@ export const el = {
       deleteSuccess: 'Ο λογαριασμός διαγράφηκε.',
       activePackages: 'Ενεργά πακέτα',
       noPackages: 'Δεν έχεις ενεργό πακέτο ακόμα.',
-      remaining: '{{remaining}} απομένουν από {{total}} sessions',
+      remaining: 'Απομένουν {{remaining}} από {{total}} συνεδρίες',
       upcoming: 'Επερχόμενες κρατήσεις',
       noBookings: 'Δεν έχεις κρατήσεις.',
       bookNew: 'Κλείσε νέα συνεδρία',
@@ -906,12 +907,14 @@ export const el = {
     },
     calendar: {
       title: 'Διαθέσιμες ώρες',
+      timezoneNote: 'Οι ώρες είναι σε ώρα Ελλάδας',
       loading: 'Φόρτωση διαθεσιμότητας…',
       noSlots: '—',
       loginPrompt: 'Για κράτηση χρειάζεται λογαριασμός.',
       confirm: 'Επιβεβαίωση κράτησης',
       booking: 'Κράτηση…',
-      success: 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου για πληρωμή.',
+      success:
+        'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου — έχεις 3 ώρες για να ολοκληρώσεις την πληρωμή, αλλιώς η ώρα αποδεσμεύεται.',
       error: 'Η κράτηση απέτυχε. Δοκίμασε ξανά.',
       slotTaken: 'Η ώρα μόλις κλείστηκε. Επίλεξε άλλη.',
       loginRequired: 'Συνδέσου για να κλείσεις ώρα.',
@@ -1020,6 +1023,11 @@ export const el = {
       confirmPaymentTitle: 'Επιβεβαίωση πληρωμής;',
       confirmPaymentBody:
         'Η κράτηση θα επιβεβαιωθεί χειροκίνητα (π.χ. μετρητά ή τραπεζική κατάθεση).',
+      confirmLatePayment: 'Καταχώρηση πληρωμής',
+      confirmLatePaymentBody:
+        'Η κράτηση έχει λήξει. Η πληρωμή θα καταχωρηθεί και το πακέτο θα ενεργοποιηθεί με όλες τις συνεδρίες διαθέσιμες — ο πελάτης θα λάβει email να κλείσει νέα ώρα.',
+      paymentExpiredNote: 'Έληξε απλήρωτη',
+      paymentCreditedNote: 'Πληρώθηκε μετά την ακύρωση',
       cancelBooking: 'Ακύρωση κράτησης',
       cancelPackage: 'Ακύρωση πακέτου',
       cancellingBooking: 'Ακύρωση…',
@@ -1035,8 +1043,24 @@ export const el = {
       filterAll: 'Όλες',
       noBookings: 'Δεν υπάρχουν κρατήσεις.',
       memberActivePackages: '{{count}} ενεργά πακέτα',
-      memberPendingPackages: '{{count}} εκκρεμεί πληρωμή',
+      memberActivePackagesOne: '1 ενεργό πακέτο',
+      memberPendingPackages: 'Εκκρεμεί πληρωμή',
       memberNoPackages: 'Χωρίς πακέτα',
+      memberNoActivePackage: 'Χωρίς ενεργό πακέτο',
+      memberPackages: 'Πακέτα',
+      packageLineActive: 'Απομένουν {{remaining}} από {{total}}',
+      packageLinePending: 'Περιμένει πληρωμή για να ενεργοποιηθεί',
+      packageLineUsed: 'Έγιναν {{used}} από {{total}}',
+      packageLineUnused: '{{count}} δεν χρησιμοποιήθηκαν',
+      packageLineUnusedOne: '1 δεν χρησιμοποιήθηκε',
+      packageLineUnpaid: 'Δεν πληρώθηκε',
+      packagePaid: 'Πληρωμή: {{date}} · {{method}}',
+      paymentMethodManual: 'χειροκίνητα',
+      paymentMethodStripe: 'Stripe',
+      confirmCancelPaidPackageWarning:
+        'Προσοχή: το πακέτο είναι πληρωμένο και έχει ακόμα {{count}} αχρησιμοποίητες συνεδρίες. Μετά την ακύρωση δεν θα μπορούν να κλειστούν.',
+      confirmCancelPaidPackageWarningOne:
+        'Προσοχή: το πακέτο είναι πληρωμένο και έχει ακόμα 1 αχρησιμοποίητη συνεδρία. Μετά την ακύρωση δεν θα μπορεί να κλειστεί.',
       recentBookings: 'Πρόσφατες κρατήσεις',
       packageStatus: {
         pending_payment: 'Αναμονή πληρωμής',
@@ -1138,6 +1162,8 @@ export const el = {
         invalid_price: 'Μη έγκυρη τιμή.',
       },
       adminErrors: {
+        member_has_active_items:
+          'Το μέλος έχει ενεργό πακέτο με διαθέσιμες συνεδρίες, εκκρεμή πληρωμή ή μελλοντική κράτηση. Ακύρωσέ τα πρώτα και μετά διάγραψε το μέλος.',
         slot_not_available:
           'Η ώρα δεν είναι διαθέσιμη για ολόκληρη τη διάρκεια της συνεδρίας.',
         delivery_failed: 'Η παράδοση απέτυχε. Δοκίμασε επαναποστολή.',

@@ -139,6 +139,7 @@ export type AdminBookingRow = {
   status: string
   created_at: string
   user_id: string
+  cancelled_reason?: 'payment_expired' | 'payment_credited' | null
   profiles?: { full_name: string | null; email: string } | null
   slot?: { start_at: string; end_at: string } | null
 }

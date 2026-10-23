@@ -43,3 +43,25 @@ describe('Athens calendar boundaries', () => {
     assert.equal(dates.isPastCell('2026-03-29', '03:30'), true)
   })
 })
+
+describe('member booking calendar days', () => {
+  it('shows a slot on the last Sunday of the two-week view', () => {
+    const monday = dates.startOfWeek(new Date('2026-10-23T12:00:00Z'))
+    const days = Array.from({ length: 14 }, (_, i) => dates.addDays(monday, i))
+    const sundaySlot = { id: 'sun', start_at: '2026-11-01T10:00:00Z' }
+    const mondaySlot = { id: 'mon', start_at: '2026-10-19T08:00:00Z' }
+    const byDay = dates.groupSlotsByAthensDay(days, [sundaySlot, mondaySlot])
+    assert.equal(dates.athensDateKey(days[13]), '2026-11-01')
+    assert.deepEqual(byDay.get(dates.athensDateKey(days[13])), [sundaySlot])
+    assert.deepEqual(byDay.get(dates.athensDateKey(days[0])), [mondaySlot])
+  })
+  it('files a late-evening slot under its Athens day, not its UTC day', () => {
+    const monday = dates.startOfWeek(new Date('2026-10-23T12:00:00Z'))
+    const days = Array.from({ length: 14 }, (_, i) => dates.addDays(monday, i))
+    // 00:30 Athens on Saturday is still Friday in UTC.
+    const slot = { id: 'late', start_at: '2026-10-23T21:30:00Z' }
+    const byDay = dates.groupSlotsByAthensDay(days, [slot])
+    assert.deepEqual(byDay.get('2026-10-24'), [slot])
+    assert.deepEqual(byDay.get('2026-10-23'), [])
+  })
+})

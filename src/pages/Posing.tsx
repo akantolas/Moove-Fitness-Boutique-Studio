@@ -441,9 +441,11 @@ export function PosingPage() {
               </p>
               {offeredSessionsTotal != null ? (
                 <p className="mt-1 text-sm text-fuchsia-100/75">
-                  {t('posing.booking.sessionsIncluded', {
-                    count: offeredSessionsTotal,
-                  })}
+                  {offeredSessionsTotal === 1
+                    ? t('posing.booking.sessionsIncludedOne')
+                    : t('posing.booking.sessionsIncluded', {
+                        count: offeredSessionsTotal,
+                      })}
                 </p>
               ) : null}
               {offerError ? (

@@ -7,6 +7,7 @@ const ADMIN = '10000000-0000-4000-8000-000000000001'
 const MEMBER = '10000000-0000-4000-8000-000000000002'
 const OTHER = '10000000-0000-4000-8000-000000000003'
 const MIGRATION = '20261013132600_admin_panel_reliability.sql'
+const EXPIRY_MIGRATION = '20261023120000_posing_booking_rules.sql'
 let db
 
 async function createDatabase() {
@@ -85,12 +86,14 @@ async function booking(
 describe('admin transactions in isolated Postgres', () => {
   before(async () => {
     db = await createDatabase()
-    await db.exec(
-      readFileSync(
-        new URL(`../supabase/migrations/${MIGRATION}`, import.meta.url),
-        'utf8',
-      ),
-    )
+    for (const name of [MIGRATION, EXPIRY_MIGRATION]) {
+      await db.exec(
+        readFileSync(
+          new URL(`../supabase/migrations/${name}`, import.meta.url),
+          'utf8',
+        ),
+      )
+    }
   })
   after(async () => {
     await db?.close()
@@ -166,6 +169,238 @@ describe('admin transactions in isolated Postgres', () => {
       0,
     )
   })
+  async function reserveSingle(slotId) {
+    return rpc('posing_reserve_booking', [MEMBER, slotId, 'single', 'el', 70])
+  }
+  async function lapse(bookingId, minutesAgo) {
+    await db.query(
+      `update public.posing_bookings set payment_expires_at=now()-make_interval(mins=>$2) where id=$1`,
+      [bookingId, minutesAgo],
+    )
+    await db.query(
+      `update public.user_packages set payment_expires_at=now()-make_interval(mins=>$2)
+      where id=(select user_package_id from public.posing_bookings where id=$1)`,
+      [bookingId, minutesAgo],
+    )
+  }
+  async function availableIds() {
+    const slots = await rpc('posing_available_slots', [
+      new Date(Date.now() - 3600000).toISOString(),
+      new Date(Date.now() + 30 * 86400000).toISOString(),
+      'single',
+    ])
+    return slots.map((s) => s.id)
+  }
+  async function activate(r, ref, method = 'stripe', actor = null) {
+    return rpc('posing_activate_payment', [
+      r.booking.id,
+      r.userPackage.id,
+      ref,
+      method,
+      actor,
+      new Date().toISOString(),
+    ])
+  }
+
+  it('unpaid bookings hold their slot for 3 hours, then release it', async () => {
+    const slotId = await slot()
+    const r = await reserveSingle(slotId)
+    const hours =
+      (Date.parse(r.booking.payment_expires_at) - Date.now()) / 3600000
+    assert.ok(hours > 2.9 && hours <= 3, `expires in ${hours}h`)
+    assert.equal(r.userPackage.payment_expires_at, r.booking.payment_expires_at)
+    assert.ok(!(await availableIds()).includes(slotId))
+
+    // Inside the 15 minute grace the slot stays held.
+    await lapse(r.booking.id, 5)
+    assert.ok(!(await availableIds()).includes(slotId))
+    assert.equal(await rpc('posing_expire_pending_payments', []), 0)
+
+    await lapse(r.booking.id, 20)
+    assert.ok((await availableIds()).includes(slotId))
+    assert.equal(await rpc('posing_expire_pending_payments', []), 1)
+    const row = (
+      await db.query(
+        `select b.status,b.cancelled_reason,p.status as package_status from public.posing_bookings b
+        join public.user_packages p on p.id=b.user_package_id where b.id=$1`,
+        [r.booking.id],
+      )
+    ).rows[0]
+    assert.deepEqual(row, {
+      status: 'cancelled',
+      cancelled_reason: 'payment_expired',
+      package_status: 'cancelled',
+    })
+  })
+
+  it('a lapsed booking no longer blocks the slot or the member', async () => {
+    const slotId = await slot()
+    const first = await reserveSingle(slotId)
+    await assert.rejects(
+      reserveSingle(await slot(30, 2)),
+      /payment_required_first/,
+    )
+    await lapse(first.booking.id, 20)
+    // Reserving sweeps lapsed rows first, so the same slot is bookable again.
+    const second = await reserveSingle(slotId)
+    assert.equal(second.booking.status, 'pending_payment')
+  })
+
+  it('bookings reserved before the 3 hour rule never lapse', async () => {
+    const pkg = await seedPaid({
+      status: 'pending_payment',
+      date: null,
+      total: 4,
+    })
+    const b = await booking(pkg, { status: 'pending_payment' })
+    assert.equal(await rpc('posing_expire_pending_payments', []), 0)
+    const status = (
+      await db.query('select status from public.posing_bookings where id=$1', [
+        b,
+      ])
+    ).rows[0].status
+    assert.equal(status, 'pending_payment')
+  })
+
+  it('included sessions are confirmed at once and carry no deadline', async () => {
+    await seedPaid({ plan: 'ruby', total: 4 })
+    const r = await rpc('posing_reserve_booking', [
+      MEMBER,
+      await slot(),
+      'ruby',
+      'el',
+      140,
+    ])
+    assert.equal(r.booking_type, 'included_session')
+    assert.equal(r.booking.payment_expires_at, null)
+  })
+
+  it('a payment after expiry becomes credit with every session available', async () => {
+    const slotId = await slot()
+    const r = await reserveSingle(slotId)
+    await lapse(r.booking.id, 20)
+    await rpc('posing_expire_pending_payments', [])
+    // Someone else takes the released slot meanwhile.
+    await db.query(
+      `insert into public.posing_bookings(user_id,slot_id,plan_key,status,duration_minutes)
+      values($1,$2,'single','pending_payment',30)`,
+      [OTHER, slotId],
+    )
+
+    const paid = await activate(r, 'cs_late')
+    assert.deepEqual(paid, { ok: true, already: false, credit_only: true })
+    const pkg = (
+      await db.query(
+        `select status,sessions_total,sessions_used,payment_expires_at,
+        period_end>now()+interval '29 days' as fresh_period
+        from public.user_packages where id=$1`,
+        [r.userPackage.id],
+      )
+    ).rows[0]
+    assert.deepEqual(pkg, {
+      status: 'active',
+      sessions_total: 1,
+      sessions_used: 0,
+      payment_expires_at: null,
+      fresh_period: true,
+    })
+    const b = (
+      await db.query(
+        'select status,cancelled_reason from public.posing_bookings where id=$1',
+        [r.booking.id],
+      )
+    ).rows[0]
+    assert.deepEqual(b, {
+      status: 'cancelled',
+      cancelled_reason: 'payment_credited',
+    })
+
+    assert.equal((await activate(r, 'cs_late')).already, true)
+
+    // The credit is then spent on a new time without another payment.
+    const next = await reserveSingle(await slot(30, 3))
+    assert.equal(next.booking_type, 'included_session')
+  })
+
+  it('a session starting within 3 hours must be paid before it starts', async () => {
+    const { rows } = await db.query(
+      `insert into public.availability_slots(start_at,end_at)
+      values(now()+interval '90 minutes',now()+interval '120 minutes') returning id,start_at`,
+    )
+    const r = await reserveSingle(rows[0].id)
+    // The driver drops microseconds from start_at, so compare to the millisecond.
+    assert.ok(
+      Math.abs(
+        Date.parse(r.booking.payment_expires_at) -
+          new Date(rows[0].start_at).getTime(),
+      ) < 1,
+    )
+  })
+
+  async function periodDays(packageId) {
+    const { rows } = await db.query(
+      `select extract(epoch from period_end-period_start)/86400 as days from public.user_packages where id=$1`,
+      [packageId],
+    )
+    return Math.round(Number(rows[0].days))
+  }
+
+  it('a month covers 4 sessions and every extra session adds a week', async () => {
+    const days = async (plan, total) =>
+      (
+        await db.query(
+          `select extract(epoch from public.posing_package_period($1,$2))/86400 as d`,
+          [plan, total],
+        )
+      ).rows[0].d
+    assert.equal(Number(await days('single', 1)), 30)
+    assert.equal(Number(await days('ruby', 4)), 30)
+    assert.equal(Number(await days('ruby', 5)), 37)
+    assert.equal(Number(await days('ruby', 6)), 44)
+  })
+
+  it('payment starts a validity that includes bonus sessions', async () => {
+    const pkg = await seedPaid({ status: 'pending_payment', date: null, total: 4 })
+    const b = await booking(pkg, { status: 'pending_payment' })
+    // A September payment carries the +1 bonus: 5 sessions, so 37 days.
+    await rpc('posing_activate_payment', [b, pkg, 'ref', 'manual', ADMIN, '2026-09-20T09:00:00Z'])
+    assert.equal(await periodDays(pkg), 37)
+  })
+
+  it('adding a session adds a week and removing it takes the week back', async () => {
+    const pkg = await seedPaid({ total: 4 })
+    await db.query(
+      `update public.user_packages set period_start=now(),period_end=now()+interval '30 days' where id=$1`,
+      [pkg],
+    )
+    const adjust = (delta) =>
+      rpc('posing_adjust_sessions', [pkg, ADMIN, delta, 'test reason', crypto.randomUUID()])
+    await adjust(1)
+    assert.equal(await periodDays(pkg), 37)
+    await adjust(-1)
+    assert.equal(await periodDays(pkg), 30)
+  })
+
+  it('a payment after the member cancelled also becomes credit', async () => {
+    const r = await reserveSingle(await slot())
+    await rpc('posing_cancel_booking', [r.booking.id, MEMBER, false])
+    const paid = await activate(r, 'manual:x', 'manual', ADMIN)
+    assert.equal(paid.credit_only, true)
+  })
+
+  it('a timely payment still confirms the booking and clears the deadline', async () => {
+    const r = await reserveSingle(await slot())
+    const paid = await activate(r, 'cs_ok')
+    assert.deepEqual(paid, { ok: true, already: false, credit_only: false })
+    const b = (
+      await db.query(
+        'select status,payment_expires_at from public.posing_bookings where id=$1',
+        [r.booking.id],
+      )
+    ).rows[0]
+    assert.deepEqual(b, { status: 'confirmed', payment_expires_at: null })
+  })
+
   it('cancellation returns exactly one session, including on retries', async () => {
     const pkg = await seedPaid({ used: 1 })
     const b = await booking(pkg)
@@ -679,6 +914,107 @@ it('migration preserves legacy balances and records known payment times', async 
       bonus_sessions: 1,
       paid_at_source: 'manual_reference',
     })
+  } finally {
+    await pg.close()
+  }
+})
+
+it('migration lapses legacy unpaid bookings whose session already passed', async () => {
+  const pg = await createDatabase()
+  try {
+    await pg.exec(
+      readFileSync(
+        new URL(`../supabase/migrations/${MIGRATION}`, import.meta.url),
+        'utf8',
+      ),
+    )
+    await pg.query(
+      "insert into auth.users(id,email) values($1,'legacy@example.test')",
+      [MEMBER],
+    )
+    const ids = {}
+    for (const [name, offset] of [
+      ['past', '-2 days'],
+      ['future', '2 days'],
+    ]) {
+      const pkg = (
+        await pg.query(
+          `insert into public.user_packages(user_id,plan_key,base_sessions,sessions_total,status,period_start,period_end)
+          values($1,'ruby',4,4,'pending_payment',now(),now()+interval '30 days') returning id`,
+          [MEMBER],
+        )
+      ).rows[0].id
+      const slotId = (
+        await pg.query(
+          `insert into public.availability_slots(start_at,end_at)
+          values(now()+$1::interval,now()+$1::interval+interval '30 minutes') returning id`,
+          [offset],
+        )
+      ).rows[0].id
+      ids[name] = (
+        await pg.query(
+          `insert into public.posing_bookings(user_id,slot_id,plan_key,user_package_id,status,duration_minutes)
+          values($1,$2,'ruby',$3,'pending_payment',30) returning id`,
+          [MEMBER, slotId, pkg],
+        )
+      ).rows[0].id
+    }
+    await pg.exec(
+      readFileSync(
+        new URL(`../supabase/migrations/${EXPIRY_MIGRATION}`, import.meta.url),
+        'utf8',
+      ),
+    )
+    await pg.query('select public.posing_expire_pending_payments()')
+    const { rows } = await pg.query(
+      `select b.id,b.status,p.status as package_status from public.posing_bookings b
+      join public.user_packages p on p.id=b.user_package_id`,
+    )
+    const byId = Object.fromEntries(rows.map((r) => [r.id, r]))
+    assert.equal(byId[ids.past].status, 'cancelled')
+    assert.equal(byId[ids.past].package_status, 'cancelled')
+    assert.equal(byId[ids.future].status, 'pending_payment')
+  } finally {
+    await pg.close()
+  }
+})
+
+it('migration extends running packages by the new rule and leaves ended ones alone', async () => {
+  const pg = await createDatabase()
+  try {
+    await pg.exec(
+      readFileSync(
+        new URL(`../supabase/migrations/${MIGRATION}`, import.meta.url),
+        'utf8',
+      ),
+    )
+    await pg.query(
+      "insert into auth.users(id,email) values($1,'legacy@example.test')",
+      [MEMBER],
+    )
+    const insert = async (startOffset, endOffset) =>
+      (
+        await pg.query(
+          `insert into public.user_packages(user_id,plan_key,base_sessions,bonus_sessions,sessions_total,
+          status,paid_at,period_start,period_end)
+          values($1,'ruby',4,2,6,'active',now(),now()+$2::interval,now()+$3::interval) returning id`,
+          [MEMBER, startOffset, endOffset],
+        )
+      ).rows[0].id
+    const running = await insert('-10 days', '20 days')
+    const ended = await insert('-40 days', '-10 days')
+    await pg.exec(
+      readFileSync(
+        new URL(`../supabase/migrations/${EXPIRY_MIGRATION}`, import.meta.url),
+        'utf8',
+      ),
+    )
+    const { rows } = await pg.query(
+      `select id,round(extract(epoch from period_end-period_start)/86400) as days from public.user_packages`,
+    )
+    const days = Object.fromEntries(rows.map((r) => [r.id, Number(r.days)]))
+    assert.equal(days[running], 44)
+    assert.equal(days[ended], 30)
   } finally {
     await pg.close()
   }

@@ -326,6 +326,19 @@ export function athensDateKey(date: Date) {
   }).format(date)
 }
 
+/** Buckets slots under the Athens day they start on, keyed like `athensDateKey`. */
+export function groupSlotsByAthensDay<T extends { start_at: string }>(
+  days: Date[],
+  slots: T[],
+) {
+  const map = new Map<string, T[]>()
+  for (const day of days) map.set(athensDateKey(day), [])
+  for (const slot of slots) {
+    map.get(athensDateKey(new Date(slot.start_at)))?.push(slot)
+  }
+  return map
+}
+
 export function athensTimeKey(iso: string) {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: POSE_TIMEZONE,

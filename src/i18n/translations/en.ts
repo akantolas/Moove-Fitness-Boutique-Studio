@@ -704,6 +704,7 @@ export const en = {
       paymentSuccess:
         'Payment completed. Thank you — you will receive confirmation from Stripe.',
       sessionsIncluded: '{{count}} sessions',
+      sessionsIncludedOne: '1 session',
       sessionsRemaining: '{{remaining}} remaining of {{total}}',
       sessionsRemainingShort: '{{remaining}} bookings available',
       newPurchaseHint: 'New purchase — payment email will be sent',
@@ -897,12 +898,14 @@ export const en = {
     },
     calendar: {
       title: 'Available times',
+      timezoneNote: 'Times shown in Greece time (Athens)',
       loading: 'Loading availability…',
       noSlots: '—',
       loginPrompt: 'You need an account to book.',
       confirm: 'Confirm booking',
       booking: 'Booking…',
-      success: 'Booking reserved. Check your email to complete payment.',
+      success:
+        'Booking reserved. Check your email — you have 3 hours to complete payment, otherwise the slot is released.',
       error: 'Booking failed. Please try again.',
       slotTaken: 'This slot was just taken. Pick another.',
       loginRequired: 'Sign in to book a slot.',
@@ -1012,6 +1015,11 @@ export const en = {
       confirmPaymentTitle: 'Confirm payment?',
       confirmPaymentBody:
         'The booking will be confirmed manually (e.g. cash or bank transfer).',
+      confirmLatePayment: 'Record payment',
+      confirmLatePaymentBody:
+        'This booking has expired. The payment will be recorded and the package activated with every session available — the client will get an email to book a new time.',
+      paymentExpiredNote: 'Expired unpaid',
+      paymentCreditedNote: 'Paid after cancellation',
       cancelBooking: 'Cancel booking',
       cancelPackage: 'Cancel package',
       cancellingBooking: 'Cancelling…',
@@ -1027,8 +1035,24 @@ export const en = {
       filterAll: 'All',
       noBookings: 'No bookings found.',
       memberActivePackages: '{{count}} active packages',
-      memberPendingPackages: '{{count}} pending payment',
+      memberActivePackagesOne: '1 active package',
+      memberPendingPackages: 'Payment pending',
       memberNoPackages: 'No packages',
+      memberNoActivePackage: 'No active package',
+      memberPackages: 'Packages',
+      packageLineActive: '{{remaining}} of {{total}} remaining',
+      packageLinePending: 'Activates once paid',
+      packageLineUsed: '{{used}} of {{total}} used',
+      packageLineUnused: '{{count}} unused',
+      packageLineUnusedOne: '1 unused',
+      packageLineUnpaid: 'Never paid',
+      packagePaid: 'Paid: {{date}} · {{method}}',
+      paymentMethodManual: 'manual',
+      paymentMethodStripe: 'Stripe',
+      confirmCancelPaidPackageWarning:
+        'Warning: this package is paid and still has {{count}} unused sessions. After cancelling, they can no longer be booked.',
+      confirmCancelPaidPackageWarningOne:
+        'Warning: this package is paid and still has 1 unused session. After cancelling, it can no longer be booked.',
       recentBookings: 'Recent bookings',
       packageStatus: {
         pending_payment: 'Pending payment',
@@ -1127,6 +1151,8 @@ export const en = {
         invalid_price: 'Invalid price.',
       },
       adminErrors: {
+        member_has_active_items:
+          'This member has an active package with sessions left, a pending payment or an upcoming booking. Cancel those first, then delete the member.',
         slot_not_available:
           'This time is not available for the full session duration.',
         delivery_failed: 'Delivery failed. Try resending.',

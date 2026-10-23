@@ -50,6 +50,17 @@ function canCancelAdminBooking(booking: AdminBookingRow) {
   return new Date(booking.slot.start_at) > new Date()
 }
 
+function cancelledReasonNote(
+  booking: AdminBookingRow,
+  t: (key: string) => string,
+) {
+  if (booking.cancelled_reason === 'payment_expired')
+    return ` · ${t('posing.admin.paymentExpiredNote')}`
+  if (booking.cancelled_reason === 'payment_credited')
+    return ` · ${t('posing.admin.paymentCreditedNote')}`
+  return null
+}
+
 const STATUS_FILTERS = [
   '',
   'non_cancelled',
@@ -89,6 +100,10 @@ export function AdminBookingsPanel({
   const [pendingAction, setPendingAction] = useState<PendingAction>(null)
   const [actionBusyId, setActionBusyId] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
+  const confirmingLatePayment =
+    pendingAction?.mode === 'confirm' &&
+    bookings.find((b) => b.id === pendingAction.id)?.status !==
+      'pending_payment'
 
   async function handleConfirm(bookingId: string) {
     if (!onConfirmPayment) return
@@ -137,7 +152,10 @@ export function AdminBookingsPanel({
   }
 
   function renderActions(booking: AdminBookingRow, stacked = false) {
-    const canConfirm = booking.status === 'pending_payment' && onConfirmPayment
+    const canConfirm =
+      (booking.status === 'pending_payment' ||
+        booking.cancelled_reason === 'payment_expired') &&
+      onConfirmPayment
     const canCancel = canCancelAdminBooking(booking) && onCancelBooking
     const canComplete =
       booking.status === 'confirmed' &&
@@ -181,7 +199,9 @@ export function AdminBookingsPanel({
           >
             {actionBusyId === booking.id && pendingAction?.mode === 'confirm'
               ? t('posing.admin.confirmingPayment')
-              : t('posing.admin.confirmPayment')}
+              : booking.status === 'pending_payment'
+                ? t('posing.admin.confirmPayment')
+                : t('posing.admin.confirmLatePayment')}
           </button>
         ) : null}
         {canCancel ? (
@@ -335,6 +355,7 @@ export function AdminBookingsPanel({
                     className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(booking.status)}`}
                   >
                     {bookingStatusLabel(booking.status, t)}
+                    {cancelledReasonNote(booking, t)}
                   </span>
                 </div>
                 {renderActions(booking, true)}
@@ -396,6 +417,7 @@ export function AdminBookingsPanel({
                           className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${bookingStatusChipClass(booking.status)}`}
                         >
                           {bookingStatusLabel(booking.status, t)}
+                          {cancelledReasonNote(booking, t)}
                         </span>
                       </td>
                       <td className="px-4 py-3">{renderActions(booking)}</td>
@@ -432,8 +454,16 @@ export function AdminBookingsPanel({
       <ConfirmDialog
         open={pendingAction?.mode === 'confirm'}
         title={t('posing.admin.confirmPaymentTitle')}
-        body={t('posing.admin.confirmPaymentBody')}
-        confirmLabel={t('posing.admin.confirmPayment')}
+        body={
+          confirmingLatePayment
+            ? t('posing.admin.confirmLatePaymentBody')
+            : t('posing.admin.confirmPaymentBody')
+        }
+        confirmLabel={
+          confirmingLatePayment
+            ? t('posing.admin.confirmLatePayment')
+            : t('posing.admin.confirmPayment')
+        }
         cancelLabel={t('posing.admin.cancelDeleteMember')}
         busy={actionBusyId !== null}
         onConfirm={() => {

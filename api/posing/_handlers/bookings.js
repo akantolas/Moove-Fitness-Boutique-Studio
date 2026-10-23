@@ -384,6 +384,7 @@ export async function handleBookings(req, res) {
       amountEur,
       packageName,
       useDynamicPrice: useDynamicStripe,
+      expiresAt: booking.payment_expires_at,
     })
     stripeLink = checkout.url
     if (checkout.sessionId) {
@@ -408,6 +409,9 @@ export async function handleBookings(req, res) {
       amountLabel: amountEur ? formatPriceEUR(amountEur, bookingLocale) : null,
       bookingId: booking.id,
       durationMinutes,
+      paymentDeadline: booking.payment_expires_at
+        ? formatSessionTimeWithZone(booking.payment_expires_at, bookingLocale)
+        : null,
       locale: bookingLocale,
     })
 
@@ -454,9 +458,10 @@ export async function handleBookings(req, res) {
     booking_id: booking.id,
     booking_type: 'new_package',
     status: 'pending_payment',
+    payment_expires_at: booking.payment_expires_at ?? null,
     message:
       bookingLocale === 'el'
-        ? 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου για πληρωμή.'
-        : 'Booking reserved. Check your email to complete payment.',
+        ? 'Η κράτηση καταχωρήθηκε. Έλεγξε το email σου — έχεις 3 ώρες για να ολοκληρώσεις την πληρωμή, αλλιώς η ώρα αποδεσμεύεται.'
+        : 'Booking reserved. Check your email — you have 3 hours to complete payment, otherwise the slot is released.',
   })
 }
