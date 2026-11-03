@@ -1,211 +1,466 @@
-import { GhostLink, ButtonLink } from '../components/Links'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { GoogleReviews } from '../components/GoogleReviews'
-import { PosePromoBubble } from '../components/PosePromoBubble'
-import { SiteContainer } from '../components/SiteContainer'
-import { ZoomableImage } from '../components/ZoomableImage'
+import { weekSchedule, type ScheduleDay, type ScheduleSlot } from '../data/weekSchedule'
+import { useCurrentTime } from '../hooks/useCurrentTime'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
 
+const bookingProps = site.bookingUrl.startsWith('http') ? { target: '_blank', rel: 'noreferrer noopener' } : undefined
+
+/** Weekday index (0 = Sunday) for each day in the studio timetable. */
+const dayIndex: Record<ScheduleDay['key'], number> = {
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+}
+
+function slotMinutes(slot: ScheduleSlot) {
+  const [h, m] = slot.time.split(':').map(Number)
+  return h * 60 + m
+}
+
+type NextClass = { day: ScheduleDay; slot: ScheduleSlot; daysAhead: number }
+
+/** The first class in the weekly timetable that has not started yet. */
+function findNextClass(now: number): NextClass | null {
+  const date = new Date(now)
+  const today = date.getDay()
+  const minutes = date.getHours() * 60 + date.getMinutes()
+  for (let daysAhead = 0; daysAhead < 7; daysAhead += 1) {
+    const weekday = (today + daysAhead) % 7
+    const day = weekSchedule.find((d) => dayIndex[d.key] === weekday)
+    if (!day) continue
+    const slot = day.slots.find((s) => daysAhead > 0 || slotMinutes(s) > minutes)
+    if (slot) return { day, slot, daysAhead }
+  }
+  return null
+}
+
+/**
+ * Marks the page as ready for entrances and reveals each [data-reveal] block once,
+ * including blocks that render later (the reviews arrive after a fetch).
+ */
+function useReveal() {
+  useEffect(() => {
+    const root = document.documentElement
+    if (!('IntersectionObserver' in window)) return
+    root.classList.add('motion-ready')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          entry.target.classList.add('is-in')
+          observer.unobserve(entry.target)
+        }
+      },
+      { rootMargin: '0px 0px -12% 0px' },
+    )
+    const watch = () =>
+      document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)').forEach((block) => observer.observe(block))
+    watch()
+    const added = new MutationObserver(watch)
+    added.observe(document.body, { childList: true, subtree: true })
+    return () => {
+      added.disconnect()
+      observer.disconnect()
+      root.classList.remove('motion-ready')
+    }
+  }, [])
+}
+
 export function HomePage() {
   const { t, dictionary } = useTranslation()
+  const now = useCurrentTime()
+  const next = useMemo(() => findNextClass(now), [now])
+  const [dayKey, setDayKey] = useState<ScheduleDay['key']>(() => next?.day.key ?? 'mon')
+  const shownDay = weekSchedule.find((d) => d.key === dayKey) ?? weekSchedule[0]
+  const home = dictionary.home
+  const days = dictionary.schedule.days
 
-  const stats = [
-    { value: t('home.stats.reformer'), label: t('home.stats.reformerLabel') },
-    { value: t('home.stats.groups'), label: t('home.stats.groupsLabel') },
-    { value: t('home.stats.volos'), label: t('home.stats.volosLabel') },
-  ]
+  useReveal()
+
+  const nextWhen = next
+    ? next.daysAhead === 0
+      ? t('home.hero.today')
+      : next.daysAhead === 1
+        ? t('home.hero.tomorrow')
+        : days[next.day.key].label
+    : ''
 
   return (
-    <>
-      <section className="relative overflow-hidden border-b border-moove-border/80">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-90"
-          style={{
-            backgroundImage:
-              'radial-gradient(ellipse 70% 55% at 8% 20%, rgba(196, 240, 49, 0.18) 0%, transparent 50%), radial-gradient(circle at 95% 10%, rgba(232, 213, 196, 0.55) 0%, transparent 35%)',
-          }}
-          aria-hidden
-        />
+    <div className="studio">
+      {/* Hero: the name with a photograph in its word space, which then opens to full width */}
+      <section className="studio-frame pt-[clamp(2.5rem,8vh,5.5rem)]">
+        <h1 className="studio-display studio-name">
+          <span>{site.name}</span>
+          <img
+            src="/magda-cutout.webp?v=4"
+            alt={t('home.hero.heroImageAlt')}
+            width={795}
+            height={1000}
+            fetchPriority="high"
+            className="studio-name__person"
+          />
+          <span>Pilates</span>
+          <span className="sr-only"> — {t('home.hero.titleHidden')}</span>
+        </h1>
 
-        <SiteContainer className="relative grid gap-12 py-16 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:py-24 xl:gap-20">
-          <div className="animate-fade-up flex flex-col items-center text-center lg:items-start lg:text-left">
-            <p className="moove-eyebrow">{site.tagline}</p>
-            <h1 className="font-display mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-moove-silver sm:text-5xl lg:text-[3.35rem]">
-              {t('home.hero.title')}
-              {t('home.hero.titleAccent') ? (
-                <span className="mt-2 block text-gradient-lime">{t('home.hero.titleAccent')}</span>
-              ) : null}
-            </h1>
-            <p className="mt-6 max-w-lg text-base leading-relaxed text-moove-muted sm:text-lg">
-              {t('home.hero.body')}
-            </p>
-            {t('home.hero.body2') ? (
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-moove-muted sm:text-lg">
-                {t('home.hero.body2')}
+        <div className="studio-grid mt-10 gap-y-8 md:mt-14 md:items-end">
+          <div className="studio-rise col-span-12 md:col-span-5 [animation-delay:500ms]">
+            {next ? (
+              <p className="studio-small text-moove-muted">
+                {t('home.hero.nextLabel')}
+                <span className="mt-1 block text-[length:var(--step-lead)] font-semibold tracking-[-0.02em] text-moove-ink">
+                  {next.slot.name}, {nextWhen} {next.slot.time}
+                </span>
               </p>
             ) : null}
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-              <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
-                {t('common.bookSpot')}
-              </ButtonLink>
-              <GhostLink to="/mathimata">{t('home.hero.viewClasses')}</GhostLink>
-            </div>
-
-            <dl className="mt-12 grid w-full max-w-md grid-cols-3 gap-4 border-t border-moove-border/70 pt-8 lg:max-w-none">
-              {stats.map((s) => (
-                <div key={s.label}>
-                  <dt className="font-display text-sm font-semibold text-moove-silver sm:text-base">
-                    {s.value}
-                  </dt>
-                  <dd className="mt-1 text-[11px] leading-snug text-moove-muted sm:text-xs">
-                    {s.label}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            <a href="#programma" className="studio-link mt-3 inline-block text-[length:var(--step-small)]">
+              {t('home.hero.fullSchedule')}
+            </a>
           </div>
+          <div className="studio-rise col-span-12 md:col-span-7 md:flex md:items-end md:justify-between md:gap-8 [animation-delay:650ms]">
+            <p className="max-w-[34ch] text-[length:var(--step-body)] leading-[1.45]">{t('home.hero.body')}</p>
+            <a href={site.bookingUrl} {...bookingProps} className="studio-button mt-6 shrink-0 md:mt-0">
+              {t('common.bookSpot')}
+            </a>
+          </div>
+        </div>
+      </section>
 
-          <div className="moove-hero-breakout animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none [animation-delay:120ms]">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] shadow-moove-soft ring-1 ring-moove-border/40">
-              <ZoomableImage
-                src="/image03.jpeg"
-                alt={t('home.hero.heroImageAlt')}
-                wrapperClassName="block h-full w-full cursor-zoom-in"
-                className="h-full w-full object-cover"
-                width={1440}
-                height={1800}
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-moove-espresso/55 via-moove-espresso/10 to-transparent" />
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-moove-lime">
-                  {site.name}
-                </p>
-                <p className="font-display mt-2 text-xl font-semibold text-white sm:text-2xl">
-                  {t('home.hero.location')}
-                </p>
+      <figure className="studio-frame mt-14 hidden md:block">
+        <div className="studio-band">
+          <img
+            src="/image1.jpeg"
+            alt={t('home.hero.photoAlt')}
+            width={1349}
+            height={1500}
+            className="h-full w-full object-cover object-[50%_42%]"
+          />
+        </div>
+      </figure>
+
+      {/* The studio at a glance, on black */}
+      <section className="mt-14 bg-moove-espresso text-white">
+        <div className="studio-frame py-14 md:py-20">
+          <h2 className="sr-only">{t('home.facts.title')}</h2>
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4" data-reveal>
+            {home.facts.items.map((fact) => (
+              <div key={fact.label} className="flex flex-col-reverse">
+                <dt className="studio-small mt-2 text-white/70">{fact.label}</dt>
+                <dd className="font-display text-[clamp(1.6rem,1rem+2vw,3rem)] font-extrabold leading-[1] tracking-[-0.04em] text-moove-lime">
+                  {fact.value}
+                </dd>
               </div>
-            </div>
-          </div>
-        </SiteContainer>
-      </section>
-
-      <section className="border-b border-moove-border/80 bg-moove-espresso/[0.03] moove-section-pad">
-        <SiteContainer>
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="moove-eyebrow">{t('home.approach.eyebrow')}</p>
-            <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
-              {t('home.approach.title')}
-            </h2>
-            <p className="mt-4 text-moove-muted">{t('home.approach.body')}</p>
-            <div className="moove-rule mx-auto mt-6" aria-hidden />
-          </div>
-
-          <div className="mt-14 grid gap-5 md:grid-cols-3 xl:gap-8">
-            {dictionary.home.approach.items.map((item, i) => (
-              <article
-                key={item.title}
-                className="group moove-card p-8 transition duration-300 hover:-translate-y-1 hover:shadow-moove-soft"
-              >
-                <span className="font-display text-3xl font-semibold text-moove-lime/50 transition group-hover:text-moove-lime/80">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <h3 className="font-display mt-4 text-xl font-semibold text-moove-silver">
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-moove-muted">{item.body}</p>
-              </article>
             ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* The week's timetable: the room on the left, the day's classes on the right */}
+      <section id="programma" className="scroll-mt-16 bg-moove-surface">
+        <div className="studio-frame studio-grid gap-y-12 py-[var(--section-gap)]">
+          <div className="col-span-12 md:col-span-5">
+            <img
+              src="/image6.jpeg"
+              alt={t('home.schedule.imageAlt')}
+              width={1440}
+              height={1800}
+              loading="lazy"
+              className="aspect-[4/5] w-full object-cover md:sticky md:top-24"
+            />
           </div>
-        </SiteContainer>
-      </section>
 
-      <section className="border-b border-moove-border/80 moove-section-pad">
-        <SiteContainer>
-          <PosePromoBubble variant="home" />
-        </SiteContainer>
-      </section>
-
-      <section className="border-b border-moove-border/80 moove-section-pad">
-        <SiteContainer className="grid gap-12 lg:grid-cols-2 lg:items-center xl:gap-16">
-          <div className="relative order-2 lg:order-1">
-            <div className="grid grid-cols-2 gap-3">
-              <ZoomableImage
-                src="/image3.jpeg"
-                alt={t('home.classes.imageAlt')}
-                wrapperClassName="block w-full cursor-zoom-in overflow-hidden rounded-2xl shadow-moove-lift"
-                className="aspect-[3/4] w-full object-cover"
-                width={400}
-                height={533}
-              />
-              <ZoomableImage
-                src="/image5.jpeg"
-                alt={t('home.classes.imageAlt')}
-                wrapperClassName="mt-8 block w-full cursor-zoom-in overflow-hidden rounded-2xl shadow-moove-lift"
-                className="aspect-[3/4] w-full object-cover"
-                width={1440}
-                height={1792}
-              />
+          <div className="col-span-12 md:col-span-7 md:pl-[2vw]">
+            <div data-reveal>
+              <h2 className="studio-head max-w-[13ch]">{t('home.schedule.title')}</h2>
             </div>
-          </div>
-
-          <div className="order-1 lg:order-2">
-            <p className="moove-eyebrow">{t('home.classes.eyebrow')}</p>
-            <h2 className="font-display mt-4 text-3xl font-semibold text-moove-silver sm:text-4xl">
-              {t('home.classes.title')}
-            </h2>
-            <p className="mt-4 leading-relaxed text-moove-muted">{t('home.classes.body')}</p>
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {dictionary.classes.items.map((item) => (
-                <li
-                  key={item.title}
-                  className="flex items-center gap-3 rounded-xl border border-moove-border/70 bg-moove-surface/80 px-4 py-3.5 text-sm font-medium text-moove-silver shadow-sm"
+            <div className="-mx-1 mt-10 flex flex-wrap gap-1" role="group" aria-label={dictionary.schedule.daysAria}>
+              {weekSchedule.map((day) => (
+                <button
+                  key={day.key}
+                  type="button"
+                  className="studio-day"
+                  aria-pressed={day.key === shownDay.key}
+                  onClick={() => setDayKey(day.key)}
                 >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-moove-lime" />
-                  {item.title}
+                  <span aria-hidden>{days[day.key].label.slice(0, 3)}</span>
+                  <span className="sr-only">{days[day.key].label}</span>
+                </button>
+              ))}
+            </div>
+
+            <table className="mt-8 w-full border-collapse text-left">
+              <caption className="studio-lead pb-4 text-left font-semibold">{days[shownDay.key].label}</caption>
+              <thead className="sr-only">
+                <tr>
+                  <th scope="col">{t('home.schedule.hours')}</th>
+                  <th scope="col">{dictionary.schedule.lesson}</th>
+                  <th scope="col">{t('home.schedule.book')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shownDay.slots.map((slot, i) => {
+                  const isNext = next?.day.key === shownDay.key && next.slot === slot
+                  return (
+                    <tr
+                      key={`${slot.time}-${slot.name}`}
+                      className={isNext ? 'bg-moove-lime' : i % 2 === 0 ? 'bg-moove-bg' : undefined}
+                    >
+                      <td className="w-[22%] py-3.5 pl-4 align-baseline tabular-nums text-moove-muted">
+                        <span className={isNext ? 'font-semibold text-moove-ink' : undefined}>{slot.time}</span>
+                      </td>
+                      <td className="py-3.5 align-baseline font-semibold">
+                        {slot.name}
+                        {isNext ? <span className="ml-2 font-normal">· {t('home.schedule.next')}</span> : null}
+                      </td>
+                      <td className="py-3.5 pr-4 text-right align-baseline">
+                        <a
+                          href={site.bookingUrl}
+                          {...bookingProps}
+                          className="studio-small inline-flex min-h-11 items-center gap-1 underline-offset-4 hover:underline"
+                        >
+                          {t('home.schedule.book')}
+                          <span aria-hidden>→</span>
+                        </a>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <p className="mt-8 max-w-[44ch] text-moove-muted">{t('home.schedule.note')}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Magda: a large portrait beside the statement */}
+      <section className="bg-moove-espresso text-white">
+        <div className="studio-frame studio-grid gap-y-10 py-[clamp(4rem,2rem+6vw,8rem)] md:items-center">
+          <div className="col-span-12 md:col-span-5">
+            <img
+              src="/magda-4x5.jpg"
+              alt={t('home.magda.portraitAlt')}
+              width={620}
+              height={775}
+              loading="lazy"
+              className="aspect-[4/5] w-full object-cover"
+            />
+          </div>
+          <div className="col-span-12 md:col-span-7 md:pl-[2vw]" data-reveal>
+            <h2 className="studio-head max-w-[10ch]">{t('home.magda.name')}</h2>
+            <p className="studio-lead mt-8 max-w-[30ch]">{t('home.magda.lead')}</p>
+            <p className="mt-6 max-w-[52ch] leading-[1.5]">
+              {t('home.magda.specialty')} {t('home.magda.more')}{' '}
+              <Link to="/posing" className="studio-link">
+                Move &amp; Pose
+              </Link>
+              {t('home.magda.moreAfter')}
+            </p>
+            <ul className="mt-8 flex flex-wrap gap-2">
+              {home.magda.facts.map((fact) => (
+                <li key={fact} className="studio-small rounded-full bg-white/10 px-4 py-2">
+                  {fact}
                 </li>
               ))}
             </ul>
-            <div className="mt-8">
-              <GhostLink to="/mathimata">{t('home.classes.viewProgram')}</GhostLink>
-            </div>
+            <Link to="/sxetika" className="studio-button mt-10">
+              {t('home.magda.readMore')}
+            </Link>
           </div>
-        </SiteContainer>
+        </div>
+      </section>
+
+      {/* Classes: a large photograph and its text, alternating sides */}
+      <section className="bg-moove-surface">
+        <div className="studio-frame py-[var(--section-gap)]">
+          <div data-reveal>
+            <h2 className="studio-head max-w-[12ch]">{t('home.classes.title')}</h2>
+          </div>
+
+          <ul className="mt-16 space-y-16 md:mt-24 md:space-y-24">
+            {home.classes.rows.map((row, i) => {
+              const flip = i % 2 === 1
+              return (
+                <li key={row.title} className="studio-grid gap-y-6 md:items-center">
+                  <div className={`col-span-12 md:col-span-6 ${flip ? 'md:order-2 md:col-start-7' : ''}`}>
+                    {row.image ? (
+                      <img src={row.image} alt={row.alt} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                    ) : (
+                      <div className="flex aspect-[4/3] w-full items-end bg-moove-lime p-[clamp(1.25rem,3vw,2.5rem)]">
+                        <p className="studio-display text-[clamp(3rem,1rem+6vw,7rem)]" aria-hidden>
+                          {row.title}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className={`col-span-12 md:col-span-5 ${flip ? 'md:order-1 md:col-start-1' : 'md:col-start-8'}`}
+                    data-reveal
+                  >
+                    <h3 className="font-display text-[clamp(1.875rem,1.1rem+2.2vw,3.25rem)] font-extrabold leading-[1] tracking-[-0.04em]">
+                      {row.title}
+                    </h3>
+                    <p className="mt-4 max-w-[36ch] leading-[1.5]">{row.body}</p>
+                    <p className="studio-small mt-4 text-moove-muted">{row.meta}</p>
+                    <a
+                      href={site.bookingUrl}
+                      {...bookingProps}
+                      className="studio-link mt-6 inline-block text-[length:var(--step-small)]"
+                    >
+                      {t('common.bookSpot')}
+                    </a>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+
+          <div className="mt-20">
+            <Link to="/mathimata" className="studio-button studio-button--ink">
+              {t('home.classes.viewProgram')}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* How to start, on the brand's lime */}
+      <section className="bg-moove-lime">
+        <div className="studio-frame studio-grid gap-y-12 py-[clamp(4rem,2rem+6vw,8rem)]">
+          <div className="col-span-12 md:col-span-5" data-reveal>
+            <h2 className="studio-head">{t('home.start.title')}</h2>
+            <a href={site.bookingUrl} {...bookingProps} className="studio-button studio-button--ink mt-10">
+              {t('home.start.cta')}
+            </a>
+            <p className="studio-small mt-6">
+              {t('home.start.call')}{' '}
+              <a href={`tel:${site.phone.replace(/\s/g, '')}`} className="studio-link">
+                {site.phone}
+              </a>
+            </p>
+          </div>
+          <ol className="col-span-12 space-y-10 md:col-span-7" data-reveal>
+            {home.start.steps.map((step) => (
+              <li key={step} className="studio-lead max-w-[28ch] font-semibold">
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* The address, with prints of the room dropped on it */}
+      <section className="bg-moove-elevated">
+        <div className="studio-frame relative flex min-h-[78svh] flex-col justify-center overflow-hidden py-16 md:min-h-[100svh]">
+          <h2 className="studio-display text-center text-[30vw] uppercase leading-[0.85] md:text-[clamp(7.5rem,15vw,15rem)]">
+            {t('home.place.line1')}
+            <br />
+            {t('home.place.line2')}
+          </h2>
+          <figure className="studio-print left-[4%] top-[4%] w-[40vw] -rotate-6 md:left-[3%] md:top-[8%] md:w-[22vw] md:-rotate-[8deg]">
+            <img src="/image6.jpeg" alt={t('home.place.altRoom')} loading="lazy" />
+          </figure>
+          <figure className="studio-print right-[4%] bottom-[16%] w-[40vw] rotate-[5deg] md:bottom-auto md:right-[4%] md:top-[30%] md:w-[22vw] md:rotate-6">
+            <img src="/image1.jpeg" alt={t('home.place.altClass')} loading="lazy" />
+          </figure>
+          <figure className="studio-print bottom-[-8%] left-[38%] hidden w-[13vw] -rotate-3 md:block">
+            <img src="/class-dance.jpg" alt={t('home.place.altWall')} loading="lazy" />
+          </figure>
+          <div className="relative z-10 mt-auto max-w-[36ch] pt-10 md:absolute md:bottom-8 md:left-[var(--gutter)]">
+            <p>{t('home.place.body')}</p>
+            <a href={site.mapsUrl} target="_blank" rel="noreferrer noopener" className="studio-link mt-2 inline-block">
+              {t('home.place.map')}
+            </a>
+          </div>
+        </div>
       </section>
 
       <GoogleReviews />
 
-      <section className="moove-section-pad">
-        <SiteContainer>
-          <div className="relative overflow-hidden rounded-[2rem] border border-moove-lime/25 bg-gradient-to-br from-moove-espresso via-[#3a322c] to-moove-espresso px-6 py-14 text-center shadow-moove-soft sm:px-12 sm:py-16">
-            <div
-              className="pointer-events-none absolute inset-0 opacity-40"
-              style={{
-                backgroundImage:
-                  'radial-gradient(circle at 20% 0%, rgba(196, 240, 49, 0.25) 0%, transparent 45%)',
-              }}
-              aria-hidden
-            />
-            <div className="relative">
-              <p className="moove-eyebrow !text-moove-lime/90">{t('home.cta.eyebrow')}</p>
-              <h2 className="font-display mt-4 text-3xl font-semibold text-white sm:text-4xl">
-                {t('home.cta.title')}
-              </h2>
-              <p className="mx-auto mt-4 max-w-lg text-moove-glow/90">{t('home.cta.body')}</p>
-              <div className="mt-9 flex flex-wrap justify-center gap-3">
-                <ButtonLink href={site.bookingUrl} external={site.bookingUrl.startsWith('http')}>
-                  {t('common.book')}
-                </ButtonLink>
-                <GhostLink
-                  to="/epikoinonia"
-                  className="!border-white/20 !bg-white/10 !text-white hover:!border-white/40 hover:!text-white"
-                >
-                  {t('nav.contact')}
-                </GhostLink>
-              </div>
+      {/* Questions people ask before their first class */}
+      <section className="studio-frame py-[var(--section-gap)]">
+        <div className="studio-grid gap-y-10">
+          <div className="col-span-12 lg:col-span-4" data-reveal>
+            <h2 className="studio-head max-w-[10ch]">{t('home.faq.title')}</h2>
+          </div>
+          <div className="col-span-12 space-y-2 lg:col-span-8">
+            {home.faq.items.map((item) => (
+              <details key={item.q} className="studio-faq group">
+                <summary className="flex cursor-pointer list-none items-baseline justify-between gap-6 px-5 py-5 text-[length:var(--step-lead)] font-semibold leading-[1.2] tracking-[-0.02em] md:px-7">
+                  {item.q}
+                  <span
+                    className="shrink-0 text-[1.5em] leading-none transition-transform duration-200 group-open:rotate-45"
+                    aria-hidden
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="max-w-[60ch] px-5 pb-6 leading-[1.55] md:px-7">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Contact: the email address as display type */}
+      <section className="bg-moove-espresso text-white">
+        <div className="studio-frame flex min-h-[70svh] flex-col justify-between gap-16 py-12 md:min-h-[80svh] md:py-16">
+          <h2 className="studio-lead max-w-[24ch] font-semibold" data-reveal>
+            <span>{t('home.contact.title')}</span>
+          </h2>
+          <div>
+            <a
+              href={`mailto:${site.email}`}
+              className="studio-display block break-words text-[11.5vw] leading-[0.95] tracking-[-0.06em] transition-colors duration-200 hover:text-moove-lime md:text-[calc((min(100vw,96rem)-2*var(--gutter))/10.6)] md:font-semibold"
+            >
+              {site.email.split('@')[0]}@<wbr />
+              {site.email.split('@')[1]}
+            </a>
+            <div className="studio-small mt-10 flex flex-col gap-6 text-white/80 md:flex-row md:justify-between">
+              <ul className="space-y-1">
+                <li>
+                  <a href={`tel:${site.phone.replace(/\s/g, '')}`} className="hover:text-moove-lime">
+                    {site.phone}
+                  </a>
+                </li>
+                <li>{site.addressLine}</li>
+                <li>{t('contact.hoursValue')}</li>
+              </ul>
+              <ul className="flex gap-6 md:items-end">
+                <li>
+                  <a
+                    href={site.social.instagram}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="hover:text-moove-lime"
+                  >
+                    {t('common.instagram')}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href={site.social.facebook}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="hover:text-moove-lime"
+                  >
+                    {t('common.facebook')}
+                  </a>
+                </li>
+                <li>
+                  <a href={site.mapsUrl} target="_blank" rel="noreferrer noopener" className="hover:text-moove-lime">
+                    {t('common.googleMaps')}
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
-        </SiteContainer>
+        </div>
       </section>
-    </>
+    </div>
   )
 }

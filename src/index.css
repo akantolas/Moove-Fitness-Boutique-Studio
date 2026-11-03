@@ -1,30 +1,30 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Lora:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;600;800&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Lora:ital,wght@0,500;0,600;0,700;1,500&display=swap');
 @import 'tailwindcss';
 
 @theme {
   --font-sans:
-    'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Commissioner', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji';
-  --font-display: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-display: 'Commissioner', ui-sans-serif, system-ui, sans-serif;
 
-  --color-moove-bg: #f8f4ec;
-  --color-moove-surface: #fffdf9;
-  --color-moove-elevated: #f0e8dc;
-  --color-moove-border: rgba(105, 72, 48, 0.12);
+  /* Studio palette: white walls, the black studio wall, oak-grey stone, the logo's lime. */
+  --color-moove-bg: #ffffff;
+  --color-moove-surface: #f3f3f1;
+  --color-moove-elevated: #e8e7e3;
+  --color-moove-border: rgba(20, 20, 18, 0.12);
   --color-moove-lime: #c4f031;
   --color-moove-lime-hover: #d4f040;
   --color-moove-lime-deep: #9eb828;
-  --color-moove-silver: #292524;
-  --color-moove-muted: #6b6560;
-  --color-moove-ink: #1c1917;
-  --color-moove-accent: #b46548;
-  --color-moove-glow: #e8d5c4;
-  --color-moove-espresso: #3d2e28;
+  --color-moove-silver: #161615;
+  --color-moove-muted: #55554f;
+  --color-moove-ink: #121211;
+  --color-moove-accent: #3f5a00;
+  --color-moove-glow: #e8e7e3;
+  --color-moove-espresso: #141413;
 
-  --shadow-moove-soft: 0 24px 56px -20px rgba(61, 46, 40, 0.16);
-  --shadow-moove-lift: 0 12px 36px -14px rgba(61, 46, 40, 0.14);
-  --shadow-moove-glow: 0 0 0 1px rgba(255, 255, 255, 0.5) inset,
-    0 20px 50px -24px rgba(196, 240, 49, 0.35);
+  --shadow-moove-soft: 0 24px 56px -20px rgba(20, 20, 18, 0.18);
+  --shadow-moove-lift: 0 12px 36px -14px rgba(20, 20, 18, 0.16);
+  --shadow-moove-glow: none;
 
   --width-site-marketing: 90rem;
   --width-site-app: 80rem;
@@ -39,21 +39,10 @@
     margin: 0;
     min-height: 100svh;
     background-color: var(--color-moove-bg);
-    background-image:
-      radial-gradient(
-        ellipse 90% 60% at 50% -15%,
-        rgba(232, 213, 196, 0.5) 0%,
-        transparent 55%
-      ),
-      radial-gradient(
-        circle at 100% 50%,
-        rgba(196, 240, 49, 0.06) 0%,
-        transparent 40%
-      );
     color: var(--color-moove-silver);
     color-scheme: light;
     font-family: var(--font-sans);
-    line-height: 1.58;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -68,7 +57,13 @@
     outline-offset: 2px;
   }
 
+  /* Move & Pose keeps its own type. */
   body.pose-shell {
+    --font-sans:
+      'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+      'Segoe UI Emoji';
+    --font-display: 'Lora', Georgia, 'Times New Roman', serif;
+    line-height: 1.58;
     background-color: #08080c;
     background-image:
       radial-gradient(
@@ -96,30 +91,20 @@
 }
 
 @layer components {
+  /* Section labels on the inner pages: plain sentence case, no tracked caps. */
   .moove-eyebrow {
-    font-size: 0.6875rem;
+    font-size: 0.9375rem;
     font-weight: 600;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--color-moove-accent) 88%, transparent);
+    color: var(--color-moove-muted);
   }
 
   .moove-rule {
-    height: 1px;
-    width: 3.5rem;
-    background: linear-gradient(
-      90deg,
-      var(--color-moove-lime) 0%,
-      color-mix(in srgb, var(--color-moove-accent) 60%, transparent) 100%
-    );
+    display: none;
   }
 
   .moove-card {
-    border-radius: 1.25rem;
-    border: 1px solid color-mix(in srgb, var(--color-moove-border) 100%, transparent);
-    background: color-mix(in srgb, var(--color-moove-surface) 92%, transparent);
-    box-shadow: var(--shadow-moove-lift);
-    backdrop-filter: blur(8px);
+    border-radius: 0;
+    background: var(--color-moove-surface);
   }
 
   .moove-site-container {
@@ -497,6 +482,285 @@
     .animate-pose-sparkle,
     .pose-offers-shimmer-border {
       animation: none;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Studio home: the name with a photograph in its word space, then a page of
+ * short statements, each with its proof beside it.
+ * ------------------------------------------------------------------------- */
+@layer components {
+  :root {
+    --step-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+    --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+    --step-lead: clamp(1.375rem, 1.15rem + 0.9vw, 2rem);
+    --step-head: clamp(2.5rem, 1.4rem + 4.2vw, 4.75rem);
+    --step-display: clamp(4.25rem, 0.5rem + 11vw, 11rem);
+    --gutter: clamp(1rem, 0.4rem + 2.4vw, 3rem);
+    --section-gap: clamp(6rem, 3rem + 9vw, 12rem);
+  }
+
+  .studio {
+    font-size: var(--step-body);
+    letter-spacing: -0.01em;
+    color: var(--color-moove-ink);
+  }
+
+  .studio-frame {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 96rem;
+    padding-inline: var(--gutter);
+  }
+
+  .studio-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(0.75rem, 0.3rem + 1.6vw, 2rem);
+  }
+
+  .studio-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.88;
+  }
+
+  .studio-head {
+    font-family: var(--font-display);
+    font-size: var(--step-head);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+  }
+
+  .studio-lead {
+    font-size: var(--step-lead);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .studio-small {
+    font-size: var(--step-small);
+    font-weight: 600;
+  }
+
+  .studio-button {
+    display: inline-flex;
+    min-height: 3.25rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border-radius: 999px;
+    background: var(--color-moove-lime);
+    padding: 0.85rem 1.75rem;
+    font-size: var(--step-body);
+    font-weight: 600;
+    color: var(--color-moove-ink);
+    transition:
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 180ms ease;
+  }
+
+  .studio-button:hover {
+    background: var(--color-moove-lime-hover);
+    transform: translateY(-2px);
+  }
+
+  .studio-button:active {
+    transform: translateY(0) scale(0.97);
+  }
+
+  .studio-button--ink {
+    background: var(--color-moove-ink);
+    color: #ffffff;
+  }
+
+  .studio-button--ink:hover {
+    background: #2a2a28;
+  }
+
+  .studio-link {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.25em;
+    transition:
+      color 160ms ease,
+      text-underline-offset 160ms ease;
+  }
+
+  .studio-link:hover {
+    text-underline-offset: 0.4em;
+  }
+
+  /* The hero line: Moove [Magda] Pilates. She stands on the baseline and rises above the letters. */
+  .studio-name {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.12em;
+    font-size: var(--step-display);
+    white-space: nowrap;
+  }
+
+  .studio-name__person {
+    display: block;
+    flex: 0 0 auto;
+    width: auto;
+    height: 2.15em;
+    margin-top: 0;
+  }
+
+  @media (max-width: 767px) {
+    .studio-name {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      font-size: 22vw;
+      line-height: 0.9;
+    }
+
+    .studio-name__person {
+      align-self: center;
+      height: 3.6em;
+      margin-block: 0.1em 0;
+    }
+  }
+
+  /* The hero photograph, opened to the full width of the frame */
+  .studio-band {
+    height: clamp(20rem, 62svh, 44rem);
+    overflow: hidden;
+    background: var(--color-moove-ink);
+  }
+
+  /* Questions: a tone step per answer, no lines */
+  .studio-faq {
+    background: var(--color-moove-surface);
+    transition: background-color 160ms ease;
+  }
+
+  .studio-faq:hover,
+  .studio-faq[open] {
+    background: var(--color-moove-elevated);
+  }
+
+  .studio-faq summary::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Prints dropped on the address */
+  .studio-print {
+    position: absolute;
+    background: #ffffff;
+    padding: 8px;
+    transition:
+      rotate 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      scale 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .studio-print:hover,
+  .studio-print:focus-within {
+    z-index: 5;
+    rotate: 0deg !important;
+    scale: 1.02;
+  }
+
+  .studio-print img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
+
+  /* The quotation spread from margin to margin */
+  .studio-spread {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4em;
+  }
+
+  /* Day picker in the timetable */
+  .studio-day {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-size: var(--step-small);
+    font-weight: 600;
+    color: var(--color-moove-muted);
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
+  }
+
+  .studio-day:hover {
+    color: var(--color-moove-ink);
+    background: var(--color-moove-elevated);
+  }
+
+  .studio-day:active {
+    transform: scale(0.95);
+  }
+
+  .studio-day[aria-pressed='true'] {
+    background: var(--color-moove-ink);
+    color: #ffffff;
+  }
+}
+
+@layer utilities {
+  /* Entrances run only once the script has marked the page as ready, so nothing
+     stays hidden without it. */
+  @media (prefers-reduced-motion: no-preference) {
+    .motion-ready [data-reveal] > * {
+      opacity: 0;
+      transform: translateY(24px);
+      transition:
+        opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .motion-ready [data-reveal].is-in > * {
+      opacity: 1;
+      transform: none;
+    }
+
+    .motion-ready [data-reveal].is-in > *:nth-child(2) { transition-delay: 80ms; }
+    .motion-ready [data-reveal].is-in > *:nth-child(3) { transition-delay: 160ms; }
+    .motion-ready [data-reveal].is-in > *:nth-child(4) { transition-delay: 240ms; }
+    .motion-ready [data-reveal].is-in > *:nth-child(5) { transition-delay: 320ms; }
+    .motion-ready [data-reveal].is-in > *:nth-child(n + 6) { transition-delay: 400ms; }
+
+    @keyframes studio-drift {
+      from { transform: scale(1) translate3d(0, 0, 0); }
+      to { transform: scale(1.08) translate3d(-2%, -1%, 0); }
+    }
+
+    @keyframes studio-emerge {
+      from { opacity: 0; transform: translateY(14%); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .studio-name__person {
+      animation: studio-emerge 1.2s cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+    }
+
+    @keyframes studio-rise {
+      from { opacity: 0; transform: translateY(32px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .studio-band img {
+      animation: studio-drift 18s ease-in-out infinite alternate;
+    }
+
+    .studio-rise {
+      animation: studio-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
     }
   }
 }

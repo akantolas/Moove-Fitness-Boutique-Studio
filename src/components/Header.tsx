@@ -8,7 +8,6 @@ import {
   posingPackagesHref,
   useIsPosingRoute,
 } from '../hooks/useIsPosingRoute'
-import { PosePromoBubble } from './PosePromoBubble'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useTranslation, useSiteVars } from '../i18n/useTranslation'
 import { usePosingAuth } from '../contexts/PosingAuthContext'
@@ -145,8 +144,10 @@ export function Header() {
     if (posing) {
       return `${posingDesktopNavBase} ${isActive ? posingDesktopNavActive : posingDesktopNavIdle}`
     }
-    return `relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-3.5 sm:text-sm ${
-      isActive ? 'text-moove-ink' : 'text-moove-muted hover:text-moove-silver'
+    return `px-3 py-2 text-[0.9375rem] font-semibold transition-colors ${
+      isActive
+        ? 'text-moove-ink underline decoration-2 underline-offset-[0.4em]'
+        : 'text-moove-muted hover:text-moove-ink'
     }`
   }
 
@@ -174,7 +175,7 @@ export function Header() {
                 ? 'border-b border-white/12 bg-[#08080c]/88'
                 : 'border-b border-white/8 bg-[#08080c]/72'
             } ${open ? 'z-[90]' : 'z-50'}`
-          : 'sticky top-0 z-50 border-b border-moove-border/70 bg-moove-surface/75 backdrop-blur-xl backdrop-saturate-150'
+          : 'sticky top-0 z-50 bg-moove-bg'
       }
     >
       {posing ? (
@@ -194,7 +195,7 @@ export function Header() {
         </>
       ) : null}
       <div
-        className={`relative moove-site-container-wide flex items-center lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'h-[4.75rem] lg:h-14 lg:gap-8' : 'h-14 lg:gap-6'}`}
+        className={`relative flex items-center lg:grid lg:grid-cols-[auto_1fr_auto] ${posing ? 'moove-site-container-wide h-[4.75rem] lg:h-14 lg:gap-8' : 'studio-frame h-16 lg:gap-6'}`}
       >
         {posing ? (
           <div className="relative flex min-w-0 flex-1 items-center justify-center lg:hidden">
@@ -235,7 +236,7 @@ export function Header() {
             </NavLink>
             <button
               type="button"
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-moove-border/80 bg-moove-surface/80 text-moove-silver transition-colors"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-moove-surface text-moove-ink transition-colors hover:bg-moove-elevated"
               aria-expanded={open}
               aria-controls="mobile-nav"
               aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')}
@@ -266,7 +267,7 @@ export function Header() {
           className={
             posing
               ? 'hidden items-center justify-center gap-1 self-center lg:flex'
-              : 'hidden items-center justify-center gap-0.5 self-center rounded-full border border-moove-border/80 bg-moove-elevated/50 p-0.5 lg:flex'
+              : 'hidden items-center justify-center gap-1 self-center lg:flex'
           }
           aria-label={t('nav.main')}
         >
@@ -282,21 +283,7 @@ export function Header() {
                 end={'end' in item ? item.end : false}
                 className={({ isActive }) => navClass(isActive)}
               >
-                {({ isActive }) =>
-                  posing ? (
-                    t(item.labelKey)
-                  ) : (
-                    <>
-                      {isActive ? (
-                        <span
-                          className="absolute inset-0 rounded-full bg-moove-lime/90 shadow-sm"
-                          aria-hidden
-                        />
-                      ) : null}
-                      <span className="relative z-10">{t(item.labelKey)}</span>
-                    </>
-                  )
-                }
+                {t(item.labelKey)}
               </NavLink>
             ),
           )}
@@ -317,7 +304,14 @@ export function Header() {
               </NavLink>
             )
           ) : null}
-          {!posing ? <PosePromoBubble variant="header" /> : null}
+          {!posing ? (
+            <Link
+              to="/posing"
+              className="px-2 py-2 text-[0.9375rem] font-semibold text-moove-muted transition-colors hover:text-moove-ink"
+            >
+              {posingBrand.brandName}
+            </Link>
+          ) : null}
           {posing ? (
             <span className="h-4 w-px bg-white/10" aria-hidden />
           ) : null}
@@ -329,7 +323,7 @@ export function Header() {
             <ButtonLink
               href={site.bookingUrl}
               external={site.bookingUrl.startsWith('http')}
-              className="!px-4 !py-2 text-xs sm:text-sm"
+              className="!px-5 text-[0.9375rem]"
             >
               {t('common.book')}
             </ButtonLink>
@@ -443,9 +437,9 @@ export function Header() {
       {open && !posing ? (
         <div
           id="mobile-nav"
-          className="border-t border-moove-border/80 bg-moove-surface/95 px-4 py-4 backdrop-blur-xl lg:hidden"
+          className="studio-frame bg-moove-bg pb-8 pt-2 lg:hidden"
         >
-          <div className="mb-3 flex justify-center">
+          <div className="mb-4 flex">
             <LanguageSwitcher />
           </div>
           <nav className="flex flex-col gap-1" aria-label={t('nav.mobile')}>
@@ -454,7 +448,7 @@ export function Header() {
                 <a
                   key={item.href}
                   href={item.href}
-                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-moove-muted"
+                  className="py-2 text-3xl font-extrabold tracking-[-0.04em] text-moove-muted"
                   onClick={() => setOpen(false)}
                 >
                   {t(item.labelKey)}
@@ -465,8 +459,8 @@ export function Header() {
                   to={item.to}
                   end={'end' in item ? item.end : false}
                   className={({ isActive }) =>
-                    `rounded-xl px-4 py-2.5 text-sm font-medium ${
-                      isActive ? 'bg-moove-lime/20 text-moove-ink' : 'text-moove-muted'
+                    `py-2 text-3xl font-extrabold tracking-[-0.04em] ${
+                      isActive ? 'text-moove-ink' : 'text-moove-muted hover:text-moove-ink'
                     }`
                   }
                   onClick={() => setOpen(false)}
@@ -475,10 +469,14 @@ export function Header() {
                 </NavLink>
               ),
             )}
-            <div className="mt-2">
-              <PosePromoBubble variant="menu" onNavigate={() => setOpen(false)} />
-            </div>
-            <div className="mt-3 border-t border-moove-border pt-4">
+            <Link
+              to="/posing"
+              className="py-2 text-3xl font-extrabold tracking-[-0.04em] text-moove-muted hover:text-moove-ink"
+              onClick={() => setOpen(false)}
+            >
+              {posingBrand.brandName}
+            </Link>
+            <div className="mt-6">
               <ButtonLink
                 href={site.bookingUrl}
                 external={site.bookingUrl.startsWith('http')}

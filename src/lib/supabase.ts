@@ -3,7 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+// A masked or placeholder URL (e.g. from `vercel env pull`) counts as unconfigured,
+// so the studio pages still render instead of crashing on startup.
+export const isSupabaseConfigured = Boolean(/^https?:\/\//.test(supabaseUrl) && supabaseAnonKey)
 
 export function createSupabaseClient() {
   if (!isSupabaseConfigured) {

@@ -15,7 +15,7 @@ export function PrimaryLink({
   return (
     <Link
       to={to}
-      className={`inline-flex items-center justify-center rounded-full bg-gradient-to-b from-moove-lime via-moove-lime to-moove-lime-deep px-6 py-3 text-sm font-semibold tracking-wide text-moove-ink shadow-moove-glow transition hover:brightness-105 active:scale-[0.98] ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-full bg-moove-lime px-6 py-3 text-sm font-semibold text-moove-ink transition hover:-translate-y-0.5 hover:bg-moove-lime-hover active:translate-y-0 active:scale-[0.98] ${className}`}
     >
       {children}
     </Link>
@@ -26,7 +26,7 @@ export function GhostLink({ to, children, className = '' }: GhostLinkProps) {
   return (
     <Link
       to={to}
-      className={`inline-flex items-center justify-center rounded-full border border-moove-espresso/15 bg-moove-surface/60 px-6 py-3 text-sm font-medium tracking-wide text-moove-silver shadow-sm backdrop-blur-sm transition hover:border-moove-accent/40 hover:bg-moove-surface hover:text-moove-accent ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center rounded-full bg-moove-surface px-6 py-3 text-sm font-semibold text-moove-ink transition hover:-translate-y-0.5 hover:bg-moove-elevated active:translate-y-0 active:scale-[0.98] ${className}`}
     >
       {children}
     </Link>
@@ -50,8 +50,8 @@ export function ButtonLink({
 }: ButtonLinkProps) {
   const base =
     variant === 'primary'
-      ? 'inline-flex items-center justify-center rounded-full bg-gradient-to-b from-moove-lime via-moove-lime to-moove-lime-deep px-6 py-3 text-sm font-semibold tracking-wide text-moove-ink shadow-moove-glow transition hover:brightness-105 active:scale-[0.98]'
-      : 'inline-flex items-center justify-center rounded-full border border-moove-espresso/15 bg-moove-surface/60 px-6 py-3 text-sm font-medium tracking-wide text-moove-silver shadow-sm backdrop-blur-sm transition hover:border-moove-accent/40 hover:bg-moove-surface hover:text-moove-accent'
+      ? 'inline-flex min-h-11 items-center justify-center rounded-full bg-moove-lime px-6 py-3 text-sm font-semibold text-moove-ink transition hover:-translate-y-0.5 hover:bg-moove-lime-hover active:translate-y-0 active:scale-[0.98]'
+      : 'inline-flex min-h-11 items-center justify-center rounded-full bg-moove-surface px-6 py-3 text-sm font-semibold text-moove-ink transition hover:-translate-y-0.5 hover:bg-moove-elevated active:translate-y-0 active:scale-[0.98]'
 
   return (
     <a

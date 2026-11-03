@@ -13,7 +13,7 @@ export function CookieBanner() {
 
   const panelClass = posing
     ? 'border-fuchsia-500/25 bg-[#12121a]/95 text-white ring-white/10'
-    : 'border-moove-border/50 bg-moove-surface/95 text-moove-silver ring-white/60'
+    : 'border-transparent bg-moove-surface text-moove-silver ring-transparent'
 
   const bodyClass = posing ? 'text-white/65' : 'text-moove-muted'
   const ghostBtn = posing
@@ -21,7 +21,7 @@ export function CookieBanner() {
     : 'border-moove-espresso/15 bg-moove-surface/80 text-moove-silver hover:bg-moove-elevated/60'
   const primaryBtn = posing
     ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black hover:brightness-110'
-    : 'bg-gradient-to-b from-moove-lime via-moove-lime to-moove-lime-deep text-moove-ink hover:brightness-105'
+    : 'bg-moove-lime text-moove-ink hover:bg-moove-lime-hover'
 
   return (
     <div
