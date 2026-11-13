@@ -1,33 +1,21 @@
 type PageHeaderProps = {
-  eyebrow: string
   title: string
   description?: string
   align?: 'left' | 'center'
 }
 
-export function PageHeader({
-  eyebrow,
-  title,
-  description,
-  align = 'left',
-}: PageHeaderProps) {
+/** Inner-page opening: one large statement and a short lead, no label above it. */
+export function PageHeader({ title, description, align = 'left' }: PageHeaderProps) {
   const centered = align === 'center'
 
   return (
-    <header className={`max-w-3xl ${centered ? 'mx-auto text-center' : ''}`}>
-      <p className="moove-eyebrow">{eyebrow}</p>
-      <h1 className="font-display mt-4 text-4xl font-semibold leading-[1.1] tracking-tight text-moove-silver sm:text-5xl">
-        {title}
-      </h1>
+    <header className={`max-w-[60rem] ${centered ? 'mx-auto text-center' : ''}`}>
+      <h1 className="studio-head">{title}</h1>
       {description ? (
-        <p className="mt-4 text-base leading-relaxed text-moove-muted sm:text-lg">
+        <p className={`studio-lead mt-6 max-w-[36ch] text-moove-muted ${centered ? 'mx-auto' : ''}`}>
           {description}
         </p>
       ) : null}
-      <div
-        className={`moove-rule mt-6 ${centered ? 'mx-auto' : ''}`}
-        aria-hidden
-      />
     </header>
   )
 }

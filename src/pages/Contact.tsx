@@ -2,9 +2,8 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
-import { SiteContainer } from '../components/SiteContainer'
 import { site } from '../site'
-import { useTranslation } from '../i18n/useTranslation'
+import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 export function ContactPage() {
   const [sent, setSent] = useState(false)
@@ -12,6 +11,7 @@ export function ContactPage() {
   const [error, setError] = useState('')
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const { t, locale } = useTranslation()
+  const vars = useSiteVars()
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -54,69 +54,63 @@ export function ContactPage() {
     }
   }
 
+  const label = 'studio-small block text-moove-muted'
+  const input = 'w-full min-h-12 bg-moove-bg px-4 py-3 text-[length:var(--step-body)] text-moove-ink placeholder:text-moove-muted/70 disabled:opacity-60'
+
   return (
-    <SiteContainer className="py-14 sm:py-20">
-      <PageHeader
-        eyebrow={t('contact.eyebrow')}
-        title={t('contact.title')}
-        description={t('contact.description')}
-      />
+    <div className="studio">
+      <section className="studio-frame pt-[clamp(3rem,2rem+4vw,6rem)]">
+        <PageHeader title={t('contact.title')} description={t('contact.description')} />
+      </section>
 
-      <div className="mt-14 grid gap-8 lg:grid-cols-2">
-        <section className="moove-card p-8 sm:p-10">
-          <h2 className="font-display text-xl font-semibold text-moove-silver">
-            {t('contact.detailsTitle')}
-          </h2>
-          <ul className="mt-8 space-y-6 text-sm">
-            <li>
-              <span className="moove-eyebrow !text-[0.6rem]">{t('contact.address')}</span>
-              <span className="mt-2 block text-base text-moove-silver">{site.addressLine}</span>
-            </li>
-            <li>
-              <span className="moove-eyebrow !text-[0.6rem]">{t('contact.phone')}</span>
-              <a
-                className="mt-2 block text-base font-medium text-moove-ink transition hover:text-moove-accent hover:underline"
-                href={`tel:${site.phone.replace(/\s/g, '')}`}
-              >
-                {site.phone}
-              </a>
-            </li>
-            <li>
-              <span className="moove-eyebrow !text-[0.6rem]">{t('common.email')}</span>
-              <a
-                className="mt-2 block text-base font-medium text-moove-ink transition hover:text-moove-accent hover:underline"
-                href={`mailto:${site.email}`}
-              >
-                {site.email}
-              </a>
-            </li>
-            <li>
-              <span className="moove-eyebrow !text-[0.6rem]">{t('contact.hours')}</span>
-              <span className="mt-2 block text-moove-silver">{t('contact.hoursValue')}</span>
-            </li>
-          </ul>
-          <div className="mt-10">
-            <a
-              href={site.mapsUrl}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="inline-flex rounded-full border border-moove-espresso/15 bg-moove-elevated/50 px-5 py-2.5 text-sm font-medium text-moove-silver transition hover:border-moove-lime/50 hover:text-moove-ink"
-            >
-              {t('contact.openMaps')}
-            </a>
-          </div>
-        </section>
+      <section className="studio-frame studio-grid gap-y-14 pb-[var(--section-gap)] pt-[clamp(3rem,2rem+4vw,6rem)]">
+        {/* The ways to reach the studio, as large type */}
+        <div className="col-span-12 md:col-span-5">
+          <h2 className="sr-only">{t('contact.detailsTitle')}</h2>
+          <dl className="space-y-8">
+            <div>
+              <dt className={label}>{t('contact.phone')}</dt>
+              <dd className="mt-1">
+                <a className="studio-lead font-semibold hover:underline" href={`tel:${site.phone.replace(/\s/g, '')}`}>
+                  {site.phone}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt className={label}>{t('common.email')}</dt>
+              <dd className="mt-1">
+                <a className="studio-lead break-words font-semibold hover:underline" href={`mailto:${site.email}`}>
+                  {site.email}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt className={label}>{t('contact.address')}</dt>
+              <dd className="mt-1 leading-[1.45]">
+                {vars.address}
+                <a href={site.mapsUrl} target="_blank" rel="noreferrer noopener" className="studio-link mt-2 block w-fit">
+                  {t('contact.openMaps')}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt className={label}>{t('contact.hours')}</dt>
+              <dd className="mt-1 leading-[1.45]">{t('contact.hoursValue')}</dd>
+            </div>
+          </dl>
+        </div>
 
-        <section className="moove-card p-8 sm:p-10">
-          <h2 className="font-display text-xl font-semibold text-moove-silver">
+        {/* The message form on a tone step */}
+        <div className="col-span-12 bg-moove-surface p-6 md:col-span-7 md:p-10">
+          <h2 className="text-[length:var(--step-lead)] font-extrabold leading-[1.15] tracking-[-0.03em]">
             {t('contact.messageTitle')}
           </h2>
           {sent ? (
-            <p className="mt-6 rounded-xl border border-moove-lime/30 bg-moove-lime/10 px-4 py-4 text-sm text-moove-silver">
+            <p className="mt-6 bg-moove-lime px-5 py-4 font-semibold" role="status">
               {t('contact.sent')}
             </p>
           ) : (
-            <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit} noValidate>
               <input
                 type="text"
                 name="_gotcha"
@@ -127,7 +121,7 @@ export function ContactPage() {
                 aria-hidden="true"
               />
               <div>
-                <label htmlFor="name" className="moove-eyebrow !text-[0.6rem]">
+                <label htmlFor="name" className={label}>
                   {t('contact.name')}
                 </label>
                 <input
@@ -136,12 +130,12 @@ export function ContactPage() {
                   required
                   autoComplete="name"
                   disabled={sending}
-                  className="mt-2 w-full rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20 disabled:opacity-60"
+                  className={`mt-2 ${input}`}
                   placeholder={t('contact.namePlaceholder')}
                 />
               </div>
               <div>
-                <label htmlFor="email" className="moove-eyebrow !text-[0.6rem]">
+                <label htmlFor="email" className={label}>
                   {t('common.email')}
                 </label>
                 <input
@@ -151,25 +145,25 @@ export function ContactPage() {
                   required
                   autoComplete="email"
                   disabled={sending}
-                  className="mt-2 w-full rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20 disabled:opacity-60"
+                  className={`mt-2 ${input}`}
                   placeholder={t('contact.emailPlaceholder')}
                 />
               </div>
               <div>
-                <label htmlFor="message" className="moove-eyebrow !text-[0.6rem]">
+                <label htmlFor="message" className={label}>
                   {t('contact.message')}
                 </label>
                 <textarea
                   id="message"
                   name="message"
                   required
-                  rows={4}
+                  rows={5}
                   disabled={sending}
-                  className="mt-2 w-full resize-y rounded-xl border border-moove-border bg-moove-bg/50 px-4 py-3.5 text-sm text-moove-silver placeholder:text-moove-muted/50 focus:border-moove-lime/50 focus:outline-none focus:ring-2 focus:ring-moove-lime/20 disabled:opacity-60"
+                  className={`mt-2 resize-y ${input}`}
                   placeholder={t('contact.messagePlaceholder')}
                 />
               </div>
-              <label className="flex items-start gap-3 rounded-xl border border-moove-border/80 bg-moove-bg/30 px-4 py-4 text-sm leading-relaxed text-moove-muted">
+              <label className="flex items-start gap-3 leading-[1.5] text-moove-muted">
                 <input
                   type="checkbox"
                   name="privacyConsent"
@@ -177,35 +171,32 @@ export function ContactPage() {
                   checked={privacyAccepted}
                   disabled={sending}
                   onChange={(event) => setPrivacyAccepted(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-moove-border accent-moove-lime-deep"
+                  className="mt-1 h-5 w-5 shrink-0 accent-moove-ink"
                 />
                 <span>
                   {t('contact.consentBefore')}{' '}
-                  <Link
-                    to="/privacy"
-                    className="font-medium text-moove-accent underline-offset-2 hover:underline"
-                  >
+                  <Link to="/privacy" className="studio-link text-moove-ink">
                     {t('privacy.footer.privacyPolicy')}
                   </Link>
                   {t('contact.consentAfter')}
                 </span>
               </label>
               {error ? (
-                <p className="rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+                <p className="bg-red-50 px-4 py-3 text-red-800" role="alert">
                   {error}
                 </p>
               ) : null}
               <button
                 type="submit"
                 disabled={!privacyAccepted || sending}
-                className="w-full rounded-full bg-gradient-to-b from-moove-lime to-moove-lime-deep py-3.5 text-sm font-semibold text-moove-ink shadow-moove-glow transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-10"
+                className="studio-button studio-button--ink w-full disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:w-auto"
               >
                 {sending ? t('contact.sending') : t('common.send')}
               </button>
             </form>
           )}
-        </section>
-      </div>
-    </SiteContainer>
+        </div>
+      </section>
+    </div>
   )
 }

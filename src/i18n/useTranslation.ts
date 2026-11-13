@@ -15,10 +15,8 @@ export function useSiteVars(): TranslationVars {
     name: site.name,
     tagline: site.tagline,
     owner: locale === 'en' ? site.ownerNameEn : site.ownerName,
-    coach: locale === 'en' ? site.posing.coachNameEn : site.posing.coachName,
-    brand: site.posing.brandName,
     email: site.email,
-    address: site.addressLine,
+    address: locale === 'en' ? site.addressLineEn : site.addressLine,
     bookingUrl: site.bookingUrl,
   }
 }

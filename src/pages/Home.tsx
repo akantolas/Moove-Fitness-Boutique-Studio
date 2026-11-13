@@ -1,83 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { GoogleReviews } from '../components/GoogleReviews'
-import { weekSchedule, type ScheduleDay, type ScheduleSlot } from '../data/weekSchedule'
+import { StudioTimetable } from '../components/StudioTimetable'
+import { useReveal } from '../hooks/useReveal'
+import { findNextClass } from '../lib/nextClass'
 import { useCurrentTime } from '../hooks/useCurrentTime'
 import { site } from '../site'
-import { useTranslation } from '../i18n/useTranslation'
+import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 const bookingProps = site.bookingUrl.startsWith('http') ? { target: '_blank', rel: 'noreferrer noopener' } : undefined
 
-/** Weekday index (0 = Sunday) for each day in the studio timetable. */
-const dayIndex: Record<ScheduleDay['key'], number> = {
-  mon: 1,
-  tue: 2,
-  wed: 3,
-  thu: 4,
-  fri: 5,
-  sat: 6,
-}
-
-function slotMinutes(slot: ScheduleSlot) {
-  const [h, m] = slot.time.split(':').map(Number)
-  return h * 60 + m
-}
-
-type NextClass = { day: ScheduleDay; slot: ScheduleSlot; daysAhead: number }
-
-/** The first class in the weekly timetable that has not started yet. */
-function findNextClass(now: number): NextClass | null {
-  const date = new Date(now)
-  const today = date.getDay()
-  const minutes = date.getHours() * 60 + date.getMinutes()
-  for (let daysAhead = 0; daysAhead < 7; daysAhead += 1) {
-    const weekday = (today + daysAhead) % 7
-    const day = weekSchedule.find((d) => dayIndex[d.key] === weekday)
-    if (!day) continue
-    const slot = day.slots.find((s) => daysAhead > 0 || slotMinutes(s) > minutes)
-    if (slot) return { day, slot, daysAhead }
-  }
-  return null
-}
-
-/**
- * Marks the page as ready for entrances and reveals each [data-reveal] block once,
- * including blocks that render later (the reviews arrive after a fetch).
- */
-function useReveal() {
-  useEffect(() => {
-    const root = document.documentElement
-    if (!('IntersectionObserver' in window)) return
-    root.classList.add('motion-ready')
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue
-          entry.target.classList.add('is-in')
-          observer.unobserve(entry.target)
-        }
-      },
-      { rootMargin: '0px 0px -12% 0px' },
-    )
-    const watch = () =>
-      document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)').forEach((block) => observer.observe(block))
-    watch()
-    const added = new MutationObserver(watch)
-    added.observe(document.body, { childList: true, subtree: true })
-    return () => {
-      added.disconnect()
-      observer.disconnect()
-      root.classList.remove('motion-ready')
-    }
-  }, [])
-}
-
 export function HomePage() {
   const { t, dictionary } = useTranslation()
+  const vars = useSiteVars()
   const now = useCurrentTime()
   const next = useMemo(() => findNextClass(now), [now])
-  const [dayKey, setDayKey] = useState<ScheduleDay['key']>(() => next?.day.key ?? 'mon')
-  const shownDay = weekSchedule.find((d) => d.key === dayKey) ?? weekSchedule[0]
   const home = dictionary.home
   const days = dictionary.schedule.days
 
@@ -98,7 +35,7 @@ export function HomePage() {
         <h1 className="studio-display studio-name">
           <span>{site.name}</span>
           <img
-            src="/magda-cutout.webp?v=4"
+            src="/magda-cutout.webp?v=5"
             alt={t('home.hero.heroImageAlt')}
             width={795}
             height={1000}
@@ -179,60 +116,9 @@ export function HomePage() {
             <div data-reveal>
               <h2 className="studio-head max-w-[13ch]">{t('home.schedule.title')}</h2>
             </div>
-            <div className="-mx-1 mt-10 flex flex-wrap gap-1" role="group" aria-label={dictionary.schedule.daysAria}>
-              {weekSchedule.map((day) => (
-                <button
-                  key={day.key}
-                  type="button"
-                  className="studio-day"
-                  aria-pressed={day.key === shownDay.key}
-                  onClick={() => setDayKey(day.key)}
-                >
-                  <span aria-hidden>{days[day.key].label.slice(0, 3)}</span>
-                  <span className="sr-only">{days[day.key].label}</span>
-                </button>
-              ))}
+            <div className="mt-10">
+              <StudioTimetable next={next} />
             </div>
-
-            <table className="mt-8 w-full border-collapse text-left">
-              <caption className="studio-lead pb-4 text-left font-semibold">{days[shownDay.key].label}</caption>
-              <thead className="sr-only">
-                <tr>
-                  <th scope="col">{t('home.schedule.hours')}</th>
-                  <th scope="col">{dictionary.schedule.lesson}</th>
-                  <th scope="col">{t('home.schedule.book')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shownDay.slots.map((slot, i) => {
-                  const isNext = next?.day.key === shownDay.key && next.slot === slot
-                  return (
-                    <tr
-                      key={`${slot.time}-${slot.name}`}
-                      className={isNext ? 'bg-moove-lime' : i % 2 === 0 ? 'bg-moove-bg' : undefined}
-                    >
-                      <td className="w-[22%] py-3.5 pl-4 align-baseline tabular-nums text-moove-muted">
-                        <span className={isNext ? 'font-semibold text-moove-ink' : undefined}>{slot.time}</span>
-                      </td>
-                      <td className="py-3.5 align-baseline font-semibold">
-                        {slot.name}
-                        {isNext ? <span className="ml-2 font-normal">· {t('home.schedule.next')}</span> : null}
-                      </td>
-                      <td className="py-3.5 pr-4 text-right align-baseline">
-                        <a
-                          href={site.bookingUrl}
-                          {...bookingProps}
-                          className="studio-small inline-flex min-h-11 items-center gap-1 underline-offset-4 hover:underline"
-                        >
-                          {t('home.schedule.book')}
-                          <span aria-hidden>→</span>
-                        </a>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
             <p className="mt-8 max-w-[44ch] text-moove-muted">{t('home.schedule.note')}</p>
           </div>
         </div>
@@ -255,11 +141,7 @@ export function HomePage() {
             <h2 className="studio-head max-w-[10ch]">{t('home.magda.name')}</h2>
             <p className="studio-lead mt-8 max-w-[30ch]">{t('home.magda.lead')}</p>
             <p className="mt-6 max-w-[52ch] leading-[1.5]">
-              {t('home.magda.specialty')} {t('home.magda.more')}{' '}
-              <Link to="/posing" className="studio-link">
-                Move &amp; Pose
-              </Link>
-              {t('home.magda.moreAfter')}
+              {t('home.magda.specialty')}
             </p>
             <ul className="mt-8 flex flex-wrap gap-2">
               {home.magda.facts.map((fact) => (
@@ -275,49 +157,43 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Classes: a large photograph and its text, alternating sides */}
+      {/* Classes: a photograph and a few lines each, three to a row */}
       <section className="bg-moove-surface">
         <div className="studio-frame py-[var(--section-gap)]">
           <div data-reveal>
             <h2 className="studio-head max-w-[12ch]">{t('home.classes.title')}</h2>
           </div>
 
-          <ul className="mt-16 space-y-16 md:mt-24 md:space-y-24">
-            {home.classes.rows.map((row, i) => {
-              const flip = i % 2 === 1
-              return (
-                <li key={row.title} className="studio-grid gap-y-6 md:items-center">
-                  <div className={`col-span-12 md:col-span-6 ${flip ? 'md:order-2 md:col-start-7' : ''}`}>
-                    {row.image ? (
-                      <img src={row.image} alt={row.alt} loading="lazy" className="aspect-[4/3] w-full object-cover" />
-                    ) : (
-                      <div className="flex aspect-[4/3] w-full items-end bg-moove-lime p-[clamp(1.25rem,3vw,2.5rem)]">
-                        <p className="studio-display text-[clamp(3rem,1rem+6vw,7rem)]" aria-hidden>
-                          {row.title}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  <div
-                    className={`col-span-12 md:col-span-5 ${flip ? 'md:order-1 md:col-start-1' : 'md:col-start-8'}`}
-                    data-reveal
+          <ul className="mt-14 grid gap-x-[clamp(0.75rem,0.3rem+1.6vw,2rem)] gap-y-14 sm:grid-cols-2 md:mt-20 lg:grid-cols-3">
+            {home.classes.rows.map((row) => (
+              <li key={row.title} className="flex flex-col" data-reveal>
+                <div>
+                  {row.image ? (
+                    <img src={row.image} alt={row.alt} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+                  ) : (
+                    <div className="flex aspect-[4/3] w-full items-end bg-moove-lime p-[clamp(1.25rem,2vw,2rem)]">
+                      <p className="studio-display text-[clamp(2.5rem,1rem+3.5vw,4.5rem)]" aria-hidden>
+                        {row.title}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-1 flex-col">
+                  <h3 className="mt-6 text-[clamp(1.5rem,1.1rem+1.2vw,2.25rem)] font-extrabold leading-[1.05] tracking-[-0.035em]">
+                    {row.title}
+                  </h3>
+                  <p className="mt-3 max-w-[36ch] leading-[1.5]">{row.body}</p>
+                  <p className="studio-small mt-3 text-moove-muted">{row.meta}</p>
+                  <a
+                    href={site.bookingUrl}
+                    {...bookingProps}
+                    className="studio-link mt-auto inline-block w-fit pt-5 text-[length:var(--step-small)]"
                   >
-                    <h3 className="font-display text-[clamp(1.875rem,1.1rem+2.2vw,3.25rem)] font-extrabold leading-[1] tracking-[-0.04em]">
-                      {row.title}
-                    </h3>
-                    <p className="mt-4 max-w-[36ch] leading-[1.5]">{row.body}</p>
-                    <p className="studio-small mt-4 text-moove-muted">{row.meta}</p>
-                    <a
-                      href={site.bookingUrl}
-                      {...bookingProps}
-                      className="studio-link mt-6 inline-block text-[length:var(--step-small)]"
-                    >
-                      {t('common.bookSpot')}
-                    </a>
-                  </div>
-                </li>
-              )
-            })}
+                    {t('common.bookSpot')}
+                  </a>
+                </div>
+              </li>
+            ))}
           </ul>
 
           <div className="mt-20">
@@ -427,7 +303,7 @@ export function HomePage() {
                     {site.phone}
                   </a>
                 </li>
-                <li>{site.addressLine}</li>
+                <li>{vars.address}</li>
                 <li>{t('contact.hoursValue')}</li>
               </ul>
               <ul className="flex gap-6 md:items-end">

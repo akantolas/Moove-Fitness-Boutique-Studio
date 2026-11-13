@@ -1,14 +1,20 @@
 {
+  "redirects": [
+    {
+      "source": "/posing",
+      "destination": "https://moveandpose.com/",
+      "permanent": true
+    },
+    {
+      "source": "/posing/:path*",
+      "destination": "https://moveandpose.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/((?!api/)(?!@)(?!.*\\..*).*)",
       "destination": "/index.html"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/posing/cron-expiry-reminders",
-      "schedule": "0 7 * * *"
     }
   ]
 }

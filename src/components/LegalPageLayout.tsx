@@ -9,7 +9,6 @@ type LegalSection = {
 }
 
 type LegalPageLayoutProps = {
-  eyebrow: string
   title: string
   description: string
   lastUpdated: string
@@ -19,7 +18,6 @@ type LegalPageLayoutProps = {
 }
 
 export function LegalPageLayout({
-  eyebrow,
   title,
   description,
   lastUpdated,
@@ -28,33 +26,24 @@ export function LegalPageLayout({
   actions,
 }: LegalPageLayoutProps) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
-      <PageHeader eyebrow={eyebrow} title={title} description={description} />
+    <div className="studio studio-frame py-[clamp(3rem,2rem+4vw,6rem)]">
+      <PageHeader title={title} description={description} />
+      <p className="studio-small mt-8 text-moove-muted">{lastUpdated}</p>
 
-      <p className="mt-8 text-sm text-moove-muted">{lastUpdated}</p>
-
-      <div className="mt-10 space-y-8">
+      <div className="mt-14 max-w-[68ch] space-y-12">
         {sections.map((section) => (
-          <section key={section.title} className="moove-card p-6 sm:p-8">
-            <h2 className="font-display text-xl font-semibold text-moove-silver">
+          <section key={section.title}>
+            <h2 className="text-[length:var(--step-lead)] font-extrabold leading-[1.15] tracking-[-0.03em]">
               {section.title}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-moove-muted sm:text-base">
+            <p className="mt-3 leading-[1.6] text-moove-muted">
               {vars ? interpolate(section.body, vars) : section.body}
             </p>
           </section>
         ))}
       </div>
 
-      {actions ? <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
+      {actions ? <div className="mt-16 flex flex-col gap-3 sm:flex-row sm:flex-wrap">{actions}</div> : null}
     </div>
   )
-}
-
-export function legalGhostLinkClassName() {
-  return 'inline-flex min-h-11 items-center justify-center rounded-full border border-moove-espresso/15 bg-moove-surface/60 px-6 py-3 text-sm font-medium text-moove-silver transition hover:border-moove-accent/40 hover:bg-moove-surface hover:text-moove-accent'
-}
-
-export function legalPrimaryLinkClassName() {
-  return 'inline-flex min-h-11 items-center justify-center rounded-full bg-gradient-to-b from-moove-lime via-moove-lime to-moove-lime-deep px-6 py-3 text-sm font-semibold text-moove-ink shadow-moove-glow transition hover:brightness-105 active:scale-[0.98]'
 }

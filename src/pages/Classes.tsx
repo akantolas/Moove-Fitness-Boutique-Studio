@@ -1,85 +1,69 @@
-import { ButtonLink } from '../components/Links'
+import { useMemo } from 'react'
 import { PageHeader } from '../components/PageHeader'
-import { SiteContainer } from '../components/SiteContainer'
-import { WeekScheduleCarousel } from '../components/WeekScheduleCarousel'
+import { StudioTimetable } from '../components/StudioTimetable'
+import { useCurrentTime } from '../hooks/useCurrentTime'
+import { useReveal } from '../hooks/useReveal'
+import { findNextClass } from '../lib/nextClass'
 import { site } from '../site'
 import { useTranslation } from '../i18n/useTranslation'
 
+const bookingProps = site.bookingUrl.startsWith('http') ? { target: '_blank', rel: 'noreferrer noopener' } : undefined
+
 export function ClassesPage() {
   const { t, dictionary } = useTranslation()
+  const now = useCurrentTime()
+  const next = useMemo(() => findNextClass(now), [now])
+
+  useReveal()
 
   return (
-    <SiteContainer className="py-14 sm:py-20">
-      <PageHeader
-        eyebrow={t('classes.eyebrow')}
-        title={t('classes.title')}
-        description={t('classes.description')}
-      />
+    <div className="studio">
+      <section className="studio-frame pt-[clamp(3rem,2rem+4vw,6rem)]">
+        <PageHeader title={t('classes.title')} description={t('classes.description')} />
+      </section>
 
-      <section className="mt-14" aria-labelledby="week-plan-heading">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2
-              id="week-plan-heading"
-              className="font-display text-2xl font-semibold text-moove-silver sm:text-3xl"
-            >
+      {/* The week's timetable, the same one as on the homepage */}
+      <section className="mt-[clamp(3rem,2rem+4vw,6rem)] bg-moove-surface" aria-labelledby="week-plan-heading">
+        <div className="studio-frame studio-grid gap-y-10 py-[clamp(4rem,2rem+6vw,8rem)]">
+          <div className="col-span-12 md:col-span-4">
+            <h2 id="week-plan-heading" className="studio-head max-w-[10ch]">
               {t('classes.weekTitle')}
             </h2>
-            <p className="mt-2 text-sm text-moove-muted">{t('classes.weekRange')}</p>
+            <p className="mt-4 text-moove-muted">{t('classes.weekRange')}</p>
+            <a href={site.bookingUrl} {...bookingProps} className="studio-button mt-8">
+              {t('common.bookClass')}
+            </a>
           </div>
-          <ButtonLink
-            href={site.bookingUrl}
-            external={site.bookingUrl.startsWith('http')}
-            className="shrink-0 self-start sm:self-auto"
-          >
-            {t('common.bookClass')}
-          </ButtonLink>
+          <div className="col-span-12 md:col-span-8 md:pl-[2vw]">
+            <StudioTimetable next={next} />
+          </div>
         </div>
-
-        <WeekScheduleCarousel />
       </section>
 
-      <section className="mt-20" aria-labelledby="class-types-heading">
-        <p className="moove-eyebrow">{t('classes.detailsEyebrow')}</p>
-        <h2
-          id="class-types-heading"
-          className="font-display mt-3 text-2xl font-semibold text-moove-silver sm:text-3xl"
-        >
-          {t('classes.typesTitle')}
-        </h2>
-        <div className="moove-rule mt-5" aria-hidden />
+      {/* What each class is, one tone step per class */}
+      <section className="studio-frame py-[var(--section-gap)]" aria-labelledby="class-types-heading">
+        <div data-reveal>
+          <h2 id="class-types-heading" className="studio-head max-w-[12ch]">
+            {t('classes.typesTitle')}
+          </h2>
+        </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-2 xl:gap-8">
-          {dictionary.classes.items.map((c, i) => (
-            <article
-              key={c.title}
-              className="group moove-card flex flex-col p-8 transition hover:-translate-y-0.5 hover:shadow-moove-soft"
-            >
-              <span className="font-display text-sm font-semibold text-moove-lime/70">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <h3 className="font-display mt-2 text-xl font-semibold text-moove-silver">
+        <ul className="mt-14 space-y-2 md:mt-20">
+          {dictionary.classes.items.map((c) => (
+            <li key={c.title} className="studio-grid gap-y-4 bg-moove-surface px-5 py-8 md:items-baseline md:px-8 md:py-10">
+              <h3 className="col-span-12 text-[clamp(1.5rem,1rem+1.5vw,2.25rem)] font-extrabold leading-[1.05] tracking-[-0.035em] md:col-span-5">
                 {c.title}
               </h3>
-              <dl className="mt-4 flex flex-wrap gap-4 text-sm">
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-moove-muted/70">
-                    {t('common.level')}
-                  </dt>
-                  <dd className="mt-1 font-medium text-moove-silver/90">{c.level}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-moove-muted/70">
-                    {t('common.duration')}
-                  </dt>
-                  <dd className="mt-1 font-medium text-moove-silver/90">{c.duration}</dd>
-                </div>
-              </dl>
-              <p className="mt-4 flex-1 text-sm leading-relaxed text-moove-muted">{c.desc}</p>
-            </article>
+              <div className="col-span-12 md:col-span-6 md:col-start-7">
+                <p className="max-w-[52ch] leading-[1.55]">{c.desc}</p>
+                <p className="studio-small mt-4 text-moove-muted">
+                  {c.level} · {c.duration}
+                </p>
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
-    </SiteContainer>
+    </div>
   )
 }

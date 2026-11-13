@@ -1,27 +1,19 @@
 import { Link } from 'react-router-dom'
 import { useCookieConsent } from '../cookies/CookieConsentProvider'
-import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
 import { useTranslation } from '../i18n/useTranslation'
 
 export function CookieBanner() {
-  const posing = useIsPosingRoute()
   const { t } = useTranslation()
   const { showBanner, showPreferences, acceptAll, rejectOptional, openPreferences } =
     useCookieConsent()
 
   if (!showBanner || showPreferences) return null
 
-  const panelClass = posing
-    ? 'border-fuchsia-500/25 bg-[#12121a]/95 text-white ring-white/10'
-    : 'border-transparent bg-moove-surface text-moove-silver ring-transparent'
+  const panelClass = 'border-transparent bg-moove-surface text-moove-silver ring-transparent'
 
-  const bodyClass = posing ? 'text-white/65' : 'text-moove-muted'
-  const ghostBtn = posing
-    ? 'border-white/15 bg-white/5 text-white/85 hover:bg-white/10'
-    : 'border-moove-espresso/15 bg-moove-surface/80 text-moove-silver hover:bg-moove-elevated/60'
-  const primaryBtn = posing
-    ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black hover:brightness-110'
-    : 'bg-moove-lime text-moove-ink hover:bg-moove-lime-hover'
+  const bodyClass = 'text-moove-muted'
+  const ghostBtn = 'border-moove-espresso/15 bg-moove-surface/80 text-moove-silver hover:bg-moove-elevated/60'
+  const primaryBtn = 'bg-moove-lime text-moove-ink hover:bg-moove-lime-hover'
 
   return (
     <div
@@ -42,22 +34,14 @@ export function CookieBanner() {
                 {t('cookies.banner.bodyBefore')}{' '}
                 <Link
                   to="/cookies"
-                  className={
-                    posing
-                      ? 'font-medium text-cyan-300 underline-offset-2 hover:underline'
-                      : 'font-medium text-moove-accent underline-offset-2 hover:underline'
-                  }
+                  className="font-medium text-moove-accent underline-offset-2 hover:underline"
                 >
                   {t('cookies.banner.policyLink')}
                 </Link>{' '}
                 {t('cookies.banner.bodyMiddle')}{' '}
                 <Link
                   to="/privacy"
-                  className={
-                    posing
-                      ? 'font-medium text-cyan-300 underline-offset-2 hover:underline'
-                      : 'font-medium text-moove-accent underline-offset-2 hover:underline'
-                  }
+                  className="font-medium text-moove-accent underline-offset-2 hover:underline"
                 >
                   {t('cookies.banner.privacyLink')}
                 </Link>

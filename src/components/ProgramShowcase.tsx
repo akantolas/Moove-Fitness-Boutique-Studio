@@ -83,7 +83,7 @@ export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseP
               type="button"
               onClick={() => selectRelative(-1)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-moove-border bg-white/70 text-lg text-moove-silver transition hover:border-moove-lime-deep/40 hover:bg-moove-lime/10"
-              aria-label={t('posing.pricing.prevPackage')}
+              aria-label={t('programs.prevProgram')}
             >
               ←
             </button>
@@ -91,7 +91,7 @@ export function ProgramShowcase({ programs, copy, onPurchase }: ProgramShowcaseP
               type="button"
               onClick={() => selectRelative(1)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-moove-border bg-white/70 text-lg text-moove-silver transition hover:border-moove-lime-deep/40 hover:bg-moove-lime/10"
-              aria-label={t('posing.pricing.nextPackage')}
+              aria-label={t('programs.nextProgram')}
             >
               →
             </button>

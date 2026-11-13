@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;600;800&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Lora:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Commissioner:wght@400;600;800&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -57,37 +57,6 @@
     outline-offset: 2px;
   }
 
-  /* Move & Pose keeps its own type. */
-  body.pose-shell {
-    --font-sans:
-      'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-      'Segoe UI Emoji';
-    --font-display: 'Lora', Georgia, 'Times New Roman', serif;
-    line-height: 1.58;
-    background-color: #08080c;
-    background-image:
-      radial-gradient(
-        ellipse 90% 50% at 15% -10%,
-        rgba(192, 38, 211, 0.12) 0%,
-        transparent 55%
-      ),
-      radial-gradient(
-        circle at 90% 30%,
-        rgba(34, 211, 238, 0.08) 0%,
-        transparent 40%
-      );
-    color: #fafafa;
-    color-scheme: dark;
-  }
-
-  body.pose-shell :focus-visible {
-    outline-color: #e879f9;
-  }
-
-  body.pose-shell ::selection {
-    background-color: rgba(192, 38, 211, 0.35);
-    color: #fafafa;
-  }
 }
 
 @layer components {
@@ -236,28 +205,6 @@
     display: none;
   }
 
-  .pose-hero-gradient {
-    position: relative;
-  }
-
-  .pose-hero-gradient::before {
-    position: absolute;
-    inset: 0;
-    content: '';
-    pointer-events: none;
-    opacity: 0.8;
-    background-image:
-      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(192, 38, 211, 0.22) 0%, transparent 55%),
-      radial-gradient(circle at 85% 20%, rgba(34, 211, 238, 0.15) 0%, transparent 45%);
-  }
-
-  .pose-card {
-    border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(4px);
-  }
-
   @media (min-width: 640px) {
     .moove-section-pad {
       padding-block: 5.5rem;
@@ -311,153 +258,6 @@
     animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  @keyframes pose-glow-breathe {
-    0%,
-    100% {
-      opacity: 0.45;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.7;
-      transform: scale(1.04);
-    }
-  }
-
-  .animate-pose-glow-breathe {
-    animation: pose-glow-breathe 5s ease-in-out infinite;
-  }
-
-  @keyframes pose-menu-reveal {
-    from {
-      opacity: 0;
-      transform: translateY(-0.5rem);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-pose-menu-reveal {
-    animation: pose-menu-reveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  @keyframes pose-overlay-fade {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .animate-pose-overlay-fade {
-    animation: pose-overlay-fade 0.28s ease-out both;
-  }
-
-  @keyframes pose-nav-stagger {
-    from {
-      opacity: 0;
-      transform: translateY(0.5rem);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-pose-nav-stagger {
-    animation: pose-nav-stagger 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  @keyframes pose-offers-modal-in {
-    from {
-      opacity: 0;
-      transform: scale(0.94) translateY(1rem);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  .animate-pose-offers-modal-in {
-    animation: pose-offers-modal-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  @keyframes pose-offers-card-in {
-    from {
-      opacity: 0;
-      transform: translateY(1.25rem);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-pose-offers-card-in {
-    animation: pose-offers-card-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  @keyframes pose-sparkle-pulse {
-    0%,
-    100% {
-      opacity: 0.25;
-      transform: scale(0.85);
-    }
-    50% {
-      opacity: 0.9;
-      transform: scale(1.1);
-    }
-  }
-
-  .animate-pose-sparkle {
-    animation: pose-sparkle-pulse 3.5s ease-in-out infinite;
-  }
-
-  @keyframes pose-offers-shimmer {
-    0% {
-      background-position: 200% center;
-    }
-    100% {
-      background-position: -200% center;
-    }
-  }
-
-  .pose-offers-shimmer-border {
-    background: linear-gradient(
-      90deg,
-      rgba(244, 114, 182, 0.15) 0%,
-      rgba(251, 191, 36, 0.45) 25%,
-      rgba(244, 114, 182, 0.65) 50%,
-      rgba(34, 211, 238, 0.35) 75%,
-      rgba(244, 114, 182, 0.15) 100%
-    );
-    background-size: 200% auto;
-    animation: pose-offers-shimmer 6s linear infinite;
-  }
-
-  .text-gradient-pose-offer {
-    background: linear-gradient(
-      120deg,
-      #fda4af 0%,
-      #f9a8d4 35%,
-      #fef08a 70%,
-      #f0abfc 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .text-gradient-pose-script {
-    background: linear-gradient(135deg, #fbcfe8 0%, #f472b6 45%, #e9d5ff 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
   .text-gradient-lime {
     background: linear-gradient(
       135deg,
@@ -473,14 +273,7 @@
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-up,
     .animate-schedule-right,
-    .animate-schedule-left,
-    .animate-pose-glow-breathe,
-    .animate-pose-menu-reveal,
-    .animate-pose-nav-stagger,
-    .animate-pose-offers-modal-in,
-    .animate-pose-offers-card-in,
-    .animate-pose-sparkle,
-    .pose-offers-shimmer-border {
+    .animate-schedule-left {
       animation: none;
     }
   }

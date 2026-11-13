@@ -1,6 +1,5 @@
 import { useEffect, useId, useState } from 'react'
 import { useCookieConsent } from '../cookies/CookieConsentProvider'
-import { useIsPosingRoute } from '../hooks/useIsPosingRoute'
 import { useTranslation } from '../i18n/useTranslation'
 
 function Toggle({
@@ -14,8 +13,6 @@ function Toggle({
   onChange: (next: boolean) => void
   labelId: string
 }) {
-  const posing = useIsPosingRoute()
-
   return (
     <button
       type="button"
@@ -25,13 +22,7 @@ function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${
-        checked
-          ? posing
-            ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400'
-            : 'bg-moove-lime-deep'
-          : posing
-            ? 'bg-white/15'
-            : 'bg-moove-espresso/15'
+        checked ? 'bg-moove-lime-deep' : 'bg-moove-espresso/15'
       }`}
     >
       <span
@@ -44,7 +35,6 @@ function Toggle({
 }
 
 export function CookiePreferencesPanel() {
-  const posing = useIsPosingRoute()
   const { t } = useTranslation()
   const {
     consent,
@@ -82,17 +72,11 @@ export function CookiePreferencesPanel() {
 
   if (!showPreferences) return null
 
-  const panelClass = posing
-    ? 'border-fuchsia-500/25 bg-[#12121a] text-white ring-white/10'
-    : 'border-moove-border/50 bg-moove-surface text-moove-silver ring-white/60'
-  const mutedClass = posing ? 'text-white/60' : 'text-moove-muted'
-  const cardClass = posing ? 'border-white/10 bg-white/[0.03]' : 'border-moove-border/70 bg-moove-bg/40'
-  const ghostBtn = posing
-    ? 'border-white/15 bg-white/5 text-white/85 hover:bg-white/10'
-    : 'border-moove-espresso/15 bg-moove-surface/80 text-moove-silver hover:bg-moove-elevated/60'
-  const primaryBtn = posing
-    ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black hover:brightness-110'
-    : 'bg-gradient-to-b from-moove-lime via-moove-lime to-moove-lime-deep text-moove-ink hover:brightness-105'
+  const panelClass = 'border-moove-border/50 bg-moove-surface text-moove-silver ring-white/60'
+  const mutedClass = 'text-moove-muted'
+  const cardClass = 'border-moove-border/70 bg-moove-bg/40'
+  const ghostBtn = 'border-moove-espresso/15 bg-moove-surface/80 text-moove-silver hover:bg-moove-elevated/60'
+  const primaryBtn = 'bg-gradient-to-b from-moove-lime via-moove-lime to-moove-lime-deep text-moove-ink hover:brightness-105'
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center p-4 sm:items-center sm:p-6">
@@ -137,9 +121,7 @@ export function CookiePreferencesPanel() {
                 </p>
               </div>
               <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${
-                  posing ? 'bg-white/10 text-white/70' : 'bg-moove-elevated text-moove-muted'
-                }`}
+                className="shrink-0 rounded-full bg-moove-elevated px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-moove-muted"
               >
                 {t('cookies.preferences.essential.alwaysOn')}
               </span>

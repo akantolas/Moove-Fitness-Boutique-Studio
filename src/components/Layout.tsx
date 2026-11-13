@@ -5,9 +5,7 @@ import { CookiePreferencesPanel } from './CookiePreferencesPanel'
 import { Header } from './Header'
 import { Footer } from './Footer'
 import { site } from '../site'
-import { usePosingBookingSticky } from '../contexts/PosingBookingStickyContext'
-import { useIsPosingRoute, posingBookingHref } from '../hooks/useIsPosingRoute'
-import { useSiteVars, useTranslation } from '../i18n/useTranslation'
+import { useTranslation } from '../i18n/useTranslation'
 
 function CalendarGlyph({ className }: { className?: string }) {
   return (
@@ -48,58 +46,89 @@ function ChevronGlyph({ className }: { className?: string }) {
   )
 }
 
-export function Layout() {
-  const isPosing = useIsPosingRoute()
-  const { pathname } = useLocation()
-  const isPosingAbout = pathname === '/posing/about'
+type PageKey =
+  | 'home'
+  | 'classes'
+  | 'about'
+  | 'contact'
+  | 'programs'
+  | 'programAccess'
+  | 'privacy'
+  | 'cookies'
+  | 'terms'
+  | 'serviceTerms'
+
+const pageByPath: Record<string, PageKey> = {
+  '/': 'home',
+  '/mathimata': 'classes',
+  '/sxetika': 'about',
+  '/epikoinonia': 'contact',
+  '/programmata': 'programs',
+  '/privacy': 'privacy',
+  '/cookies': 'cookies',
+  '/terms': 'terms',
+  '/service-terms': 'serviceTerms',
+}
+
+/** Finds or creates a <meta>/<link> in <head> and sets one attribute on it. */
+function setHeadTag(selector: string, create: () => HTMLElement, attr: string, value: string) {
+  let el = document.head.querySelector<HTMLElement>(selector)
+  if (!el) {
+    el = create()
+    document.head.appendChild(el)
+  }
+  el.setAttribute(attr, value)
+}
+
+function metaTag(key: 'name' | 'property', name: string) {
+  return () => {
+    const el = document.createElement('meta')
+    el.setAttribute(key, name)
+    return el
+  }
+}
+
+/** Per-page title, description, canonical URL and social tags. */
+function usePageMeta(pathname: string) {
+  const { dictionary } = useTranslation()
   const isProgramAccess = pathname.startsWith('/programmata/access/')
-  const posingBookingSticky = usePosingBookingSticky()
-  const { t, locale } = useTranslation()
-  const vars = useSiteVars()
-
-  const posingStickyMode = isPosing ? (posingBookingSticky?.sticky.mode ?? 'navigate') : null
-  const showMobileSticky =
-    !isProgramAccess && (!isPosing || posingStickyMode === 'navigate' || posingStickyMode === 'confirm')
+  const key: PageKey = isProgramAccess ? 'programAccess' : (pageByPath[pathname] ?? 'home')
 
   useEffect(() => {
-    document.body.classList.toggle('pose-shell', isPosing)
-    return () => {
-      document.body.classList.remove('pose-shell')
-    }
-  }, [isPosing])
+    const pages = dictionary.meta.pages
+    const page = pages[key]
+    const description = page.description || pages.home.description
+    const url = `${site.url}${pathname === '/' ? '/' : pathname}`
 
-  useEffect(() => {
-    const prevTitle = document.title
-    document.title = isPosingAbout
-      ? t('meta.posingAboutTitle', vars)
-      : isPosing
-        ? t('meta.posingTitle', vars)
-        : t('meta.studioTitle', vars)
+    document.title = page.title
+    setHeadTag('meta[name="description"]', metaTag('name', 'description'), 'content', description)
+    setHeadTag('meta[property="og:title"]', metaTag('property', 'og:title'), 'content', page.title)
+    setHeadTag('meta[property="og:description"]', metaTag('property', 'og:description'), 'content', description)
+    setHeadTag('meta[property="og:url"]', metaTag('property', 'og:url'), 'content', url)
+    setHeadTag(
+      'link[rel="canonical"]',
+      () => {
+        const el = document.createElement('link')
+        el.setAttribute('rel', 'canonical')
+        return el
+      },
+      'href',
+      url,
+    )
+    // Private program links must never be indexed.
+    setHeadTag('meta[name="robots"]', metaTag('name', 'robots'), 'content', isProgramAccess ? 'noindex, nofollow' : 'index, follow')
+  }, [dictionary, key, pathname, isProgramAccess])
+}
 
-    let themeMeta = document.querySelector('meta[name="theme-color"]')
-    const created = !themeMeta
-    if (!themeMeta) {
-      themeMeta = document.createElement('meta')
-      themeMeta.setAttribute('name', 'theme-color')
-      document.head.appendChild(themeMeta)
-    }
-    const prevTheme = themeMeta.getAttribute('content')
-    themeMeta.setAttribute('content', isPosing ? '#08080c' : '#ffffff')
+export function Layout() {
+  const { pathname } = useLocation()
+  const isProgramAccess = pathname.startsWith('/programmata/access/')
+  const { t } = useTranslation()
 
-    return () => {
-      document.title = prevTitle
-      if (created) {
-        themeMeta?.remove()
-      } else if (prevTheme) {
-        themeMeta?.setAttribute('content', prevTheme)
-      }
-    }
-  }, [isPosing, isPosingAbout, t, locale, vars])
+  usePageMeta(pathname)
 
   return (
-    <div
-      className={`flex min-h-svh flex-col ${isPosing ? 'bg-[#08080c] text-white' : ''}`}
-    >
+    <div className="flex min-h-svh flex-col">
       <Header />
       <main className="flex-1 pb-24 lg:pb-0">
         <Outlet />
@@ -107,71 +136,27 @@ export function Layout() {
       <Footer />
       <CookieBanner />
       <CookiePreferencesPanel />
-      {!showMobileSticky ? null : (
+      {isProgramAccess ? null : (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden">
           <div className="pointer-events-auto px-4 pb-[calc(0.65rem+env(safe-area-inset-bottom,0px))] pt-3">
-            <div
-              className={`mx-auto max-w-lg ${
-                isPosing
-                  ? 'rounded-2xl border border-fuchsia-500/30 bg-[#12121a]/90 p-1.5 shadow-moove-soft ring-1 ring-white/10 backdrop-blur-xl backdrop-saturate-150'
-                  : 'rounded-full'
-              }`}
-            >
-              {posingStickyMode === 'confirm' && posingBookingSticky?.sticky.mode === 'confirm' ? (
-                <button
-                  type="button"
-                  disabled={posingBookingSticky.sticky.disabled}
-                  onClick={() => posingBookingSticky.triggerConfirm()}
-                  className="flex min-h-[3.35rem] w-full items-center gap-2 rounded-[0.85rem] bg-gradient-to-r from-fuchsia-500 to-cyan-400 px-2 py-2 text-left transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:px-3"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black/15">
-                    <CalendarGlyph className="h-[1.15rem] w-[1.15rem]" />
-                  </span>
-                  <span className="min-w-0 flex-1 text-center text-sm font-semibold leading-tight tracking-wide text-black">
-                    {posingBookingSticky.sticky.loading
-                      ? t('posing.calendar.booking')
-                      : posingBookingSticky.sticky.sessionReady
-                        ? t('posing.booking.stickyConfirm')
-                        : t('posing.auth.login')}
-                    <span className="mt-0.5 block text-xs font-medium text-black/70">
-                      {posingBookingSticky.sticky.slotLabel}
-                    </span>
-                  </span>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/12 text-black/80">
-                    <ChevronGlyph className="h-4 w-4" />
-                  </span>
-                </button>
-              ) : (
-                <a
-                  href={isPosing ? posingBookingHref : site.bookingUrl}
-                  className={`flex min-h-[3.35rem] items-center gap-2 px-2 py-2 no-underline transition active:scale-[0.98] sm:px-3 ${
-                    isPosing
-                      ? 'rounded-[0.85rem] bg-gradient-to-r from-fuchsia-500 to-cyan-400 text-black shadow-[0_8px_28px_-6px_rgba(192,38,211,0.45)] active:brightness-[0.97]'
-                      : 'rounded-full bg-moove-ink text-white'
-                  }`}
-                  {...(!isPosing && site.bookingUrl.startsWith('http')
-                    ? { target: '_blank', rel: 'noreferrer noopener' }
-                    : undefined)}
-                >
-                  <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                      isPosing ? 'bg-black/15' : 'rounded-full bg-moove-lime text-moove-ink'
-                    }`}
-                  >
-                    <CalendarGlyph className="h-[1.15rem] w-[1.15rem]" />
-                  </span>
-                  <span className="min-w-0 flex-1 text-center text-sm font-semibold leading-tight tracking-wide">
-                    {isPosing ? t('common.bookPosing') : t('common.bookClass')}
-                  </span>
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                      isPosing ? 'bg-black/12 text-black/80' : 'text-white/80'
-                    }`}
-                  >
-                    <ChevronGlyph className="h-4 w-4" />
-                  </span>
-                </a>
-              )}
+            <div className="mx-auto max-w-lg rounded-full">
+              <a
+                href={site.bookingUrl}
+                className="flex min-h-[3.35rem] items-center gap-2 rounded-full bg-moove-ink px-2 py-2 text-white no-underline transition active:scale-[0.98] sm:px-3"
+                {...(site.bookingUrl.startsWith('http')
+                  ? { target: '_blank', rel: 'noreferrer noopener' }
+                  : undefined)}
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-moove-lime text-moove-ink">
+                  <CalendarGlyph className="h-[1.15rem] w-[1.15rem]" />
+                </span>
+                <span className="min-w-0 flex-1 text-center text-sm font-semibold leading-tight tracking-wide">
+                  {t('common.bookClass')}
+                </span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80">
+                  <ChevronGlyph className="h-4 w-4" />
+                </span>
+              </a>
             </div>
           </div>
         </div>

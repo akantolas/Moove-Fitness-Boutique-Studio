@@ -1,9 +1,5 @@
 import { Link } from 'react-router-dom'
-import {
-  LegalPageLayout,
-  legalGhostLinkClassName,
-  legalPrimaryLinkClassName,
-} from '../components/LegalPageLayout'
+import { LegalPageLayout } from '../components/LegalPageLayout'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
 export function TermsOfUsePage() {
@@ -13,7 +9,6 @@ export function TermsOfUsePage() {
 
   return (
     <LegalPageLayout
-      eyebrow={t('termsOfUse.page.eyebrow')}
       title={t('termsOfUse.page.title')}
       description={t('termsOfUse.page.description', vars)}
       lastUpdated={t('termsOfUse.page.lastUpdated')}
@@ -21,13 +16,13 @@ export function TermsOfUsePage() {
       vars={vars}
       actions={
         <>
-          <Link to="/service-terms" className={legalPrimaryLinkClassName()}>
+          <Link to="/service-terms" className="studio-button">
             {t('serviceTerms.footer.serviceTerms')}
           </Link>
-          <Link to="/privacy" className={legalGhostLinkClassName()}>
+          <Link to="/privacy" className="studio-button bg-moove-surface hover:bg-moove-elevated">
             {t('privacy.footer.privacyPolicy')}
           </Link>
-          <Link to="/" className={legalGhostLinkClassName()}>
+          <Link to="/" className="studio-button bg-moove-surface hover:bg-moove-elevated">
             {t('termsOfUse.page.backHome')}
           </Link>
         </>
