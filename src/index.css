@@ -486,6 +486,54 @@
     object-fit: cover;
   }
 
+  /* The address as a link: a lime stroke runs under each line on hover */
+  .studio-place a {
+    display: inline-block;
+  }
+
+  .studio-place__line {
+    background: linear-gradient(var(--color-moove-lime), var(--color-moove-lime)) no-repeat 0 78% / 0% 0.3em;
+  }
+
+  .studio-place a:hover .studio-place__line,
+  .studio-place a:focus-visible .studio-place__line {
+    background-size: 100% 0.3em;
+  }
+
+  .studio-place__city {
+    margin-top: 0.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2em;
+    font-size: 0.2em;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .studio-place__city svg {
+    width: 0.8em;
+    height: 0.8em;
+    transition: translate 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .studio-place a:hover .studio-place__city svg {
+    translate: 0.12em -0.12em;
+  }
+
+  /* Open or closed, on a light ground */
+  .studio-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    outline: 1.5px solid var(--color-moove-ink);
+  }
+
+  .studio-dot[data-open='true'] {
+    background: var(--color-moove-lime);
+  }
+
   /* The quotation spread from margin to margin */
   .studio-spread {
     display: flex;
@@ -545,6 +593,34 @@
     .motion-ready [data-reveal].is-in > *:nth-child(4) { transition-delay: 240ms; }
     .motion-ready [data-reveal].is-in > *:nth-child(5) { transition-delay: 320ms; }
     .motion-ready [data-reveal].is-in > *:nth-child(n + 6) { transition-delay: 400ms; }
+
+    /* Prints are dealt rather than faded up: each drops flat and settles into its tilt */
+    @keyframes studio-deal {
+      from { opacity: 0; translate: 0 -3rem; rotate: 0deg; scale: 1.16; }
+    }
+
+    .motion-ready [data-reveal] > .studio-print {
+      opacity: 0;
+      transform: none;
+      transition:
+        rotate 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        scale 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .motion-ready [data-reveal].is-in > .studio-print {
+      opacity: 1;
+      transition-delay: 0ms;
+      animation: studio-deal 900ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+      animation-delay: calc(var(--deal, 0) * 140ms + 120ms);
+    }
+
+    .studio-place__line {
+      transition: background-size 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .studio-place__line + br + .studio-place__line {
+      transition-delay: 70ms;
+    }
 
     @keyframes studio-drift {
       from { transform: scale(1) translate3d(0, 0, 0); }

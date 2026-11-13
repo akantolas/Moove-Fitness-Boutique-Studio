@@ -9,24 +9,28 @@ export function useReveal() {
     const root = document.documentElement
     if (!('IntersectionObserver' in window)) return
     root.classList.add('motion-ready')
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue
-          entry.target.classList.add('is-in')
-          observer.unobserve(entry.target)
-        }
-      },
-      { rootMargin: '0px 0px -12% 0px' },
-    )
+    const reveal: IntersectionObserverCallback = (entries, source) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        entry.target.classList.add('is-in')
+        source.unobserve(entry.target)
+      }
+    }
+    const observer = new IntersectionObserver(reveal, { rootMargin: '0px 0px -12% 0px' })
+    // data-reveal="late" waits until the block is well inside the screen, for tall blocks
+    // whose entrance would otherwise play before anyone can see it.
+    const lateObserver = new IntersectionObserver(reveal, { rootMargin: '0px 0px -35% 0px' })
     const watch = () =>
-      document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)').forEach((block) => observer.observe(block))
+      document
+        .querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)')
+        .forEach((block) => (block.dataset.reveal === 'late' ? lateObserver : observer).observe(block))
     watch()
     const added = new MutationObserver(watch)
     added.observe(document.body, { childList: true, subtree: true })
     return () => {
       added.disconnect()
       observer.disconnect()
+      lateObserver.disconnect()
       root.classList.remove('motion-ready')
     }
   }, [])

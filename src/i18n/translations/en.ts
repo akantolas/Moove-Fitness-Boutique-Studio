@@ -177,6 +177,7 @@ export const en = {
     place: {
       line1: 'Korai',
       line2: '137',
+      line3: 'Volos',
       body: 'Daylight, wood and mirrors, a few minutes from the centre of Volos.',
       map: 'Directions on Google Maps',
       altRoom: 'The studio with its wooden floor and plants',

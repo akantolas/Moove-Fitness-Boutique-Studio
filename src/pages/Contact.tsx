@@ -1,7 +1,6 @@
 import { useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { useCurrentTime } from '../hooks/useCurrentTime'
-import { studioStatus } from '../lib/openingHours'
+import { useStudioStatus } from '../hooks/useStudioStatus'
 import { site } from '../site'
 import { useSiteVars, useTranslation } from '../i18n/useTranslation'
 
@@ -47,8 +46,7 @@ export function ContactPage() {
   const { t, locale, dictionary } = useTranslation()
   const vars = useSiteVars()
   const reach = dictionary.contact.reach
-  const now = useCurrentTime()
-  const status = studioStatus(now)
+  const status = useStudioStatus()
 
   const [values, setValues] = useState<Values>({ name: '', email: '', message: '', consent: false })
   const [topics, setTopics] = useState<string[]>([])
@@ -63,20 +61,6 @@ export function ContactPage() {
 
   const visitsLabel =
     visits >= 5 ? reach.visitsMax : visits === 1 ? reach.visitsOne : t('contact.reach.visitsMany', { n: visits })
-
-  const statusText = !status
-    ? ''
-    : status.open
-      ? t('contact.reach.openNow', { time: status.closes })
-      : t('contact.reach.closedNow', {
-          when:
-            status.daysAhead === 0
-              ? reach.today
-              : status.daysAhead === 1
-                ? reach.tomorrow
-                : dictionary.schedule.days[status.dayKey].label,
-          time: status.opens,
-        })
 
   function update<K extends keyof Values>(key: K, value: Values[K]) {
     const next = { ...values, [key]: value }
@@ -176,10 +160,10 @@ export function ContactPage() {
           <h1 className="studio-head max-w-[14ch] text-[clamp(2.25rem,1.4rem+2.6vw,3.75rem)]">{reach.title}</h1>
           <p className="mt-5 max-w-[34ch] leading-[1.5] text-white/70">{reach.body}</p>
 
-          {statusText ? (
+          {status.text ? (
             <p className="studio-small mt-7 flex items-center gap-2.5 text-white/85">
-              <i className="reach-dot" data-open={status?.open ? 'true' : 'false'} aria-hidden />
-              {statusText}
+              <i className="reach-dot" data-open={status.open ? 'true' : 'false'} aria-hidden />
+              {status.text}
             </p>
           ) : null}
 

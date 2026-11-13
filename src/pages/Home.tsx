@@ -4,6 +4,7 @@ import { ClassSlideshow } from '../components/ClassSlideshow'
 import { GoogleReviews } from '../components/GoogleReviews'
 import { StudioTimetable } from '../components/StudioTimetable'
 import { useReveal } from '../hooks/useReveal'
+import { useStudioStatus } from '../hooks/useStudioStatus'
 import { findNextClass } from '../lib/nextClass'
 import { useCurrentTime } from '../hooks/useCurrentTime'
 import { site } from '../site'
@@ -15,6 +16,7 @@ export function HomePage() {
   const { t, dictionary } = useTranslation()
   const vars = useSiteVars()
   const now = useCurrentTime()
+  const status = useStudioStatus()
   const next = useMemo(() => findNextClass(now), [now])
   const home = dictionary.home
   const days = dictionary.schedule.days
@@ -200,28 +202,51 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* The address, with prints of the room dropped on it */}
-      <section className="bg-moove-elevated">
-        <div className="studio-frame relative flex min-h-[78svh] flex-col justify-center overflow-hidden py-16 md:min-h-[100svh]">
-          <h2 className="studio-display text-center text-[30vw] uppercase leading-[0.85] md:text-[clamp(7.5rem,15vw,15rem)]">
-            {t('home.place.line1')}
-            <br />
-            {t('home.place.line2')}
+      {/* The address is the way in: the words link to the map, with prints of the room dealt around them */}
+      <section className="overflow-clip bg-moove-elevated">
+        <div
+          className="studio-frame relative flex flex-col pb-[60vw] pt-[60vw] md:min-h-[max(calc(100svh-4rem),38rem)] md:pb-10 md:pt-12"
+          data-reveal="late"
+        >
+          <h2 className="studio-display studio-place relative z-10 text-center text-[calc((100vw-2*var(--gutter))/3.6)] uppercase leading-[0.85] md:my-auto md:text-[clamp(7.5rem,15vw,15rem)]">
+            <a href={site.mapsUrl} target="_blank" rel="noreferrer noopener">
+              <span className="studio-place__line">{t('home.place.line1')}</span>
+              <br />
+              <span className="studio-place__line">{t('home.place.line2')}</span>
+              <span className="studio-place__city">
+                {t('home.place.line3')}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+                  <path d="M6 18 18 6M8 6h10v10" />
+                </svg>
+              </span>
+              <span className="sr-only">, {t('home.place.map')}</span>
+            </a>
           </h2>
-          <figure className="studio-print left-[4%] top-[4%] w-[40vw] -rotate-6 md:left-[3%] md:top-[8%] md:w-[22vw] md:-rotate-[8deg]">
+          <figure className="studio-print left-[var(--gutter)] top-[4vw] w-[38vw] -rotate-6 [--deal:0] md:top-[7%] md:w-[min(18vw,17rem,28svh)] md:-rotate-[8deg]">
             <img src="/image6.jpeg" alt={t('home.place.altRoom')} loading="lazy" />
           </figure>
-          <figure className="studio-print right-[4%] bottom-[16%] w-[40vw] rotate-[5deg] md:bottom-auto md:right-[4%] md:top-[30%] md:w-[22vw] md:rotate-6">
-            <img src="/image1.jpeg" alt={t('home.place.altClass')} loading="lazy" />
-          </figure>
-          <figure className="studio-print bottom-[-8%] left-[38%] hidden w-[13vw] -rotate-3 md:block">
+          <figure className="studio-print right-[9%] top-[5%] hidden w-[min(11vw,11rem,18svh)] rotate-3 [--deal:1] md:block">
             <img src="/class-dance.jpg" alt={t('home.place.altWall')} loading="lazy" />
           </figure>
-          <div className="relative z-10 mt-auto max-w-[36ch] pt-10 md:absolute md:bottom-8 md:left-[var(--gutter)]">
-            <p>{t('home.place.body')}</p>
-            <a href={site.mapsUrl} target="_blank" rel="noreferrer noopener" className="studio-link mt-2 inline-block">
-              {t('home.place.map')}
-            </a>
+          <figure className="studio-print bottom-[6vw] right-[var(--gutter)] w-[38vw] rotate-[5deg] [--deal:2] md:bottom-[17%] md:w-[min(18vw,17rem,28svh)] md:rotate-6">
+            <img src="/image1.jpeg" alt={t('home.place.altClass')} loading="lazy" />
+          </figure>
+          <div className="relative z-10 mt-10 flex flex-col gap-6 md:mt-0 md:flex-row md:items-end md:justify-between md:gap-10">
+            <p className="max-w-[36ch]">{t('home.place.body')}</p>
+            <div className="flex flex-col gap-5 md:flex-row md:items-end md:gap-8">
+              <p className="studio-small">
+                {vars.address}
+                {status.text ? (
+                  <span className="mt-1 flex items-center gap-2.5 font-semibold">
+                    <i className="studio-dot" data-open={status.open ? 'true' : 'false'} aria-hidden />
+                    {status.text}
+                  </span>
+                ) : null}
+              </p>
+              <a href={site.mapsUrl} target="_blank" rel="noreferrer noopener" className="studio-button shrink-0 self-start md:self-auto">
+                {t('home.place.map')}
+              </a>
+            </div>
           </div>
         </div>
       </section>
