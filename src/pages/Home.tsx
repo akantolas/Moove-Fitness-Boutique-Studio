@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { ClassSlideshow } from '../components/ClassSlideshow'
 import { GoogleReviews } from '../components/GoogleReviews'
 import { StudioTimetable } from '../components/StudioTimetable'
 import { useReveal } from '../hooks/useReveal'
@@ -157,44 +158,14 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Classes: a photograph and a few lines each, three to a row */}
+      {/* Classes: hover or tap a title and its photograph wipes in beside it */}
       <section className="bg-moove-surface">
         <div className="studio-frame py-[var(--section-gap)]">
           <div data-reveal>
             <h2 className="studio-head max-w-[12ch]">{t('home.classes.title')}</h2>
           </div>
 
-          <ul className="mt-14 grid gap-x-[clamp(0.75rem,0.3rem+1.6vw,2rem)] gap-y-14 sm:grid-cols-2 md:mt-20 lg:grid-cols-3">
-            {home.classes.rows.map((row) => (
-              <li key={row.title} className="flex flex-col" data-reveal>
-                <div>
-                  {row.image ? (
-                    <img src={row.image} alt={row.alt} loading="lazy" className="aspect-[4/3] w-full object-cover" />
-                  ) : (
-                    <div className="flex aspect-[4/3] w-full items-end bg-moove-lime p-[clamp(1.25rem,2vw,2rem)]">
-                      <p className="studio-display text-[clamp(2.5rem,1rem+3.5vw,4.5rem)]" aria-hidden>
-                        {row.title}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <h3 className="mt-6 text-[clamp(1.5rem,1.1rem+1.2vw,2.25rem)] font-extrabold leading-[1.05] tracking-[-0.035em]">
-                    {row.title}
-                  </h3>
-                  <p className="mt-3 max-w-[36ch] leading-[1.5]">{row.body}</p>
-                  <p className="studio-small mt-3 text-moove-muted">{row.meta}</p>
-                  <a
-                    href={site.bookingUrl}
-                    {...bookingProps}
-                    className="studio-link mt-auto inline-block w-fit pt-5 text-[length:var(--step-small)]"
-                  >
-                    {t('common.bookSpot')}
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <ClassSlideshow />
 
           <div className="mt-20">
             <Link to="/mathimata" className="studio-button studio-button--ink">

@@ -23,5 +23,5 @@ export const site = {
     instagram: 'https://www.instagram.com/moove_fitness_boutique_studio/',
     facebook: 'https://www.facebook.com/profile.php?id=100086176767067',
   },
-  hours: 'Δευ–Παρ: 07:00–21:00 · Σαβ: 09:00–15:00',
+  hours: 'Δευ–Παρ: 08:00–12:10 & 14:30–21:25 · Σαβ: 09:30–11:20',
 } as const

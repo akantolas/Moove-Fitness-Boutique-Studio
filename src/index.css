@@ -833,3 +833,108 @@
     }
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Homepage classes: titles whose letters rise one by one, beside a photograph
+ * that wipes in from the top. Without motion the states simply swap.
+ * ------------------------------------------------------------------------- */
+@layer components {
+  .slides-title {
+    cursor: pointer;
+  }
+
+  /* Each letter clips its two copies; the padding leaves room for accents and descenders */
+  .slides-letter {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    margin-block: -0.14em;
+    vertical-align: bottom;
+  }
+
+  .slides-letter__ghost,
+  .slides-letter__solid {
+    display: inline-block;
+    padding-block: 0.14em;
+  }
+
+  /* 45% keeps the resting titles above 3:1 contrast for large text */
+  .slides-letter__ghost {
+    opacity: 0.45;
+  }
+
+  .slides-letter__solid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(110%);
+  }
+
+  .slides-title[data-active='true'] .slides-letter__ghost {
+    transform: translateY(-110%);
+  }
+
+  .slides-title[data-active='true'] .slides-letter__solid {
+    transform: none;
+  }
+
+  .slides-title:hover .slides-letter__ghost {
+    opacity: 0.7;
+  }
+
+  /* Photographs share one cell; only the chosen one is uncovered */
+  .slides-photo {
+    overflow: hidden;
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  }
+
+  .slides-photo[data-active='true'] {
+    z-index: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .slides-letter__ghost,
+    .slides-letter__solid {
+      transition:
+        transform 550ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 200ms ease;
+      transition-delay: calc(var(--i, 0) * 14ms);
+    }
+
+    /* The outgoing photograph stays put until the new one has covered it */
+    .slides-photo {
+      transition: clip-path 0s linear 750ms;
+    }
+
+    .slides-photo[data-active='true'] {
+      transition: clip-path 700ms cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    .slides-photo img {
+      transform: scale(1.06);
+      transition: transform 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .slides-photo[data-active='true'] img {
+      transform: none;
+    }
+
+    @keyframes slides-detail-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .slides-detail {
+      animation: slides-detail-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}

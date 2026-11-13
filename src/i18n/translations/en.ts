@@ -93,9 +93,9 @@ export const en = {
     facts: {
       title: 'The studio at a glance',
       items: [
-        { value: '07:00–21:00', label: 'Monday to Friday' },
-        { value: '09:00–15:00', label: 'Saturday' },
-        { value: '45–50′', label: 'Class length' },
+        { value: '08:00–12:10', label: 'Monday to Friday, mornings' },
+        { value: '14:30–21:25', label: 'Monday to Friday, afternoons' },
+        { value: '09:30–11:20', label: 'Saturday' },
         { value: 'Small groups', label: 'For every level' },
       ],
     },
@@ -260,7 +260,7 @@ export const en = {
     },
   },
   contact: {
-    hoursValue: 'Mon–Fri: 07:00–21:00 · Sat: 09:00–15:00',
+    hoursValue: 'Mon–Fri: 08:00–12:10 & 14:30–21:25 · Sat: 09:30–11:20',
     sending: 'Sending…',
     sendError: "Your message couldn't be sent. Please try again or call us.",
     sendUnavailable:
