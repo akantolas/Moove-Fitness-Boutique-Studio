@@ -258,6 +258,22 @@
     animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
+  /* Language menu: drops in from its button */
+  @keyframes lang-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .lang-menu {
+    animation: lang-menu-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
   .text-gradient-lime {
     background: linear-gradient(
       135deg,
@@ -273,7 +289,8 @@
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-up,
     .animate-schedule-right,
-    .animate-schedule-left {
+    .animate-schedule-left,
+    .lang-menu {
       animation: none;
     }
   }
@@ -554,6 +571,265 @@
 
     .studio-rise {
       animation: studio-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Contact section: the studio's details on black beside the message form.
+ * Floating labels, a live open/closed dot and a drawn check on success.
+ * ------------------------------------------------------------------------- */
+@layer components {
+  .reach-info {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  /* A lime glow drifting in the corner, under a fading grid */
+  .reach-info::before {
+    position: absolute;
+    right: -220px;
+    bottom: -260px;
+    z-index: -1;
+    width: 560px;
+    height: 560px;
+    border-radius: 50%;
+    content: '';
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-moove-lime) 55%, transparent), transparent 65%);
+    filter: blur(10px);
+  }
+
+  .reach-info::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: '';
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 36px 36px;
+    mask-image: radial-gradient(ellipse at 100% 100%, #000, transparent 70%);
+  }
+
+  .reach-way {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.8rem 0.875rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition:
+      background-color 200ms ease,
+      transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reach-way:hover {
+    background: rgba(255, 255, 255, 0.09);
+    transform: translateX(4px);
+  }
+
+  .reach-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  .reach-dot[data-open='true'] {
+    background: var(--color-moove-lime);
+  }
+
+  /* Floating labels: the label sits in the field until it has focus or a value */
+  .reach-field {
+    position: relative;
+  }
+
+  .reach-field input,
+  .reach-field textarea {
+    display: block;
+    width: 100%;
+    resize: none;
+    border: 1px solid var(--color-moove-border);
+    background: var(--color-moove-bg);
+    padding: 1.45rem 0.875rem 0.5rem;
+    color: var(--color-moove-ink);
+    outline: 0;
+    transition:
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .reach-field textarea {
+    min-height: 8.5rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .reach-field label {
+    position: absolute;
+    top: 0.95rem;
+    left: 0.9375rem;
+    color: var(--color-moove-muted);
+    pointer-events: none;
+    transform-origin: left top;
+    transition:
+      transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 200ms ease;
+  }
+
+  .reach-field input:focus,
+  .reach-field textarea:focus {
+    border-color: var(--color-moove-ink);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-moove-lime) 55%, transparent);
+  }
+
+  .reach-field input:focus + label,
+  .reach-field input:not(:placeholder-shown) + label,
+  .reach-field textarea:focus + label,
+  .reach-field textarea:not(:placeholder-shown) + label {
+    color: var(--color-moove-ink);
+    transform: translateY(-0.55rem) scale(0.78);
+  }
+
+  .reach-field[data-invalid='true'] input,
+  .reach-field[data-invalid='true'] textarea {
+    border-color: #c62828;
+  }
+
+  .reach-field[data-invalid='true'] label {
+    color: #b71c1c !important;
+  }
+
+  .reach-topic {
+    min-height: 2.75rem;
+    border: 1px solid color-mix(in srgb, var(--color-moove-ink) 18%, transparent);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-size: var(--step-small);
+    font-weight: 600;
+    transition:
+      background-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 200ms ease,
+      border-color 200ms ease,
+      transform 160ms ease;
+  }
+
+  .reach-topic:hover {
+    border-color: var(--color-moove-ink);
+  }
+
+  .reach-topic:active {
+    transform: scale(0.96);
+  }
+
+  .reach-topic[aria-pressed='true'] {
+    border-color: var(--color-moove-ink);
+    background: var(--color-moove-ink);
+    color: #ffffff;
+  }
+
+  .reach-spin {
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+  }
+
+  .reach-success {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 2rem;
+    text-align: center;
+    background: var(--color-moove-surface);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 400ms ease;
+  }
+
+  .reach-success[data-on='true'] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .reach-success circle {
+    fill: var(--color-moove-lime);
+    stroke: var(--color-moove-ink);
+    stroke-width: 3;
+    stroke-dasharray: 240;
+    stroke-dashoffset: 0;
+  }
+
+  .reach-success path {
+    fill: none;
+    stroke: var(--color-moove-ink);
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 0;
+  }
+}
+
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes reach-float {
+      to { transform: translate(-60px, -40px) scale(1.1); }
+    }
+
+    @keyframes reach-ping {
+      70% { box-shadow: 0 0 0 10px transparent; }
+      100% { box-shadow: 0 0 0 0 transparent; }
+    }
+
+    @keyframes reach-draw {
+      from { stroke-dashoffset: var(--reach-dash); }
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes reach-spin {
+      to { transform: rotate(1turn); }
+    }
+
+    .reach-info::before {
+      animation: reach-float 12s ease-in-out infinite alternate;
+    }
+
+    .reach-dot[data-open='true'] {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-moove-lime) 70%, transparent);
+      animation: reach-ping 2s infinite;
+    }
+
+    .reach-spin {
+      animation: reach-spin 700ms linear infinite;
+    }
+
+    .reach-success[data-on='true'] circle {
+      --reach-dash: 240;
+      animation: reach-draw 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .reach-success[data-on='true'] path {
+      --reach-dash: 60;
+      animation: reach-draw 400ms 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+/* About: studio photographs start in grey and take colour under the pointer.
+   Only where a pointer can hover, so touch screens always see them in colour. */
+@layer components {
+  @media (hover: hover) and (pointer: fine) {
+    .about-photo img {
+      filter: grayscale(1);
+      transition: filter 1000ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .about-photo:hover img {
+      filter: none;
     }
   }
 }

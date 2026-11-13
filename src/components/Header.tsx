@@ -119,7 +119,7 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center justify-end gap-2 lg:flex">
-          <LanguageSwitcher compact />
+          <LanguageSwitcher />
           <ButtonLink
             href={site.bookingUrl}
             external={bookingExternal}
@@ -133,7 +133,7 @@ export function Header() {
       {open ? (
         <div id="mobile-nav" className="studio-frame bg-moove-bg pb-8 pt-2 lg:hidden">
           <div className="mb-4 flex">
-            <LanguageSwitcher />
+            <LanguageSwitcher align="start" />
           </div>
           <nav className="flex flex-col gap-1" aria-label={t('nav.mobile')}>
             {studioNav.map((item) => (

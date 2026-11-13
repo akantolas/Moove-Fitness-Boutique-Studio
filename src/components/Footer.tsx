@@ -117,7 +117,7 @@ export function Footer() {
         </div>
       </div>
       <p
-        className="studio-display pointer-events-none -mb-[0.2em] mt-6 select-none whitespace-nowrap pl-[var(--gutter)] text-[46vw] leading-[0.8] md:text-[28vw]"
+        className="studio-display pointer-events-none -mb-[0.2em] mt-6 select-none whitespace-nowrap pl-[var(--gutter)] text-[calc((min(100vw,96rem)-2*var(--gutter))/3)] leading-[0.8]"
         aria-hidden
       >
         {site.name}
